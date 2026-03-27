@@ -1,0 +1,42 @@
+server:
+  port: 8178
+  mode: debug
+
+database:
+  host: 127.0.0.1
+  port: 3306
+  user: root
+  password: root
+  dbname: kloggerx
+  charset: utf8mb4
+  max_idle_conns: 10
+  max_open_conns: 100
+
+redis:
+  addr: 127.0.0.1:6379
+  password: ""
+  db: 0
+
+jwt:
+  secret: kloggerx-secret-key-change-in-production
+  expire: 168h
+
+minio:
+  endpoint: 127.0.0.1:9000
+  access_key: minioadmin
+  secret_key: minioadmin
+  bucket: kloggerx
+  use_ssl: false
+
+log:
+  level: debug
+  filename: logs/kloggerx.log
+  max_size: 100
+  max_backups: 10
+  max_age: 30
+
+onlyoffice:
+  server_url: "http://192.168.95.52:8082"
+  jwt_secret: "jHdXhbSumkJvGf4cKmX6Tp8mrUqzMV6v"
+  file_base_url: "http://192.168.95.52:8178"
+  callback_url: "http://192.168.95.52:8178"

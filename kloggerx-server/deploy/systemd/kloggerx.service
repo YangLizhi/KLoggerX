@@ -1,0 +1,16 @@
+[Unit]
+Description=KLoggerX Server
+After=network.target mysql.service redis.service
+
+[Service]
+Type=simple
+User=kloggerx
+Group=kloggerx
+WorkingDirectory=/opt/kloggerx/server
+ExecStart=/opt/kloggerx/server/kloggerx-server
+Restart=always
+RestartSec=5
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

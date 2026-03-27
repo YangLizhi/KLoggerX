@@ -1,0 +1,50 @@
+:root {
+  --kx-primary: #3370ff;
+  --kx-primary-hover: #4e83fd;
+  --kx-primary-active: #245bdb;
+  --kx-bg: #f5f6f7;
+  --kx-sidebar-bg: #f0f1f5;
+  --kx-sidebar-width: 260px;
+  --kx-header-height: 48px;
+  --kx-text-primary: #1f2329;
+  --kx-text-secondary: #646a73;
+  --kx-text-placeholder: #8f959e;
+  --kx-border: #dee0e3;
+  --kx-success: #34c724;
+  --kx-warning: #ff7d00;
+  --kx-danger: #f54a45;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #app {
+  width: 100%;
+  height: 100%;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  font-size: 14px;
+  color: var(--kx-text-primary);
+  background: var(--kx-bg);
+}
+
+a {
+  text-decoration: none;
+  color: var(--kx-primary);
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}

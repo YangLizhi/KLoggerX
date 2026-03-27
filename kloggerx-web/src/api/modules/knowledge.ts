@@ -1,0 +1,46 @@
+import { get, post, del } from '../request'
+import type { ApiResponse, KnowledgeBase, PaginatedData } from '@/types'
+
+export function getKnowledgeBaseList(params: { page: number; pageSize: number; keyword?: string }) {
+  return get<ApiResponse<PaginatedData<KnowledgeBase>>>('/api/v1/knowledge/list', params)
+}
+
+export function getKnowledgeBaseDetail(id: number) {
+  return get<ApiResponse<KnowledgeBase>>(`/api/v1/knowledge/${id}`)
+}
+
+export function createKnowledgeBase(data: { name: string; description: string }) {
+  return post<ApiResponse<KnowledgeBase>>('/api/v1/knowledge/create', data)
+}
+
+export function updateKnowledgeBase(id: number, data: Partial<KnowledgeBase>) {
+  return post<ApiResponse>(`/api/v1/knowledge/${id}/update`, data)
+}
+
+export function deleteKnowledgeBase(id: number) {
+  return del<ApiResponse>(`/api/v1/knowledge/${id}`)
+}
+
+export function getKnowledgeBaseTree(id: number) {
+  return get<ApiResponse>(`/api/v1/knowledge/${id}/tree`)
+}
+
+export function addKnowledgeMember(id: number, data: { userId: number; role: string }) {
+  return post<ApiResponse>(`/api/v1/knowledge/${id}/member/add`, data)
+}
+
+export function removeKnowledgeMember(id: number, userId: number) {
+  return post<ApiResponse>(`/api/v1/knowledge/${id}/member/remove`, { userId })
+}
+
+export function getKnowledgeMembers(id: number) {
+  return get<ApiResponse>(`/api/v1/knowledge/${id}/members`)
+}
+
+export function searchKnowledge(params: { keyword: string; knowledgeBaseId?: number; page: number; pageSize: number }) {
+  return get<ApiResponse>('/api/v1/knowledge/search', params)
+}
+
+export function publishDocument(knowledgeBaseId: number, documentId: number) {
+  return post<ApiResponse>(`/api/v1/knowledge/${knowledgeBaseId}/publish`, { documentId })
+}

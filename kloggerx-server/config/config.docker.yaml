@@ -1,0 +1,36 @@
+server:
+  port: 8178
+  mode: release
+
+database:
+  host: mysql
+  port: 3306
+  user: root
+  password: "123456"
+  dbname: kloggerx
+  charset: utf8mb4
+  max_idle_conns: 10
+  max_open_conns: 100
+
+redis:
+  addr: redis:6379
+  password: ""
+  db: 0
+
+jwt:
+  secret: kloggerx-secret-key-change-in-production
+  expire: 168h
+
+minio:
+  endpoint: minio:9000
+  access_key: minioadmin
+  secret_key: minioadmin
+  bucket: kloggerx
+  use_ssl: false
+
+log:
+  level: info
+  filename: logs/kloggerx.log
+  max_size: 100
+  max_backups: 10
+  max_age: 30
