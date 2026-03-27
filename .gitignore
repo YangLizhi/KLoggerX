@@ -24,3 +24,6 @@ uploads
 
 .storybook/
 .vscode/
+
+.specstory/
+.vscode/
