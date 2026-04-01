@@ -9,7 +9,7 @@ kloggerx-server/kloggerx
 kloggerx-server/kloggerx-server
 
 # Uploads
-uploads
+kloggerx-server/uploads
 
 # IDE
 .vscode
@@ -21,9 +21,3 @@ uploads
 
 # OS
 .DS_Store
-
-.storybook/
-.vscode/
-
-.specstory/
-.vscode/

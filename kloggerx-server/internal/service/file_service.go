@@ -2,6 +2,7 @@ package service
 
 import (
 	"fmt"
+	"io"
 	"mime/multipart"
 	"path/filepath"
 	"time"
@@ -50,6 +51,24 @@ func GetFilePreviewURL(fileID uint) (string, error) {
 	return miniosvc.GetPresignedURL(f.Path)
 }
 
+// DownloadFileStream returns the original filename and a ReadCloser for streaming the file contents.
+func DownloadFileStream(fileID uint) (string, string, io.ReadCloser, error) {
+	var f model.FileRecord
+	if err := mysql.DB.First(&f, fileID).Error; err != nil {
+		return "", "", nil, err
+	}
+	rc, err := miniosvc.GetObject(f.Path)
+	if err != nil {
+		return "", "", nil, err
+	}
+	return f.Name, f.MimeType, rc, nil
+}
+
+// GetFileStreamByPath returns a ReadCloser for a file by its storage object name.
+func GetFileStreamByPath(objectName string) (io.ReadCloser, error) {
+	return miniosvc.GetObject(objectName)
+}
+
 func DeleteFile(fileID uint) error {
 	var f model.FileRecord
 	if err := mysql.DB.First(&f, fileID).Error; err != nil {
@@ -58,3 +77,4 @@ func DeleteFile(fileID uint) error {
 	miniosvc.Delete(f.Path)
 	return mysql.DB.Delete(&f).Error
 }
+

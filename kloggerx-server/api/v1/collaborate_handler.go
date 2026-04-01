@@ -88,3 +88,21 @@ func MarkAllNotificationsRead(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, model.Success(nil))
 }
+
+func CreateSystemNotification(c *gin.Context) {
+	uid := utils.GetUserID(c.MustGet("userId"))
+	var body struct {
+		Type    string `json:"type" binding:"required"`
+		Title   string `json:"title" binding:"required"`
+		Content string `json:"content"`
+	}
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg("参数错误"))
+		return
+	}
+	if err := service.CreateNotification(body.Type, body.Title, body.Content, 0, uid, 0); err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg(err.Error()))
+		return
+	}
+	c.JSON(http.StatusOK, model.Success(nil))
+}

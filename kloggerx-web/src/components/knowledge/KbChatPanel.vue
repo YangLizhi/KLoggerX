@@ -78,11 +78,12 @@
 <script setup lang="ts">
 import { ref, computed, nextTick, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
+import { post } from '@/api/request'
 
 interface Message {
   role: 'user' | 'assistant'
   content: string
-  sources?: { id: number; title: string }[]
+  sources?: { id: number; title: string; documentId?: number }[]
 }
 
 const props = defineProps<{
@@ -107,7 +108,6 @@ const userInitial = computed(() => {
 })
 
 function formatMessage(content: string): string {
-  // Basic markdown-like formatting
   return content
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.*?)\*/g, '<em>$1</em>')
@@ -133,14 +133,29 @@ async function sendMessage() {
 
   loading.value = true
   try {
-    // Simulate AI response (in production, call actual API)
-    await new Promise(r => setTimeout(r, 1500))
-    
-    // Generate a contextual response
-    const response = generateResponse(text)
-    messages.value.push(response)
+    // Build history for context (last 6 messages)
+    const history = messages.value.slice(-6).map(m => ({ role: m.role, content: m.content }))
+    const res: any = await post(`/api/v1/knowledge/${props.kbId}/chat`, {
+      question: text,
+      history: history.slice(0, -1), // exclude current user message
+    })
+    const data = res.data
+    const sources = (data.sources || []).map((s: any) => ({
+      id: s.documentId,
+      title: s.documentTitle || '文档',
+      documentId: s.documentId,
+    }))
+    // Deduplicate sources by documentId
+    const seen = new Set<number>()
+    const uniqueSources = sources.filter((s: any) => {
+      if (seen.has(s.id)) return false
+      seen.add(s.id)
+      return true
+    })
+    messages.value.push({ role: 'assistant', content: data.answer || '暂无回答', sources: uniqueSources })
   } catch (e: any) {
-    ElMessage.error(e.message || '发送失败')
+    const errMsg = e?.response?.data?.message || e?.message || 'AI 服务暂时不可用'
+    messages.value.push({ role: 'assistant', content: `⚠️ ${errMsg}` })
   } finally {
     loading.value = false
     scrollToBottom()
@@ -150,34 +165,6 @@ async function sendMessage() {
 function sendQuickMessage(text: string) {
   inputText.value = text
   sendMessage()
-}
-
-function generateResponse(query: string): Message {
-  const lowerQuery = query.toLowerCase()
-  
-  // Generate contextual response based on query type
-  let content = ''
-  let sources: { id: number; title: string }[] = []
-
-  if (lowerQuery.includes('包含') || lowerQuery.includes('内容')) {
-    content = `**${props.kbName}** 知识库目前包含多个文档分类，涵盖了技术文档、产品说明、操作指南等内容。\n\n您可以通过左侧目录浏览具体文档，或者直接向我提问您感兴趣的话题。`
-  } else if (lowerQuery.includes('总结') || lowerQuery.includes('摘要')) {
-    content = `根据知识库内容，最近的文档主要涉及以下主题：\n\n1. **技术规范** - 系统架构和开发规范\n2. **操作指南** - 用户操作手册\n3. **更新日志** - 版本更新记录\n\n如需了解具体内容，请点击下方参考来源查看原文。`
-    sources = [
-      { id: 1, title: '系统架构文档' },
-      { id: 2, title: '用户操作手册' },
-    ]
-  } else if (lowerQuery.includes('查找') || lowerQuery.includes('搜索') || lowerQuery.includes('技术')) {
-    content = `我为您找到了以下相关技术文档：\n\n- **API 接口文档** - 详细的接口说明\n- **数据库设计** - 数据模型和表结构\n- **部署指南** - 系统部署步骤\n\n您可以点击参考来源直接跳转到对应文档。`
-    sources = [
-      { id: 3, title: 'API接口文档' },
-      { id: 4, title: '数据库设计说明' },
-    ]
-  } else {
-    content = `感谢您的提问！关于"${query}"，我正在从知识库中检索相关信息。\n\n目前知识库中有多个相关文档，您可以通过以下方式获取更多信息：\n\n1. 在搜索框中输入关键词查找\n2. 浏览左侧目录分类\n3. 继续向我提问具体问题\n\n我会尽力为您提供准确的答案。`
-  }
-
-  return { role: 'assistant', content, sources }
 }
 
 function clearChat() {

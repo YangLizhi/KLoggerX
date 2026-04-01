@@ -167,12 +167,12 @@ func DetectAIModels(c *gin.Context) {
 		return
 	}
 
-	// Parse response
+	// Parse response - owned_by can be bool or string depending on API
 	var apiResp struct {
 		Data []struct {
-			ID     string `json:"id"`
-			Object string `json:"object"`
-			Owned  bool   `json:"owned_by"`
+			ID     string      `json:"id"`
+			Object string      `json:"object"`
+			Owned  interface{} `json:"owned_by"` // 可以是 bool 或 string
 		} `json:"data"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&apiResp); err != nil {

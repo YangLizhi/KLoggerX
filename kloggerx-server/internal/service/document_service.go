@@ -10,18 +10,24 @@ import (
 )
 
 type CreateDocReq struct {
-	Title    string `json:"title" binding:"required"`
-	Type     string `json:"type" binding:"required"`
-	ParentID *uint  `json:"parentId"`
+	Title        string `json:"title" binding:"required"`
+	Type         string `json:"type" binding:"required"`
+	ParentID     *uint  `json:"parentId"`
+	FileSize     int64  `json:"fileSize"`
+	FileExt      string `json:"fileExt"`
+	OriginalName string `json:"originalName"`
 }
 
 func CreateDocument(userID uint, req CreateDocReq) (*model.Document, error) {
 	doc := model.Document{
-		Title:    req.Title,
-		Type:     req.Type,
-		ParentID: req.ParentID,
-		OwnerID:  userID,
-		Version:  1,
+		Title:        req.Title,
+		Type:         req.Type,
+		ParentID:     req.ParentID,
+		OwnerID:      userID,
+		Version:      1,
+		FileSize:     req.FileSize,
+		FileExt:      req.FileExt,
+		OriginalName: req.OriginalName,
 	}
 	if err := mysql.DB.Create(&doc).Error; err != nil {
 		return nil, err
@@ -157,12 +163,15 @@ func CopyDocument(docID, userID uint) (*model.Document, error) {
 		return nil, err
 	}
 	doc := model.Document{
-		Title:    src.Title + " (副本)",
-		Type:     src.Type,
-		ParentID: src.ParentID,
-		OwnerID:  userID,
-		Content:  src.Content,
-		Version:  1,
+		Title:        src.Title + " (副本)",
+		Type:         src.Type,
+		ParentID:     src.ParentID,
+		OwnerID:      userID,
+		Content:      src.Content,
+		Version:      1,
+		FileSize:     src.FileSize,
+		FileExt:      src.FileExt,
+		OriginalName: src.OriginalName,
 	}
 	if err := mysql.DB.Create(&doc).Error; err != nil {
 		return nil, err

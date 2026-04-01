@@ -1,0 +1,90 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1774929748401,
+  "projectRoot": "/home/y00066/iKloggerX",
+  "techStack": {
+    "languages": [],
+    "frameworks": [],
+    "packageManager": null,
+    "runtime": null
+  },
+  "build": {
+    "buildCommand": null,
+    "testCommand": null,
+    "lintCommand": null,
+    "devCommand": null,
+    "scripts": {}
+  },
+  "conventions": {
+    "namingStyle": null,
+    "importStyle": null,
+    "testPattern": null,
+    "fileOrganization": null
+  },
+  "structure": {
+    "isMonorepo": false,
+    "workspaces": [],
+    "mainDirectories": [],
+    "gitBranches": null
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "kloggerx-server": {
+      "path": "kloggerx-server",
+      "purpose": null,
+      "fileCount": 5,
+      "lastAccessed": 1774929748397,
+      "keyFiles": [
+        "Dockerfile",
+        "go.mod",
+        "go.sum",
+        "kloggerx",
+        "kloggerx-server"
+      ]
+    },
+    "kloggerx-web": {
+      "path": "kloggerx-web",
+      "purpose": null,
+      "fileCount": 13,
+      "lastAccessed": 1774929748399,
+      "keyFiles": [
+        "Dockerfile",
+        "README.md",
+        "index.html",
+        "nginx.conf",
+        "package-lock.json"
+      ]
+    },
+    "kloggerx-server/api": {
+      "path": "kloggerx-server/api",
+      "purpose": "API routes",
+      "fileCount": 0,
+      "lastAccessed": 1774929748399,
+      "keyFiles": []
+    },
+    "kloggerx-server/config": {
+      "path": "kloggerx-server/config",
+      "purpose": "Configuration files",
+      "fileCount": 4,
+      "lastAccessed": 1774929748400,
+      "keyFiles": [
+        "config.docker.yaml",
+        "config.go",
+        "config.yaml"
+      ]
+    },
+    "kloggerx-web/dist": {
+      "path": "kloggerx-web/dist",
+      "purpose": "Distribution/build output",
+      "fileCount": 3,
+      "lastAccessed": 1774929748401,
+      "keyFiles": [
+        "favicon.svg",
+        "icons.svg",
+        "index.html"
+      ]
+    }
+  },
+  "hotPaths": [],
+  "userDirectives": []
+}

@@ -32,3 +32,7 @@ export function markNotificationRead(id: number) {
 export function markAllNotificationsRead() {
   return post<ApiResponse>('/api/v1/collaborate/notification/read-all')
 }
+
+export function createNotification(data: { type: string; title: string; content?: string }) {
+  return post<ApiResponse>('/api/v1/collaborate/notification/create', data)
+}

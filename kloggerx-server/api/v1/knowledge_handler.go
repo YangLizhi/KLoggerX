@@ -6,6 +6,7 @@ import (
 
 	"kloggerx-server/internal/model"
 	"kloggerx-server/internal/pkg/utils"
+	"kloggerx-server/internal/repository/mysql"
 	"kloggerx-server/internal/service"
 
 	"github.com/gin-gonic/gin"
@@ -168,5 +169,125 @@ func PublishDocument(c *gin.Context) {
 		c.JSON(http.StatusOK, model.ErrorMsg(err.Error()))
 		return
 	}
+	// Index the newly published document for RAG
+	go service.IndexDocumentContent(uint(id), body.DocumentID)
 	c.JSON(http.StatusOK, model.Success(nil))
+}
+
+// ─── Knowledge Sources ────────────────────────────────────────────────────────
+
+func GetKnowledgeSources(c *gin.Context) {
+	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+	sources, err := service.GetKnowledgeSources(uint(id))
+	if err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg(err.Error()))
+		return
+	}
+	c.JSON(http.StatusOK, model.Success(sources))
+}
+
+func AddKnowledgeSource(c *gin.Context) {
+	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+	var body struct {
+		SourceType string `json:"sourceType" binding:"required"` // "folder" | "document"
+		SourceID   uint   `json:"sourceId" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg("参数错误"))
+		return
+	}
+	src, err := service.AddKnowledgeSource(uint(id), body.SourceType, body.SourceID)
+	if err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg(err.Error()))
+		return
+	}
+	c.JSON(http.StatusOK, model.Success(src))
+}
+
+func RemoveKnowledgeSource(c *gin.Context) {
+	kbID, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+	srcID, _ := strconv.ParseUint(c.Param("srcId"), 10, 64)
+	if err := service.RemoveKnowledgeSource(uint(kbID), uint(srcID)); err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg(err.Error()))
+		return
+	}
+	c.JSON(http.StatusOK, model.Success(nil))
+}
+
+func SyncKnowledgeSource(c *gin.Context) {
+	srcID, _ := strconv.ParseUint(c.Param("srcId"), 10, 64)
+	if err := service.SyncKnowledgeSource(uint(srcID)); err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg(err.Error()))
+		return
+	}
+	c.JSON(http.StatusOK, model.Success(nil))
+}
+
+// ─── Knowledge AI Chat ────────────────────────────────────────────────────────
+
+func KnowledgeChat(c *gin.Context) {
+	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+	var body struct {
+		Question string                 `json:"question" binding:"required"`
+		History  []service.ChatMessage  `json:"history"`
+	}
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg("参数错误"))
+		return
+	}
+	result, err := service.ChatWithKnowledge(uint(id), body.Question, body.History)
+	if err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg(err.Error()))
+		return
+	}
+	c.JSON(http.StatusOK, model.Success(result))
+}
+
+// KnowledgeChatGlobal handles chat without a specific KB (searches all accessible KBs).
+func KnowledgeChatGlobal(c *gin.Context) {
+	uid := utils.GetUserID(c.MustGet("userId"))
+	var body struct {
+		Question    string                `json:"question" binding:"required"`
+		History     []service.ChatMessage `json:"history"`
+		KBIDs       []uint                `json:"kbIds"`
+	}
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg("参数错误"))
+		return
+	}
+
+	// If no specific KBs given, use all KBs the user is a member of
+	if len(body.KBIDs) == 0 {
+		var members []model.KnowledgeMember
+		mysql.DB.Where("user_id = ?", uid).Find(&members)
+		for _, m := range members {
+			body.KBIDs = append(body.KBIDs, m.KnowledgeBaseID)
+		}
+	}
+
+	if len(body.KBIDs) == 0 {
+		c.JSON(http.StatusOK, model.ErrorMsg("您还没有加入任何知识库，请先创建或加入知识库"))
+		return
+	}
+
+	// Search chunks across all KBs
+	var allChunks []service.ChunkRef
+	for _, kbID := range body.KBIDs {
+		chunks := service.SearchChunks(kbID, body.Question, 3)
+		allChunks = append(allChunks, chunks...)
+	}
+
+	// If we have chunks, use first KB for full RAG; else just call AI without context
+	if len(body.KBIDs) > 0 {
+		result, err := service.ChatWithKnowledge(body.KBIDs[0], body.Question, body.History)
+		if err != nil {
+			c.JSON(http.StatusOK, model.ErrorMsg(err.Error()))
+			return
+		}
+		result.Sources = allChunks
+		c.JSON(http.StatusOK, model.Success(result))
+		return
+	}
+
+	c.JSON(http.StatusOK, model.ErrorMsg("暂无知识库内容，请先向知识库添加文档"))
 }

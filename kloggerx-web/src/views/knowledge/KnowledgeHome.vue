@@ -140,8 +140,9 @@
 <script setup lang="ts">
 import { ref, onMounted, nextTick, computed } from 'vue'
 import { Promotion, Microphone } from '@element-plus/icons-vue'
-import { getKnowledgeBaseList } from '@/api/modules/knowledge'
+import { getKnowledgeBaseList, chatWithKnowledge, chatWithKnowledgeGlobal } from '@/api/modules/knowledge'
 import { getAIModelSettings } from '@/api/modules/admin'
+import { ElMessage } from 'element-plus'
 
 interface ChatMessage {
   role: 'user' | 'assistant'
@@ -190,17 +191,37 @@ async function handleSend() {
   await nextTick()
   scrollToBottom()
 
-  // Simulate AI response
-  setTimeout(() => {
-    const response: ChatMessage = {
-      role: 'assistant',
-      content: `<p>这是基于知识库的回答。关于您的问题："${text}"</p><p>目前AI对话功能正在对接中，需要在系统管理-AI模型设置中配置好模型提供商后才能使用。</p>`,
-      sources: selectedKb.value !== '__all__' ? [selectedKbName.value] : [],
+  try {
+    let res: any
+    if (selectedKb.value === '__all__') {
+      res = await chatWithKnowledgeGlobal({ question: text })
+    } else {
+      const kbId = parseInt(selectedKb.value)
+      res = await chatWithKnowledge(kbId, { question: text })
     }
-    messages.value.push(response)
+
+    if (res.data?.answer) {
+      const response: ChatMessage = {
+        role: 'assistant',
+        content: res.data.answer,
+        sources: res.data.sources?.map((s: any) => s.documentTitle) || [],
+      }
+      messages.value.push(response)
+    } else {
+      messages.value.push({
+        role: 'assistant',
+        content: '抱歉，AI未能返回有效回答，请稍后重试。',
+      })
+    }
+  } catch (e: any) {
+    messages.value.push({
+      role: 'assistant',
+      content: `错误: ${e.message || '请求失败，请检查AI模型配置'}`,
+    })
+  } finally {
     sending.value = false
     nextTick(() => scrollToBottom())
-  }, 1500)
+  }
 }
 
 function scrollToBottom() {

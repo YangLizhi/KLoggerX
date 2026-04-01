@@ -158,7 +158,7 @@
               :data="sortedDocuments"
               style="width: 100%"
               table-layout="auto"
-              @row-click="handleDocClick"
+              @row-dblclick="handleDocClick"
               @selection-change="handleSelectionChange"
               @row-contextmenu="(row: Document, _column: any, e: MouseEvent) => showRowContextMenu(e, row)"
             >
@@ -167,9 +167,19 @@
                 <template #default="{ row }">
                   <div class="doc-name-cell">
                     <el-icon :color="getTypeColor(row.type)"><component :is="getTypeIcon(row.type)" /></el-icon>
-                    <span>{{ row.title }}</span>
+                    <span>{{ getDisplayName(row) }}</span>
                     <el-icon v-if="row.isPinned" class="pin-badge" color="#3370ff"><Flag /></el-icon>
                   </div>
+                </template>
+              </el-table-column>
+              <el-table-column label="文件类型" min-width="110">
+                <template #default="{ row }">
+                  <el-tag size="small" :type="getTypeTagType(row.type)" disable-transitions>{{ getTypeName(row) }}</el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column label="文件大小" min-width="100">
+                <template #default="{ row }">
+                  <span>{{ row.fileSize > 0 ? formatFileSize(row.fileSize) : '—' }}</span>
                 </template>
               </el-table-column>
               <el-table-column label="修改时间" min-width="130" sortable>
@@ -188,7 +198,7 @@
                 class="doc-card"
                 :class="{ 'drag-over': dragOverDocId === doc.id }"
                 draggable="true"
-                @click="handleDocClick(doc)"
+                @dblclick="handleDocClick(doc)"
                 @contextmenu.prevent="doc.type === 'folder' ? showFolderCtxMenu($event, doc) : showContextMenu($event, doc)"
                 @dragstart="handleDragStart($event, doc)"
                 @dragend="handleDragEnd"
@@ -199,7 +209,7 @@
                 <div class="doc-card-icon">
                   <el-icon :size="36" :color="getTypeColor(doc.type)"><component :is="getTypeIcon(doc.type)" /></el-icon>
                 </div>
-                <div class="doc-card-title">{{ doc.title }}</div>
+                <div class="doc-card-title">{{ getDisplayName(doc) }}</div>
                 <div class="doc-card-meta">{{ formatDate(doc.updatedAt) }}</div>
               </div>
             </div>
@@ -627,10 +637,50 @@ const typeMap: Record<string, { icon: string; color: string }> = {
   mindnote: { icon: 'Share', color: '#9254de' },
   bitable: { icon: 'Tickets', color: '#00b8d9' },
   survey: { icon: 'Notebook', color: '#f54a45' },
+  file: { icon: 'Document', color: '#888' },
+  image: { icon: 'Picture', color: '#36b37e' },
+  code: { icon: 'Memo', color: '#3370ff' },
+}
+
+const typeNameMap: Record<string, string> = {
+  folder: '文件夹', doc: '文档', sheet: '表格', slide: '幻灯片',
+  mindnote: '思维笔记', bitable: '多维表格', survey: '问卷',
+  file: '文件', image: '图片', code: '代码',
+}
+const extTypeMap: Record<string, string> = {
+  pdf: 'PDF文件', docx: 'Word文档', doc: 'Word文档',
+  xlsx: 'Excel表格', xls: 'Excel表格', pptx: 'PPT幻灯片', ppt: 'PPT幻灯片',
+  png: 'PNG图片', jpg: 'JPEG图片', jpeg: 'JPEG图片', gif: 'GIF图片',
+  mp4: '视频', mp3: '音频', zip: '压缩包', rar: '压缩包',
+  txt: '文本文件', md: 'Markdown', json: 'JSON文件', csv: 'CSV文件',
 }
 
 function getTypeIcon(type: string) { return typeMap[type]?.icon || 'Document' }
-function getTypeColor(type: string) { return typeMap[type]?.color || '#3370ff' }
+function getTypeColor(type: string) { return typeMap[type]?.color || '#888' }
+
+function getDisplayName(doc: Document): string {
+  if (doc.originalName) return doc.originalName
+  if (doc.fileExt && !doc.title.endsWith(doc.fileExt)) return doc.title + doc.fileExt
+  return doc.title
+}
+function getTypeName(doc: Document): string {
+  const ext = (doc.fileExt || '').replace('.', '').toLowerCase()
+  if (ext && extTypeMap[ext]) return extTypeMap[ext]
+  return typeNameMap[doc.type] || doc.type
+}
+function getTypeTagType(type: string): '' | 'success' | 'warning' | 'info' | 'danger' {
+  const m: Record<string, '' | 'success' | 'warning' | 'info' | 'danger'> = {
+    folder: 'warning', doc: '', sheet: 'success', slide: 'warning',
+    mindnote: '', bitable: 'info', survey: 'danger', file: 'info',
+  }
+  return m[type] || 'info'
+}
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return bytes + ' B'
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
+  if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
+  return (bytes / (1024 * 1024 * 1024)).toFixed(1) + ' GB'
+}
 function formatDate(t: string) {
   if (!t) return ''
   const d = new Date(t)
@@ -1046,13 +1096,6 @@ function handleFolderSelect(file: any) {
   if (file.raw) {
     importFiles.value.push(file.raw)
   }
-}
-
-function formatFileSize(bytes: number): string {
-  if (bytes < 1024) return bytes + ' B'
-  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
-  if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
-  return (bytes / (1024 * 1024 * 1024)).toFixed(1) + ' GB'
 }
 
 async function handleImport() {

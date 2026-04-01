@@ -54,14 +54,14 @@
         <el-tab-pane v-for="p in activeProviders" :key="p.id" :label="p.name" :name="String(p.id)">
           <div class="model-tree">
             <div v-for="vendor in getModelVendors(p.id)" :key="vendor.name" class="vendor-group">
-              <div class="vendor-header" @click="vendor.expanded = !vendor.expanded">
+              <div class="vendor-header" @click="toggleVendor(p.id, vendor.name)">
                 <el-icon class="expand-arrow" :class="{ expanded: vendor.expanded }"><ArrowRight /></el-icon>
                 <span class="vendor-name">{{ vendor.name }}</span>
                 <span class="vendor-count">{{ vendor.categories.length }} 类</span>
               </div>
               <div v-show="vendor.expanded" class="vendor-body">
                 <div v-for="cat in vendor.categories" :key="cat.name" class="category-group">
-                  <div class="category-header" @click="cat.expanded = !cat.expanded">
+                  <div class="category-header" @click="toggleCategory(p.id, vendor.name, cat.name)">
                     <el-icon class="expand-arrow" :class="{ expanded: cat.expanded }"><ArrowRight /></el-icon>
                     <span class="category-name">{{ cat.name }}</span>
                     <span class="category-count">{{ cat.models.length }} 个模型</span>
@@ -169,6 +169,9 @@ import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import { getAIModelSettings, saveAIModelSettings, detectAIModels, testAIModel } from '@/api/modules/admin'
+import { useNotify } from '@/composables/useNotify'
+
+const $notify = useNotify()
 
 interface Model {
   id: string
@@ -215,6 +218,10 @@ const providerForm = ref({
   color: '#3370ff',
 })
 
+// 用于存储展开状态的响应式数据
+const vendorExpandedMap = ref<Record<string, boolean>>({})
+const categoryExpandedMap = ref<Record<string, boolean>>({})
+
 const providerRules: FormRules = {
   name: [{ required: true, message: '请输入提供商名称', trigger: 'blur' }],
   baseUrl: [{ required: true, message: '请输入Base URL', trigger: 'blur' }],
@@ -222,6 +229,32 @@ const providerRules: FormRules = {
 }
 
 const activeProviders = computed(() => providers.value.filter(p => p.isActive))
+
+function getVendorKey(providerId: number, vendorName: string) {
+  return `${providerId}-${vendorName}`
+}
+
+function getCategoryKey(providerId: number, vendorName: string, categoryName: string) {
+  return `${providerId}-${vendorName}-${categoryName}`
+}
+
+function isVendorExpanded(providerId: number, vendorName: string) {
+  return vendorExpandedMap.value[getVendorKey(providerId, vendorName)] ?? false
+}
+
+function toggleVendor(providerId: number, vendorName: string) {
+  const key = getVendorKey(providerId, vendorName)
+  vendorExpandedMap.value[key] = !isVendorExpanded(providerId, vendorName)
+}
+
+function isCategoryExpanded(providerId: number, vendorName: string, categoryName: string) {
+  return categoryExpandedMap.value[getCategoryKey(providerId, vendorName, categoryName)] ?? false
+}
+
+function toggleCategory(providerId: number, vendorName: string, categoryName: string) {
+  const key = getCategoryKey(providerId, vendorName, categoryName)
+  categoryExpandedMap.value[key] = !isCategoryExpanded(providerId, vendorName, categoryName)
+}
 
 function getModelVendors(providerId: number): VendorGroup[] {
   const provider = providers.value.find(p => p.id === providerId)
@@ -243,8 +276,11 @@ function getModelVendors(providerId: number): VendorGroup[] {
 
   return Array.from(vendorMap.entries()).map(([name, categories]) => ({
     name,
-    expanded: false,
-    categories,
+    expanded: isVendorExpanded(providerId, name),
+    categories: categories.map(cat => ({
+      ...cat,
+      expanded: isCategoryExpanded(providerId, name, cat.name),
+    })),
   }))
 }
 
@@ -273,14 +309,14 @@ async function submitProvider() {
   const valid = await providerFormRef.value?.validate().catch(() => false)
   if (!valid) return
   if (!editingProvider.value && providers.value.length >= 15) {
-    ElMessage.warning('最多支持添加15个模型提供商')
+    $notify.warning('最多支持添加15个模型提供商')
     return
   }
   submittingProvider.value = true
   try {
     if (editingProvider.value) {
       Object.assign(editingProvider.value, providerForm.value)
-      ElMessage.success('提供商已更新')
+      $notify.success('提供商已更新')
     } else {
       const newProvider: Provider = {
         id: Date.now(),
@@ -290,7 +326,7 @@ async function submitProvider() {
         detecting: false,
       }
       providers.value.push(newProvider)
-      ElMessage.success('提供商已添加')
+      $notify.success('提供商已添加')
     }
     showAddProviderDialog.value = false
     editingProvider.value = null
@@ -320,20 +356,20 @@ async function saveAllProviders() {
 }
 
 async function toggleProvider(p: Provider) {
-  ElMessage.success(p.isActive ? '已启用' : '已禁用')
+  $notify.success(p.isActive ? '已启用' : '已禁用')
   await saveAllProviders()
 }
 
 async function deleteProvider(p: Provider) {
   await ElMessageBox.confirm(`确定要删除提供商 "${p.name}" 吗？`, '删除确认')
   providers.value = providers.value.filter(x => x.id !== p.id)
-  ElMessage.success('已删除')
+  $notify.success('已删除')
   await saveAllProviders()
 }
 
 async function detectModels(p: Provider) {
   if (!p.baseUrl || !p.apiKey) {
-    ElMessage.warning('请先配置 Base URL 和 API Key')
+    $notify.warning('请先配置 Base URL 和 API Key')
     return
   }
   p.detecting = true
@@ -353,11 +389,11 @@ async function detectModels(p: Provider) {
         const firstChat = p.models.find((m: Model) => m.type === 'chat')
         if (firstChat) firstChat.isDefault = true
       }
-      ElMessage.success(`探测到 ${p.models.length} 个模型`)
+      $notify.success(`探测到 ${p.models.length} 个模型`)
       await saveAllProviders()
     }
   } catch (e: any) {
-    ElMessage.error(e.message || '探测失败')
+    $notify.error(e.message || '探测失败')
   } finally {
     p.detecting = false
   }
@@ -369,7 +405,7 @@ function setDefaultModel(m: Model) {
     if (x.type === m.type) x.isDefault = false
   })
   m.isDefault = true
-  ElMessage.success(`已将 ${m.name} 设为默认`)
+  $notify.success(`已将 ${m.name} 设为默认`)
 }
 
 // Test model
@@ -390,7 +426,7 @@ async function runTest() {
   if (!testingModel.value) return
   const provider = providers.value.find(p => p.models.includes(testingModel.value!))
   if (!provider || !provider.baseUrl || !provider.apiKey) {
-    ElMessage.warning('请先配置提供商的 Base URL 和 API Key')
+    $notify.warning('请先配置提供商的 Base URL 和 API Key')
     return
   }
   testing.value = true
@@ -429,9 +465,9 @@ async function saveKbSettings() {
       providers: providers.value,
       kbSettings: kbSettings.value,
     })
-    ElMessage.success('知识库AI设置已保存')
+    $notify.success('知识库AI设置已保存')
   } catch (e: any) {
-    ElMessage.error(e.message || '保存失败')
+    $notify.error(e.message || '保存失败')
   } finally {
     savingKb.value = false
   }

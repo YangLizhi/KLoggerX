@@ -47,6 +47,7 @@ func RegisterRoutes(r *gin.Engine, hub *ws.Hub) {
 		auth.POST("/document/import", ImportDocument)
 		auth.GET("/document/:id/export", ExportDocument)
 		auth.GET("/document/:id/file-preview", GetDocumentFilePreview)
+		auth.GET("/document/:id/download", DownloadDocumentFile)
 
 		// Permission
 		auth.GET("/auth/document/:id", GetDocumentPermissions)
@@ -68,6 +69,19 @@ func RegisterRoutes(r *gin.Engine, hub *ws.Hub) {
 		auth.GET("/knowledge/:id/members", GetKnowledgeMembers)
 		auth.GET("/knowledge/search", SearchKnowledge)
 		auth.POST("/knowledge/:id/publish", PublishDocument)
+		// Knowledge sources (folder/document linkage)
+		auth.GET("/knowledge/:id/sources", GetKnowledgeSources)
+		auth.POST("/knowledge/:id/source/add", AddKnowledgeSource)
+		auth.DELETE("/knowledge/:id/source/:srcId", RemoveKnowledgeSource)
+		auth.POST("/knowledge/:id/source/:srcId/sync", SyncKnowledgeSource)
+		// Knowledge AI chat
+		auth.POST("/knowledge/:id/chat", KnowledgeChat)
+		auth.POST("/knowledge/chat/global", KnowledgeChatGlobal)
+
+		// Templates
+		auth.GET("/template/list", GetTemplates)
+		auth.GET("/template/:id", GetTemplateDetail)
+		auth.POST("/template/:id/use", UseTemplate)
 
 		// Collaborate
 		auth.POST("/collaborate/comment/add", AddComment)
@@ -77,6 +91,7 @@ func RegisterRoutes(r *gin.Engine, hub *ws.Hub) {
 		auth.GET("/collaborate/notifications", GetNotifications)
 		auth.POST("/collaborate/notification/:id/read", MarkNotificationRead)
 		auth.POST("/collaborate/notification/read-all", MarkAllNotificationsRead)
+		auth.POST("/collaborate/notification/create", CreateSystemNotification)
 
 		// File
 		auth.POST("/file/upload", UploadFile)

@@ -130,6 +130,8 @@
     <div v-if="showDisplaySettings" class="display-settings-panel" @click.stop>
       <div class="display-title">显示列设置</div>
       <el-checkbox v-model="colVisible.title" disabled>标题</el-checkbox>
+      <el-checkbox v-model="colVisible.fileType">文件类型</el-checkbox>
+      <el-checkbox v-model="colVisible.fileSize">文件大小</el-checkbox>
       <el-checkbox v-model="colVisible.location">位置</el-checkbox>
       <el-checkbox v-model="colVisible.owner">所有者</el-checkbox>
       <el-checkbox v-model="colVisible.createdAt">创建时间</el-checkbox>
@@ -144,7 +146,7 @@
         :data="filteredDocuments"
         style="width: 100%"
         table-layout="auto"
-        @row-click="handleDocClick"
+        @row-dblclick="handleDocClick"
         @row-contextmenu="handleRowContextMenu"
         @selection-change="handleSelectionChange"
         :default-sort="{ prop: sortField, order: sortOrder }"
@@ -155,9 +157,19 @@
           <template #default="{ row }">
             <div class="doc-name-cell">
               <el-icon :color="getTypeColor(row.type)" :size="16"><component :is="getTypeIcon(row.type)" /></el-icon>
-              <span class="doc-title-text">{{ row.title }}</span>
+              <span class="doc-title-text">{{ getDisplayName(row) }}</span>
               <el-icon v-if="row.isPinned" class="pin-badge" color="#3370ff" :size="12"><Flag /></el-icon>
             </div>
+          </template>
+        </el-table-column>
+        <el-table-column v-if="colVisible.fileType" label="文件类型" min-width="100">
+          <template #default="{ row }">
+            <el-tag size="small" :type="getTypeTagType(row.type)" disable-transitions>{{ getTypeName(row) }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column v-if="colVisible.fileSize" label="文件大小" min-width="100">
+          <template #default="{ row }">
+            <span class="size-cell">{{ row.fileSize > 0 ? formatFileSize(row.fileSize) : (row.type === 'folder' ? '—' : '—') }}</span>
           </template>
         </el-table-column>
         <el-table-column v-if="colVisible.location" label="位置" min-width="140">
@@ -188,11 +200,6 @@
           </template>
           <template #default="{ row }">{{ formatDate(row.updatedAt) }}</template>
         </el-table-column>
-        <el-table-column width="50" align="center">
-          <template #default="{ row }">
-            <el-icon class="more-btn" @click.stop="showContextMenu($event, row)"><MoreFilled /></el-icon>
-          </template>
-        </el-table-column>
       </el-table>
 
       <!-- Grid View -->
@@ -201,7 +208,7 @@
           v-for="doc in filteredDocuments"
           :key="doc.id"
           class="doc-card"
-          @click="handleDocClick(doc)"
+          @dblclick="handleDocClick(doc)"
           @contextmenu.prevent="showContextMenu($event, doc)"
         >
           <div class="doc-card-check" @click.stop>
@@ -242,6 +249,7 @@
     <div v-if="contextMenu.visible" class="context-menu" :style="{ left: contextMenu.x + 'px', top: contextMenu.y + 'px' }">
       <div class="ctx-item" @click="handleAction('share')"><el-icon><Share /></el-icon>分享</div>
       <div class="ctx-item" @click="handleAction('copyLink')"><el-icon><Link /></el-icon>复制链接</div>
+      <div v-if="contextMenu.doc?.type === 'file' || contextMenu.doc?.fileSize" class="ctx-item" @click="handleAction('download')"><el-icon><Download /></el-icon>下载原文件</div>
       <div class="ctx-sep" />
       <div class="ctx-item" @click="handleAction('copy')"><el-icon><DocumentCopy /></el-icon>创建副本</div>
       <div class="ctx-item" @click="handleAction('shortcut')"><el-icon><Position /></el-icon>添加快捷方式到</div>
@@ -444,6 +452,8 @@ const filterUpdatedRange = ref('')
 const showDisplaySettings = ref(false)
 const colVisible = reactive({
   title: true,
+  fileType: true,
+  fileSize: true,
   location: true,
   owner: true,
   createdAt: true,
@@ -488,12 +498,51 @@ const typeMap: Record<string, { icon: string; color: string }> = {
   mindnote: { icon: 'Share', color: '#9254de' },
   bitable: { icon: 'Tickets', color: '#00b8d9' },
   survey: { icon: 'Notebook', color: '#f54a45' },
+  file: { icon: 'Document', color: '#888' },
+  image: { icon: 'Picture', color: '#36b37e' },
+  code: { icon: 'Memo', color: '#3370ff' },
 }
 const avatarColors = ['#3370ff', '#36b37e', '#ff7d00', '#f54a45', '#9254de', '#00b8d9']
 
+const typeNameMap: Record<string, string> = {
+  folder: '文件夹', doc: '文档', sheet: '表格', slide: '幻灯片',
+  mindnote: '思维笔记', bitable: '多维表格', survey: '问卷',
+  file: '文件', image: '图片', code: '代码',
+}
+const extTypeMap: Record<string, string> = {
+  pdf: 'PDF文件', docx: 'Word文档', doc: 'Word文档',
+  xlsx: 'Excel表格', xls: 'Excel表格', pptx: 'PPT幻灯片', ppt: 'PPT幻灯片',
+  png: 'PNG图片', jpg: 'JPEG图片', jpeg: 'JPEG图片', gif: 'GIF图片',
+  mp4: '视频', mp3: '音频', zip: '压缩包', rar: '压缩包',
+  txt: '文本文件', md: 'Markdown', json: 'JSON文件', csv: 'CSV文件',
+}
+
 function getTypeIcon(t: string) { return typeMap[t]?.icon || 'Document' }
-function getTypeColor(t: string) { return typeMap[t]?.color || '#3370ff' }
+function getTypeColor(t: string) { return typeMap[t]?.color || '#888' }
 function getAvatarColor(id: number) { return avatarColors[(id || 0) % avatarColors.length] }
+
+// Returns the display name: for uploaded files prefer originalName, otherwise title
+function getDisplayName(doc: Document): string {
+  if (doc.originalName) return doc.originalName
+  if (doc.fileExt && !doc.title.endsWith(doc.fileExt)) return doc.title + doc.fileExt
+  return doc.title
+}
+
+// Returns human-friendly type name, using file extension if available
+function getTypeName(doc: Document): string {
+  const ext = (doc.fileExt || '').replace('.', '').toLowerCase()
+  if (ext && extTypeMap[ext]) return extTypeMap[ext]
+  return typeNameMap[doc.type] || doc.type
+}
+
+function getTypeTagType(type: string): '' | 'success' | 'warning' | 'info' | 'danger' {
+  const m: Record<string, '' | 'success' | 'warning' | 'info' | 'danger'> = {
+    folder: 'warning', doc: '', sheet: 'success', slide: 'warning',
+    mindnote: '', bitable: 'info', survey: 'danger', file: 'info',
+  }
+  return m[type] || 'info'
+}
+
 function formatDate(t: string) {
   if (!t) return ''
   const d = new Date(t)
@@ -616,9 +665,35 @@ function typeLabel(type: string): string {
 function showContextMenu(e: MouseEvent, doc: Document) {
   e.preventDefault()
   e.stopPropagation()
+  
+  // 计算菜单位置，适应窗口边距
+  const menuWidth = 220
+  const menuHeight = 400
+  const padding = 8
+  
+  let x = e.clientX
+  let y = e.clientY
+  
+  // 右边界检测
+  if (x + menuWidth + padding > window.innerWidth) {
+    x = window.innerWidth - menuWidth - padding
+  }
+  // 左边界检测
+  if (x < padding) {
+    x = padding
+  }
+  // 下边界检测
+  if (y + menuHeight + padding > window.innerHeight) {
+    y = window.innerHeight - menuHeight - padding
+  }
+  // 上边界检测
+  if (y < padding) {
+    y = padding
+  }
+  
   contextMenu.visible = true
-  contextMenu.x = e.clientX
-  contextMenu.y = e.clientY
+  contextMenu.x = x
+  contextMenu.y = y
   contextMenu.doc = doc
   offlineToggle.value = false
   followToggle.value = false
@@ -773,6 +848,12 @@ async function handleAction(action: string) {
       ElMessage.success('链接已复制')
       break
     }
+    case 'download': {
+      const a = document.createElement('a')
+      a.href = `/api/v1/document/${doc.id}/download`
+      a.click()
+      break
+    }
     case 'copy':
       await copyDocument(doc.id, false)
       ElMessage.success('副本已创建，标题为"' + doc.title + ' 副本"')
@@ -887,8 +968,12 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .home-page {
-  max-width: 1200px;
-  padding-top: 20px;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 24px;
+  box-sizing: border-box;
 }
 
 /* Action Bar */
@@ -1084,8 +1169,10 @@ onBeforeUnmount(() => {
 
 /* Table */
 .doc-list-area {
+  flex: 1;
   margin-top: 4px;
   overflow-x: auto;
+  overflow-y: auto;
 }
 .doc-list-area :deep(.el-table) {
   width: 100% !important;

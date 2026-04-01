@@ -44,3 +44,27 @@ export function searchKnowledge(params: { keyword: string; knowledgeBaseId?: num
 export function publishDocument(knowledgeBaseId: number, documentId: number) {
   return post<ApiResponse>(`/api/v1/knowledge/${knowledgeBaseId}/publish`, { documentId })
 }
+
+export function getKnowledgeSources(kbId: number) {
+  return get<ApiResponse>(`/api/v1/knowledge/${kbId}/sources`)
+}
+
+export function addKnowledgeSource(kbId: number, data: { sourceType: string; sourceId: number }) {
+  return post<ApiResponse>(`/api/v1/knowledge/${kbId}/source/add`, data)
+}
+
+export function removeKnowledgeSource(kbId: number, srcId: number) {
+  return del<ApiResponse>(`/api/v1/knowledge/${kbId}/source/${srcId}`)
+}
+
+export function syncKnowledgeSource(kbId: number, srcId: number) {
+  return post<ApiResponse>(`/api/v1/knowledge/${kbId}/source/${srcId}/sync`, {})
+}
+
+export function chatWithKnowledge(kbId: number, data: { question: string; history?: { role: string; content: string }[] }) {
+  return post<ApiResponse>(`/api/v1/knowledge/${kbId}/chat`, data)
+}
+
+export function chatWithKnowledgeGlobal(data: { question: string; history?: { role: string; content: string }[] }) {
+  return post<ApiResponse>('/api/v1/knowledge/chat/global', data)
+}

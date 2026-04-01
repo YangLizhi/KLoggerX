@@ -311,6 +311,31 @@
             <div v-if="!categories.length" class="cat-empty">暂无分类，点击上方按钮创建</div>
           </div>
         </el-tab-pane>
+        <el-tab-pane label="数据来源" name="sources">
+          <div class="sources-tip">将云盘文件夹或我的文档库中的文档关联到此知识库，文档内容将被自动索引，支持 AI 问答检索。</div>
+          <div class="sources-toolbar">
+            <el-button size="small" type="primary" @click="showAddSourceDialog = true"><el-icon><Link /></el-icon>添加来源</el-button>
+            <el-button size="small" :loading="syncingAll" @click="syncAllSources"><el-icon><Refresh /></el-icon>全量同步</el-button>
+          </div>
+          <div v-loading="sourcesLoading" class="sources-list">
+            <div v-for="src in kbSources" :key="src.id" class="source-item-row">
+              <el-icon :color="src.sourceType === 'folder' ? '#f5a623' : '#3370ff'">
+                <component :is="src.sourceType === 'folder' ? 'Folder' : 'Document'" />
+              </el-icon>
+              <div class="source-info">
+                <div class="source-name">{{ src.sourceName }}</div>
+                <div class="source-meta">{{ src.sourceType === 'folder' ? '文件夹' : '文档' }} · {{ src.lastSyncAt ? '上次同步: ' + formatDate(src.lastSyncAt) : '未同步' }}</div>
+              </div>
+              <div class="source-actions">
+                <el-button size="small" text @click="syncSource(src.id)"><el-icon><Refresh /></el-icon>同步</el-button>
+                <el-button size="small" text type="danger" @click="removeSource(src.id)"><el-icon><Delete /></el-icon></el-button>
+              </div>
+            </div>
+            <div v-if="!sourcesLoading && !kbSources.length" class="sources-empty">
+              <el-empty description="暂无数据来源，点击「添加来源」关联文件夹或文档" />
+            </div>
+          </div>
+        </el-tab-pane>
         <el-tab-pane label="审核设置" name="approval">
           <el-form label-position="top" style="max-width:400px">
             <el-form-item label="发布审核">
@@ -411,6 +436,38 @@
       </template>
     </el-dialog>
 
+    <!-- Add Source Dialog -->
+    <el-dialog v-model="showAddSourceDialog" title="添加数据来源" width="500px" destroy-on-close>
+      <div class="add-source-desc">选择云盘文件夹或我的文档库中的文档，添加为知识库数据来源。来源中的文档内容将被自动索引，可通过 AI 问答检索。</div>
+      <el-form label-position="top" style="margin-top:16px">
+        <el-form-item label="来源类型">
+          <el-radio-group v-model="addSourceForm.type">
+            <el-radio value="folder">文件夹（批量导入文件夹内全部文档）</el-radio>
+            <el-radio value="document">单篇文档</el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item label="选择文档/文件夹">
+          <el-select v-model="addSourceForm.sourceId" placeholder="请选择" filterable style="width:100%">
+            <el-option
+              v-for="item in addSourceForm.type === 'folder' ? allFolders : allDocs"
+              :key="item.id"
+              :value="item.id"
+              :label="item.title || item.originalName"
+            >
+              <el-icon :color="item.type === 'folder' ? '#f5a623' : '#3370ff'">
+                <component :is="item.type === 'folder' ? 'Folder' : 'Document'" />
+              </el-icon>
+              <span style="margin-left:8px">{{ item.title || item.originalName }}</span>
+            </el-option>
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="showAddSourceDialog = false">取消</el-button>
+        <el-button type="primary" :loading="addingSource" :disabled="!addSourceForm.sourceId" @click="confirmAddSource">添加并同步</el-button>
+      </template>
+    </el-dialog>
+
     <!-- AI Chat Button -->
     <div class="chat-fab" @click="showChatPanel = true" v-if="!showChatPanel">
       <el-icon :size="24"><ChatDotRound /></el-icon>
@@ -428,10 +485,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, reactive, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { getKnowledgeBaseDetail, getKnowledgeBaseTree, getKnowledgeMembers, deleteKnowledgeBase, updateKnowledgeBase, addKnowledgeMember, removeKnowledgeMember, publishDocument, searchKnowledge } from '@/api/modules/knowledge'
-import { createDocument, updateDocument, deleteDocument, copyDocument, moveDocument, pinDocument, favoriteDocument, getDocumentVersions, rollbackVersion, importDocument } from '@/api/modules/document'
+import { getKnowledgeBaseDetail, getKnowledgeBaseTree, getKnowledgeMembers, deleteKnowledgeBase, updateKnowledgeBase, addKnowledgeMember, removeKnowledgeMember, publishDocument, searchKnowledge, getKnowledgeSources, addKnowledgeSource, removeKnowledgeSource, syncKnowledgeSource } from '@/api/modules/knowledge'
+import { createDocument, updateDocument, deleteDocument, copyDocument, moveDocument, pinDocument, favoriteDocument, getDocumentVersions, rollbackVersion, importDocument, getDocumentTree } from '@/api/modules/document'
 import type { KnowledgeBase, DocumentVersion } from '@/types'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { UploadFile } from 'element-plus'
@@ -500,6 +557,20 @@ const showNewCatDialog = ref(false)
 const showImportDialog = ref(false)
 const showAddMember = ref(false)
 const showChatPanel = ref(false)
+
+// Share dialog
+const shareLink = ref('')
+const shareDialogVisible = ref(false)
+
+// Knowledge source state
+const kbSources = ref<any[]>([])
+const sourcesLoading = ref(false)
+const syncingAll = ref(false)
+const showAddSourceDialog = ref(false)
+const addingSource = ref(false)
+const addSourceForm = reactive({ type: 'folder', sourceId: undefined as number | undefined })
+const allFolders = ref<any[]>([])
+const allDocs = ref<any[]>([])
 
 // Form state
 const settingsTab = ref('basic')
@@ -973,10 +1044,77 @@ function closeMenus() {
   showTreeNewMenu.value = false
 }
 
+// Knowledge source management
+async function loadSources() {
+  sourcesLoading.value = true
+  try {
+    const res: any = await getKnowledgeSources(kbId)
+    kbSources.value = res.data || []
+  } catch { /* ignore */ } finally {
+    sourcesLoading.value = false
+  }
+}
+
+async function loadAllDocsFolders() {
+  try {
+    const res: any = await getDocumentTree(null)
+    const items = res.data || []
+    allFolders.value = items.filter((d: any) => d.type === 'folder')
+    allDocs.value = items.filter((d: any) => d.type !== 'folder')
+  } catch { /* ignore */ }
+}
+
+async function syncSource(srcId: number) {
+  try {
+    await syncKnowledgeSource(kbId, srcId)
+    ElMessage.success('同步完成')
+    loadSources()
+  } catch { ElMessage.error('同步失败') }
+}
+
+async function removeSource(srcId: number) {
+  await ElMessageBox.confirm('确定移除该数据来源？移除后相关索引将被清除。', '移除确认')
+  try {
+    await removeKnowledgeSource(kbId, srcId)
+    ElMessage.success('已移除')
+    loadSources()
+  } catch { ElMessage.error('移除失败') }
+}
+
+async function syncAllSources() {
+  if (!kbSources.value.length) { ElMessage.info('暂无数据来源'); return }
+  syncingAll.value = true
+  try {
+    for (const src of kbSources.value) {
+      try { await syncKnowledgeSource(kbId, src.id) } catch { /* continue */ }
+    }
+    ElMessage.success('全量同步完成')
+    loadSources()
+  } finally { syncingAll.value = false }
+}
+
+async function confirmAddSource() {
+  if (!addSourceForm.sourceId) { ElMessage.warning('请选择文档或文件夹'); return }
+  addingSource.value = true
+  try {
+    await addKnowledgeSource(kbId, { sourceType: addSourceForm.type, sourceId: addSourceForm.sourceId })
+    ElMessage.success('已添加并开始同步')
+    showAddSourceDialog.value = false
+    addSourceForm.sourceId = undefined
+    loadSources()
+  } catch (e: any) {
+    ElMessage.error(e?.response?.data?.message || '添加失败')
+  } finally { addingSource.value = false }
+}
+
+watch(() => addSourceForm.type, () => { addSourceForm.sourceId = undefined })
+
 onMounted(() => {
   fetchDetail()
   fetchDocs()
   fetchMembers()
+  loadSources()
+  loadAllDocsFolders()
   document.addEventListener('click', closeMenus)
 })
 onBeforeUnmount(() => {
@@ -1523,6 +1661,61 @@ onBeforeUnmount(() => {
 .move-item.active {
   background: rgba(51,112,255,0.08);
   color: var(--kx-primary);
+}
+
+/* Sources */
+.sources-tip {
+  font-size: 13px;
+  color: var(--kx-text-secondary);
+  margin-bottom: 16px;
+  line-height: 1.6;
+}
+.sources-toolbar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.sources-list {
+  min-height: 80px;
+}
+.sources-empty {
+  padding: 20px 0;
+}
+.source-item-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--kx-border);
+}
+.source-info {
+  flex: 1;
+  min-width: 0;
+}
+.source-name {
+  font-size: 14px;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.source-meta {
+  font-size: 12px;
+  color: var(--kx-text-placeholder);
+  margin-top: 2px;
+}
+.source-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.add-source-desc {
+  font-size: 13px;
+  color: var(--kx-text-secondary);
+  line-height: 1.6;
+  background: #f7f8fa;
+  padding: 10px 12px;
+  border-radius: 6px;
 }
 
 /* Chat FAB Button */

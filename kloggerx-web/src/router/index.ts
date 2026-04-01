@@ -65,6 +65,12 @@ const router = createRouter({
           props: true,
         },
         {
+          path: 'templates',
+          name: 'TemplateCenter',
+          component: () => import('@/views/template/TemplateCenter.vue'),
+          meta: { title: '模板库' },
+        },
+        {
           path: 'settings',
           name: 'Settings',
           component: () => import('@/views/user/Settings.vue'),

@@ -39,6 +39,10 @@ export interface Document {
   isDeleted: boolean
   deletedAt: string | null
   version: number
+  // File metadata (populated for uploaded/imported files)
+  fileSize: number
+  fileExt: string
+  originalName: string
   createdAt: string
   updatedAt: string
   children?: Document[]

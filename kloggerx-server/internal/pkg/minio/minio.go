@@ -129,3 +129,18 @@ func GetFileContent(objectName string) ([]byte, error) {
 	fullPath := filepath.Join("uploads", objectName)
 	return os.ReadFile(fullPath)
 }
+
+// GetObject returns a ReadCloser for streaming a file from storage.
+func GetObject(objectName string) (io.ReadCloser, error) {
+	if IsAvailable() {
+		obj, err := client.GetObject(context.Background(), config.Cfg.MinIO.Bucket, objectName, minio.GetObjectOptions{})
+		if err != nil {
+			return nil, err
+		}
+		return obj, nil
+	}
+	// Fallback: open from local filesystem
+	fullPath := filepath.Join("uploads", objectName)
+	f, err := os.Open(fullPath)
+	return f, err
+}

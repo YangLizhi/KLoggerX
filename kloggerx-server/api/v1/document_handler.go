@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
 	"mime/multipart"
 	"net/http"
 	"strconv"
@@ -368,9 +369,12 @@ func ImportDocument(c *gin.Context) {
 	}
 
 	doc, err := service.CreateDocument(uid, service.CreateDocReq{
-		Title:    title,
-		Type:     docType,
-		ParentID: parentID,
+		Title:        title,
+		Type:         docType,
+		ParentID:     parentID,
+		FileSize:     file.Size,
+		FileExt:      ext,
+		OriginalName: file.Filename,
 	})
 	if err != nil {
 		c.JSON(http.StatusOK, model.ErrorMsg(err.Error()))
@@ -517,4 +521,48 @@ func ExportDocument(c *gin.Context) {
 		"content": doc.Content,
 		"type":    doc.Type,
 	}))
+}
+
+// DownloadDocumentFile streams the original uploaded file to the client with its original filename.
+func DownloadDocumentFile(c *gin.Context) {
+	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+
+	var doc model.Document
+	if err := mysql.DB.First(&doc, id).Error; err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg("文档不存在"))
+		return
+	}
+
+	// Parse content to get the MinIO object path
+	var contentData struct {
+		FilePath string `json:"filePath"`
+		FileName string `json:"fileName"`
+	}
+	if err := json.Unmarshal([]byte(doc.Content), &contentData); err != nil || contentData.FilePath == "" {
+		c.JSON(http.StatusOK, model.ErrorMsg("该文档没有可下载的文件"))
+		return
+	}
+
+	// Determine original filename
+	filename := contentData.FileName
+	if filename == "" {
+		filename = doc.OriginalName
+	}
+	if filename == "" {
+		filename = doc.Title
+	}
+
+	rc, err := service.GetFileStreamByPath(contentData.FilePath)
+	if err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg("获取文件失败: "+err.Error()))
+		return
+	}
+	defer rc.Close()
+
+	c.Header("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, filename))
+	c.Header("Content-Type", "application/octet-stream")
+	if _, err := io.Copy(c.Writer, rc); err != nil {
+		// Connection may have closed, ignore
+		_ = err
+	}
 }
