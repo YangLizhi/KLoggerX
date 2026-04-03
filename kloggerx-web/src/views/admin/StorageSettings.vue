@@ -61,34 +61,30 @@
       </div>
     </div>
 
-    <!-- Default Local Directory -->
+    <!-- System Default Storage Path -->
     <div class="settings-section">
       <div class="section-header">
-        <span>默认本地目录</span>
+        <span>系统默认存储路径</span>
       </div>
-      <el-form :model="localDirSettings" label-width="120px">
-        <el-form-item label="同步目录">
-          <el-input v-model="localDirSettings.syncDir" style="width: 400px">
+      <el-form :model="systemStoragePaths" label-width="120px">
+        <el-form-item label="云盘存储路径">
+          <el-input v-model="systemStoragePaths.uploadPath" style="width: 400px">
             <template #append>
-              <el-button @click="selectDirectory('sync')">浏览</el-button>
+              <el-button @click="selectSystemDir('upload')">浏览</el-button>
             </template>
           </el-input>
-          <div class="form-tip">本地同步目录，用于离线访问和备份</div>
+          <div class="form-tip">云盘文件的默认存储位置（系统级设置）</div>
         </el-form-item>
-        <el-form-item label="下载目录">
-          <el-input v-model="localDirSettings.downloadDir" style="width: 400px">
+        <el-form-item label="远程文件路径">
+          <el-input v-model="systemStoragePaths.remotePath" style="width: 400px">
             <template #append>
-              <el-button @click="selectDirectory('download')">浏览</el-button>
+              <el-button @click="selectSystemDir('remote')">浏览</el-button>
             </template>
           </el-input>
-          <div class="form-tip">文件下载的默认保存位置</div>
-        </el-form-item>
-        <el-form-item label="自动同步">
-          <el-switch v-model="localDirSettings.autoSync" />
-          <div class="form-tip">开启后，文件变更将自动同步到本地</div>
+          <div class="form-tip">远程存储接入的文件更新存放位置</div>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="saveLocalDirSettings" :loading="savingLocalDir">保存设置</el-button>
+          <el-button type="primary" @click="saveSystemStoragePaths" :loading="savingSystemPaths">保存路径设置</el-button>
         </el-form-item>
       </el-form>
     </div>
@@ -116,9 +112,11 @@
             </span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="180" fixed="right">
+        <el-table-column label="操作" width="280" fixed="right">
           <template #default="{ row }">
             <el-button link type="primary" @click="testStorageConnection(row)" :loading="row.testing">测试连接</el-button>
+            <el-button link type="primary" @click="reconnectStorage(row)" :loading="row.reconnecting">重新连接</el-button>
+            <el-button link type="warning" @click="disconnectStorage(row)" :loading="row.disconnecting">断开</el-button>
             <el-button link type="primary" @click="editStorage(row)">编辑</el-button>
             <el-button link type="danger" @click="deleteStorage(row)">删除</el-button>
           </template>
@@ -170,32 +168,52 @@
           <el-input v-model="storageForm.name" placeholder="请输入存储名称" />
         </el-form-item>
         <el-form-item label="存储类型" prop="type">
-          <el-select v-model="storageForm.type" style="width: 100%">
-            <el-option label="FTP" value="ftp" />
-            <el-option label="SFTP" value="sftp" />
-            <el-option label="SMB/CIFS" value="smb" />
-            <el-option label="NFS" value="nfs" />
-            <el-option label="WebDAV" value="webdav" />
+          <el-select v-model="storageForm.type" style="width: 100%" @change="onStorageTypeChange">
+            <el-option-group label="网络协议">
+              <el-option label="FTP" value="ftp" />
+              <el-option label="SFTP" value="sftp" />
+              <el-option label="SMB/CIFS" value="smb" />
+              <el-option label="NFS" value="nfs" />
+              <el-option label="WebDAV" value="webdav" />
+            </el-option-group>
+            <el-option-group label="云盘服务">
+              <el-option label="百度网盘" value="baidu" />
+              <el-option label="阿里云盘" value="aliyun" />
+              <el-option label="腾讯微盘" value="tencent" />
+            </el-option-group>
           </el-select>
         </el-form-item>
-        <el-form-item label="服务器地址" prop="server">
+        <el-form-item label="服务器地址" prop="server" v-if="!['baidu', 'aliyun', 'tencent'].includes(storageForm.type)">
           <el-input v-model="storageForm.server" placeholder="如: 192.168.1.100 或 fileserver.local" />
         </el-form-item>
-        <el-form-item label="端口">
+        <el-form-item label="端口" v-if="!['baidu', 'aliyun', 'tencent'].includes(storageForm.type)">
           <el-input-number v-model="storageForm.port" :min="1" :max="65535" style="width: 150px" />
           <span class="port-hint">{{ getDefaultPort(storageForm.type) }}</span>
         </el-form-item>
-        <el-form-item label="共享路径" v-if="['smb', 'nfs'].includes(storageForm.type)">
-          <el-input v-model="storageForm.sharePath" placeholder="如: /shared/documents" />
+        <el-form-item label="共享路径" v-if="['smb', 'nfs', 'ftp', 'sftp'].includes(storageForm.type)">
+          <el-input v-model="storageForm.sharePath" :placeholder="storageForm.type === 'ftp' || storageForm.type === 'sftp' ? '可选：如 /home/user/documents' : '如: /shared/documents'" />
+          <div class="form-tip" v-if="storageForm.type === 'ftp' || storageForm.type === 'sftp'">初始目录路径（可选），留空则进入根目录</div>
         </el-form-item>
         <el-form-item label="用户名" v-if="['ftp', 'sftp', 'smb', 'webdav'].includes(storageForm.type)">
-          <el-input v-model="storageForm.username" placeholder="请输入用户名" />
+          <el-input v-model="storageForm.username" :placeholder="['ftp', 'webdav'].includes(storageForm.type) ? '留空则匿名访问' : '请输入用户名'" />
+          <div class="form-tip" v-if="storageForm.type === 'ftp'">留空或填 anonymous 进行匿名访问</div>
+          <div class="form-tip" v-if="storageForm.type === 'webdav'">留空进行匿名访问</div>
+          <div class="form-tip" v-if="storageForm.type === 'smb'">留空使用来宾(Guest)模式访问</div>
         </el-form-item>
-        <el-form-item label="密码" v-if="['ftp', 'sftp', 'smb', 'webdav'].includes(storageForm.type)">
+        <el-form-item label="密码" v-if="['ftp', 'sftp', 'smb', 'webdav'].includes(storageForm.type) && storageForm.username !== '' && storageForm.username !== 'anonymous'">
           <el-input v-model="storageForm.password" type="password" placeholder="请输入密码" show-password />
         </el-form-item>
         <el-form-item label="域" v-if="storageForm.type === 'smb'">
           <el-input v-model="storageForm.domain" placeholder="AD域（可选）" />
+        </el-form-item>
+        <!-- Cloud drive OAuth tokens -->
+        <el-form-item label="Access Token" v-if="['baidu', 'aliyun', 'tencent'].includes(storageForm.type)">
+          <el-input v-model="storageForm.accessToken" type="textarea" :rows="3" placeholder="请输入 OAuth Access Token" />
+          <div class="form-tip">从云盘开放平台获取的访问令牌</div>
+        </el-form-item>
+        <el-form-item label="Refresh Token" v-if="['aliyun'].includes(storageForm.type)">
+          <el-input v-model="storageForm.refreshToken" type="textarea" :rows="2" placeholder="请输入 OAuth Refresh Token（可选）" />
+          <div class="form-tip">用于自动刷新 Access Token</div>
         </el-form-item>
         <el-form-item label="挂载点">
           <el-input v-model="storageForm.mountPoint" placeholder="如: /mnt/remote-storage">
@@ -217,11 +235,24 @@
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
+import {
+  getAdminStorageUsage,
+  getStorageSettings,
+  saveStorageSettings,
+  listRemoteStorages,
+  createRemoteStorage,
+  updateRemoteStorage,
+  deleteRemoteStorage,
+  testRemoteStorage,
+  testRemoteStorageConnection,
+  connectRemoteStorage,
+  disconnectRemoteStorage,
+} from '@/api/modules/admin'
 
 interface RemoteStorage {
   id: number
   name: string
-  type: 'ftp' | 'sftp' | 'smb' | 'nfs' | 'webdav'
+  type: 'ftp' | 'sftp' | 'smb' | 'nfs' | 'webdav' | 'baidu' | 'aliyun' | 'tencent'
   server: string
   port: number
   username: string
@@ -230,17 +261,24 @@ interface RemoteStorage {
   mountPoint: string
   status: 'connected' | 'disconnected' | 'error'
   testing: boolean
+  reconnecting: boolean
+  disconnecting: boolean
 }
 
-// Storage stats
-const storageUsed = ref(256 * 1024 * 1024 * 1024) // 256GB
-const storageTotal = ref(1024 * 1024 * 1024 * 1024) // 1TB
-const fileCount = ref(1234)
-const docSize = ref(100 * 1024 * 1024 * 1024) // 100GB
-const sheetSize = ref(80 * 1024 * 1024 * 1024) // 80GB
-const otherSize = ref(76 * 1024 * 1024 * 1024) // 76GB
+// Storage stats - initialize with 0, load from API
+const storageUsed = ref(0)
+const storageTotal = ref(0)
+const fileCount = ref(0)
+const docSize = ref(0)
+const sheetSize = ref(0)
+const otherSize = ref(0)
+const slideSize = ref(0)
+const imageSize = ref(0)
 
-const storagePercent = computed(() => Math.round(storageUsed.value / storageTotal.value * 100))
+const storagePercent = computed(() => {
+  if (storageTotal.value === 0) return 0
+  return Math.round(storageUsed.value / storageTotal.value * 100)
+})
 
 function formatSize(bytes: number): string {
   if (bytes >= 1024 * 1024 * 1024 * 1024) {
@@ -255,25 +293,31 @@ function formatSize(bytes: number): string {
   return (bytes / 1024).toFixed(1) + ' KB'
 }
 
-// Local directory settings
-const localDirSettings = ref({
-  syncDir: '/Users/username/KloggerX',
-  downloadDir: '/Users/username/Downloads/KloggerX',
-  autoSync: true,
+// System storage paths (admin only)
+const systemStoragePaths = ref({
+  uploadPath: './uploads',
+  remotePath: './uploads/remote',
 })
-const savingLocalDir = ref(false)
+const savingSystemPaths = ref(false)
 
-function selectDirectory(type: string) {
+function selectSystemDir(_type: string) {
   ElMessage.info('请在实际环境中选择目录')
 }
 
-async function saveLocalDirSettings() {
-  savingLocalDir.value = true
+async function saveSystemStoragePaths() {
+  savingSystemPaths.value = true
   try {
-    await new Promise(r => setTimeout(r, 500))
-    ElMessage.success('本地目录设置已保存')
+    const settings = await getStorageSettings()
+    const data = settings.data || {}
+    await saveStorageSettings({
+      ...data,
+      systemStoragePaths: systemStoragePaths.value,
+    })
+    ElMessage.success('系统存储路径已保存')
+  } catch (err: any) {
+    ElMessage.error(err.message || '保存失败')
   } finally {
-    savingLocalDir.value = false
+    savingSystemPaths.value = false
   }
 }
 
@@ -287,25 +331,33 @@ const testingConnection = ref(false)
 
 const storageForm = ref({
   name: '',
-  type: 'smb' as 'ftp' | 'sftp' | 'smb' | 'nfs' | 'webdav',
+  type: 'smb' as 'ftp' | 'sftp' | 'smb' | 'nfs' | 'webdav' | 'baidu' | 'aliyun' | 'tencent',
   server: '',
-  port: 0,
+  port: 445, // Default SMB port
   username: '',
   password: '',
   sharePath: '',
   domain: '',
   mountPoint: '',
+  accessToken: '',
+  refreshToken: '',
 })
 
 const storageRules: FormRules = {
   name: [{ required: true, message: '请输入存储名称', trigger: 'blur' }],
   type: [{ required: true, message: '请选择存储类型', trigger: 'change' }],
-  server: [{ required: true, message: '请输入服务器地址', trigger: 'blur' }],
+  mountPoint: [{ required: true, message: '请输入挂载点', trigger: 'blur' }],
 }
 
 function getDefaultPort(type: string): string {
   const ports: Record<string, number> = { ftp: 21, sftp: 22, smb: 445, nfs: 2049, webdav: 80 }
   return `默认端口: ${ports[type] || '-'}`
+}
+
+// Update port when type changes
+function onStorageTypeChange(type: string) {
+  const ports: Record<string, number> = { ftp: 21, sftp: 22, smb: 445, nfs: 2049, webdav: 80 }
+  storageForm.value.port = ports[type] || 0
 }
 
 function editStorage(s: RemoteStorage) {
@@ -316,10 +368,12 @@ function editStorage(s: RemoteStorage) {
     server: s.server,
     port: s.port,
     username: s.username,
-    password: s.password,
+    password: '',
     sharePath: s.sharePath,
     domain: '',
     mountPoint: s.mountPoint,
+    accessToken: '',
+    refreshToken: '',
   }
   showAddStorageDialog.value = true
 }
@@ -327,10 +381,16 @@ function editStorage(s: RemoteStorage) {
 async function testConnectionFromDialog() {
   testingConnection.value = true
   try {
-    await new Promise(r => setTimeout(r, 1500))
+    await testRemoteStorage({
+      type: storageForm.value.type,
+      server: storageForm.value.server,
+      port: storageForm.value.port,
+      username: storageForm.value.username,
+      password: storageForm.value.password,
+    })
     ElMessage.success('连接成功')
-  } catch {
-    ElMessage.error('连接失败')
+  } catch (err: any) {
+    ElMessage.error(err.message || '连接失败')
   } finally {
     testingConnection.value = false
   }
@@ -341,21 +401,38 @@ async function submitStorage() {
   if (!valid) return
   submittingStorage.value = true
   try {
-    await new Promise(r => setTimeout(r, 500))
+    const data: any = {
+      name: storageForm.value.name,
+      type: storageForm.value.type,
+      server: storageForm.value.server,
+      port: storageForm.value.port,
+      username: storageForm.value.username,
+      password: storageForm.value.password,
+      sharePath: storageForm.value.sharePath,
+      domain: storageForm.value.domain,
+      mountPoint: storageForm.value.mountPoint,
+      isEnabled: true,
+    }
+    
+    // Add cloud drive tokens if applicable
+    if (['baidu', 'aliyun', 'tencent'].includes(storageForm.value.type)) {
+      data.accessToken = storageForm.value.accessToken
+      data.refreshToken = storageForm.value.refreshToken
+      data.server = '' // Cloud drives don't need server
+      data.port = 0
+    }
+
     if (editingStorage.value) {
-      Object.assign(editingStorage.value, storageForm.value)
+      await updateRemoteStorage(editingStorage.value.id, data)
       ElMessage.success('存储已更新')
     } else {
-      const newStorage: RemoteStorage = {
-        id: Date.now(),
-        ...storageForm.value,
-        status: 'disconnected',
-        testing: false,
-      }
-      remoteStorages.value.push(newStorage)
+      await createRemoteStorage(data)
       ElMessage.success('存储已添加')
     }
     showAddStorageDialog.value = false
+    fetchRemoteStorages()
+  } catch (err: any) {
+    ElMessage.error(err.message || '操作失败')
   } finally {
     submittingStorage.value = false
   }
@@ -364,21 +441,53 @@ async function submitStorage() {
 async function testStorageConnection(s: RemoteStorage) {
   s.testing = true
   try {
-    await new Promise(r => setTimeout(r, 1500))
+    await testRemoteStorageConnection(s.id)
     s.status = 'connected'
     ElMessage.success('连接成功')
-  } catch {
+  } catch (err: any) {
     s.status = 'error'
-    ElMessage.error('连接失败')
+    ElMessage.error(err.message || '连接失败')
   } finally {
     s.testing = false
   }
 }
 
+async function reconnectStorage(s: RemoteStorage) {
+  s.reconnecting = true
+  try {
+    await connectRemoteStorage(s.id)
+    s.status = 'connected'
+    ElMessage.success('重新连接成功')
+  } catch (err: any) {
+    s.status = 'error'
+    ElMessage.error(err.message || '重新连接失败')
+  } finally {
+    s.reconnecting = false
+  }
+}
+
+async function disconnectStorage(s: RemoteStorage) {
+  s.disconnecting = true
+  try {
+    await disconnectRemoteStorage(s.id)
+    s.status = 'disconnected'
+    ElMessage.success('已断开连接')
+  } catch (err: any) {
+    ElMessage.error(err.message || '断开连接失败')
+  } finally {
+    s.disconnecting = false
+  }
+}
+
 async function deleteStorage(s: RemoteStorage) {
   await ElMessageBox.confirm(`确定要删除存储 "${s.name}" 吗？`, '删除确认')
-  remoteStorages.value = remoteStorages.value.filter(x => x.id !== s.id)
-  ElMessage.success('已删除')
+  try {
+    await deleteRemoteStorage(s.id)
+    remoteStorages.value = remoteStorages.value.filter(x => x.id !== s.id)
+    ElMessage.success('已删除')
+  } catch (err: any) {
+    ElMessage.error(err.message || '删除失败')
+  }
 }
 
 // Storage policy
@@ -393,33 +502,99 @@ const savingPolicy = ref(false)
 async function saveStoragePolicy() {
   savingPolicy.value = true
   try {
-    await new Promise(r => setTimeout(r, 500))
+    const settings = await getStorageSettings()
+    const data = settings.data || {}
+    await saveStorageSettings({
+      ...data,
+      storagePolicy: storagePolicy.value,
+    })
     ElMessage.success('存储策略已保存')
+  } catch (err: any) {
+    ElMessage.error(err.message || '保存失败')
   } finally {
     savingPolicy.value = false
   }
 }
 
+// Fetch storage statistics
+async function fetchStorageStats() {
+  try {
+    const res = await getAdminStorageUsage()
+    const data = res.data || {}
+    const diskStats = data.diskStats || {}
+    const byType = data.byType || {}
+
+    storageUsed.value = diskStats.used || 0
+    storageTotal.value = diskStats.total || 0
+    fileCount.value = data.fileCount || 0
+
+    docSize.value = byType.doc || 0
+    sheetSize.value = byType.sheet || 0
+    slideSize.value = byType.slide || 0
+    imageSize.value = byType.image || 0
+    otherSize.value = byType.other || 0
+  } catch (err) {
+    console.error('Failed to fetch storage stats:', err)
+  }
+}
+
+// Fetch remote storages from API
 async function fetchRemoteStorages() {
-  remoteStorages.value = [
-    {
-      id: 1,
-      name: '公司文件服务器',
-      type: 'smb',
-      server: '192.168.1.100',
-      port: 445,
-      username: 'admin',
-      password: '***',
-      sharePath: '/shared/docs',
-      mountPoint: '/mnt/company-files',
-      status: 'connected',
+  try {
+    const res = await listRemoteStorages()
+    remoteStorages.value = (res.data || []).map((s: any) => ({
+      id: s.id,
+      name: s.name,
+      type: s.type,
+      server: s.server,
+      port: s.port,
+      username: s.username || '',
+      password: '',
+      sharePath: s.sharePath || '',
+      mountPoint: s.mountPoint,
+      status: s.status || 'disconnected',
       testing: false,
-    },
-  ]
+      reconnecting: false,
+      disconnecting: false,
+    }))
+  } catch (err) {
+    console.error('Failed to fetch remote storages:', err)
+    remoteStorages.value = []
+  }
+}
+
+// Fetch storage settings
+async function fetchStorageSettings() {
+  try {
+    const res = await getStorageSettings()
+    const data = res.data || {}
+
+    // Load system storage paths
+    if (data.systemStoragePaths) {
+      systemStoragePaths.value = {
+        uploadPath: data.systemStoragePaths.uploadPath || './uploads',
+        remotePath: data.systemStoragePaths.remotePath || './uploads/remote',
+      }
+    }
+
+    // Load storage policy
+    if (data.storagePolicy) {
+      storagePolicy.value = {
+        versionRetention: data.storagePolicy.versionRetention || 20,
+        recycleRetention: data.storagePolicy.recycleRetention || 30,
+        largeFileThreshold: data.storagePolicy.largeFileThreshold || 100,
+        autoCleanCache: data.storagePolicy.autoCleanCache !== false,
+      }
+    }
+  } catch (err) {
+    console.error('Failed to fetch storage settings:', err)
+  }
 }
 
 onMounted(() => {
+  fetchStorageStats()
   fetchRemoteStorages()
+  fetchStorageSettings()
 })
 </script>
 

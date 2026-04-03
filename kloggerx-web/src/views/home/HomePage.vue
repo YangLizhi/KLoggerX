@@ -156,7 +156,7 @@
         <el-table-column label="标题" prop="title" min-width="240" sortable="custom">
           <template #default="{ row }">
             <div class="doc-name-cell">
-              <el-icon :color="getTypeColor(row.type)" :size="16"><component :is="getTypeIcon(row.type)" /></el-icon>
+              <el-icon :color="getTypeColor(row.type, row.fileExt)" :size="16"><component :is="getTypeIcon(row.type, row.fileExt)" /></el-icon>
               <span class="doc-title-text">{{ getDisplayName(row) }}</span>
               <el-icon v-if="row.isPinned" class="pin-badge" color="#3370ff" :size="12"><Flag /></el-icon>
             </div>
@@ -215,7 +215,7 @@
             <el-checkbox v-model="doc._selected" />
           </div>
           <div class="doc-card-icon">
-            <el-icon :size="36" :color="getTypeColor(doc.type)"><component :is="getTypeIcon(doc.type)" /></el-icon>
+            <el-icon :size="36" :color="getTypeColor(doc.type, doc.fileExt)"><component :is="getTypeIcon(doc.type, doc.fileExt)" /></el-icon>
           </div>
           <div class="doc-card-title">{{ doc.title }}</div>
           <div class="doc-card-meta">
@@ -502,23 +502,184 @@ const typeMap: Record<string, { icon: string; color: string }> = {
   image: { icon: 'Picture', color: '#36b37e' },
   code: { icon: 'Memo', color: '#3370ff' },
 }
+
+// Extension-based icon mapping
+const extIconMap: Record<string, { icon: string; color: string }> = {
+  // 文档类
+  pdf: { icon: 'Document', color: '#f54a45' },
+  doc: { icon: 'Document', color: '#2b579a' },
+  docx: { icon: 'Document', color: '#2b579a' },
+  txt: { icon: 'Document', color: '#666' },
+  md: { icon: 'Memo', color: '#3370ff' },
+  // 表格
+  xls: { icon: 'Grid', color: '#217346' },
+  xlsx: { icon: 'Grid', color: '#217346' },
+  csv: { icon: 'Grid', color: '#36b37e' },
+  // 演示文稿
+  ppt: { icon: 'Monitor', color: '#d24726' },
+  pptx: { icon: 'Monitor', color: '#d24726' },
+  // 图片
+  png: { icon: 'Picture', color: '#36b37e' },
+  jpg: { icon: 'Picture', color: '#36b37e' },
+  jpeg: { icon: 'Picture', color: '#36b37e' },
+  gif: { icon: 'Picture', color: '#ff7d00' },
+  svg: { icon: 'Picture', color: '#ff7d00' },
+  // 音频
+  mp3: { icon: 'Headset', color: '#9254de' },
+  wav: { icon: 'Headset', color: '#9254de' },
+  flac: { icon: 'Headset', color: '#9254de' },
+  // 视频
+  mp4: { icon: 'VideoPlay', color: '#ff7d00' },
+  mkv: { icon: 'VideoPlay', color: '#ff7d00' },
+  avi: { icon: 'VideoPlay', color: '#ff7d00' },
+  mov: { icon: 'VideoPlay', color: '#ff7d00' },
+  // 压缩包
+  zip: { icon: 'Files', color: '#f5a623' },
+  rar: { icon: 'Files', color: '#f5a623' },
+  '7z': { icon: 'Files', color: '#f5a623' },
+  // 可执行文件
+  exe: { icon: 'Monitor', color: '#3370ff' },
+  apk: { icon: 'Iphone', color: '#36b37e' },
+  sh: { icon: 'Memo', color: '#36b37e' },
+  // 代码
+  html: { icon: 'Link', color: '#ff7d00' },
+  css: { icon: 'Memo', color: '#264de4' },
+  js: { icon: 'Memo', color: '#f7df1e' },
+  ts: { icon: 'Memo', color: '#3178c6' },
+  vue: { icon: 'Memo', color: '#42b883' },
+  json: { icon: 'Memo', color: '#f5a623' },
+  py: { icon: 'Memo', color: '#3776ab' },
+  go: { icon: 'Memo', color: '#00add8' },
+  java: { icon: 'Memo', color: '#f54a45' },
+}
+
 const avatarColors = ['#3370ff', '#36b37e', '#ff7d00', '#f54a45', '#9254de', '#00b8d9']
 
 const typeNameMap: Record<string, string> = {
   folder: '文件夹', doc: '文档', sheet: '表格', slide: '幻灯片',
   mindnote: '思维笔记', bitable: '多维表格', survey: '问卷',
-  file: '文件', image: '图片', code: '代码',
+  file: '其他', image: '图片', code: '代码',
 }
 const extTypeMap: Record<string, string> = {
-  pdf: 'PDF文件', docx: 'Word文档', doc: 'Word文档',
-  xlsx: 'Excel表格', xls: 'Excel表格', pptx: 'PPT幻灯片', ppt: 'PPT幻灯片',
-  png: 'PNG图片', jpg: 'JPEG图片', jpeg: 'JPEG图片', gif: 'GIF图片',
-  mp4: '视频', mp3: '音频', zip: '压缩包', rar: '压缩包',
-  txt: '文本文件', md: 'Markdown', json: 'JSON文件', csv: 'CSV文件',
+ // 文档类
+  txt: '文本文档',
+  doc: 'Word文档',
+  docx: 'Word文档',
+  pdf: 'PDF文档',
+  rtf: '富文本',
+  epub: '电子书',
+  mobi: '电子书',
+
+  // 表格/数据类
+  xls: 'Excel表格',
+  xlsx: 'Excel表格',
+  csv: 'Csv表格',
+  db: '数据库',
+  sqlite: '数据库',
+  sql: '数据库',
+
+  // 演示文稿
+  ppt: '幻灯片',
+  pptx: '幻灯片',
+  pot: '幻灯片模板',
+
+  // 图片类
+  png: 'PNG图片',
+  jpg: 'JPEG图片',
+  jpeg: 'JPEG图片',
+  gif: 'GIF动图',
+  bmp: 'BMP图片',
+  webp: 'WebP图片',
+  svg: '矢量图片',
+  ico: '图标文件',
+
+  // 音频
+  mp3: '音频文件',
+  wav: '无损音频',
+  flac: 'FLAC无损音频',
+  aac: 'AAC音频',
+  ogg: 'OGG音频',
+  m4a: 'M4A音频',
+
+  // 视频
+  mp4: '视频文件',
+  mkv: 'MKV视频',
+  avi: 'AVI视频',
+  mov: 'MOV视频',
+  wmv: 'WMV视频',
+  flv: 'FLV视频',
+  webm: 'WEBM视频',
+
+  // 压缩包
+  zip: '压缩包',
+  rar: '压缩包',
+  '7z': '7Z压缩包',
+  tar: 'TAR打压缩包',
+  gz: 'GZ压缩包',
+  'tar.gz': 'TAR.GZ压缩包',
+  bz2: 'BZ2压缩包',
+
+  // 系统/安装包
+  exe: 'Windows程序',
+  msi: 'Windows安装包',
+  dll: '系统库文件',
+  apk: '安卓安装包',
+  aab: '安卓应用捆绑包',
+  ipa: 'iOS安装包',
+  app: 'macOS应用',
+  dmg: '苹果磁盘镜像',
+  deb: 'Ubuntu安装包',
+  rpm: 'RedHat安装包',
+  AppImage: 'Linux便携程序',
+  sh: 'Shell脚本',
+  iso: '光盘镜像',
+
+  // 网页/代码
+  html: '网页文件',
+  htm: '网页文件',
+  css: '样式文件',
+  js: 'JavaScript',
+  ts: 'TypeScript',
+  vue: 'Vue组件',
+  jsx: 'React组件',
+  md: 'Markdown文档',
+  json: 'JSON配置',
+  xml: 'XML文件',
+  yaml: 'YAML文件',
+  yml: 'YAML文件',
+
+  // 编程源码
+  c: 'C语言代码',
+  cpp: 'C++代码',
+  h: '头文件',
+  java: 'Java代码',
+  class: 'Java编译文件',
+  jar: 'Java包',
+  py: 'Python代码',
+  go: 'Go代码',
+  php: 'PHP脚本',
+
+  // 其他
+  log: '日志文件',
+  tmp: '临时文件',
+  vmdk: '虚拟机磁盘',
+  vdi: '虚拟机磁盘',
 }
 
-function getTypeIcon(t: string) { return typeMap[t]?.icon || 'Document' }
-function getTypeColor(t: string) { return typeMap[t]?.color || '#888' }
+function getTypeIcon(t: string, ext?: string): string {
+  if (ext) {
+    const e = ext.replace('.', '').toLowerCase()
+    if (extIconMap[e]) return extIconMap[e].icon
+  }
+  return typeMap[t]?.icon || 'Document'
+}
+function getTypeColor(t: string, ext?: string): string {
+  if (ext) {
+    const e = ext.replace('.', '').toLowerCase()
+    if (extIconMap[e]) return extIconMap[e].color
+  }
+  return typeMap[t]?.color || '#888'
+}
 function getAvatarColor(id: number) { return avatarColors[(id || 0) % avatarColors.length] }
 
 // Returns the display name: for uploaded files prefer originalName, otherwise title
@@ -532,7 +693,8 @@ function getDisplayName(doc: Document): string {
 function getTypeName(doc: Document): string {
   const ext = (doc.fileExt || '').replace('.', '').toLowerCase()
   if (ext && extTypeMap[ext]) return extTypeMap[ext]
-  return typeNameMap[doc.type] || doc.type
+  if (typeNameMap[doc.type]) return typeNameMap[doc.type]
+  return '其他'
 }
 
 function getTypeTagType(type: string): '' | 'success' | 'warning' | 'info' | 'danger' {

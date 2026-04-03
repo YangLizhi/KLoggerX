@@ -77,6 +77,11 @@ func RegisterRoutes(r *gin.Engine, hub *ws.Hub) {
 		// Knowledge AI chat
 		auth.POST("/knowledge/:id/chat", KnowledgeChat)
 		auth.POST("/knowledge/chat/global", KnowledgeChatGlobal)
+		// Knowledge RAPTOR and embedding
+		auth.POST("/knowledge/:id/raptor/build", BuildRaptorTree)
+		auth.GET("/knowledge/:id/raptor/stats", GetRaptorTreeStats)
+		auth.GET("/knowledge/:id/embedding/status", GetEmbeddingStatus)
+		auth.POST("/knowledge/:id/embedding/rebuild", RebuildEmbeddings)
 
 		// Templates
 		auth.GET("/template/list", GetTemplates)
@@ -97,6 +102,23 @@ func RegisterRoutes(r *gin.Engine, hub *ws.Hub) {
 		auth.POST("/file/upload", UploadFile)
 		auth.GET("/file/:id/preview", GetFilePreviewURL)
 		auth.POST("/file/:id/delete", DeleteFile)
+
+		// Storage Statistics
+		auth.GET("/storage/stats", GetStorageStats)
+		auth.GET("/storage/usage", GetStorageUsage)
+
+		// User Storage Settings
+		auth.GET("/user/storage-settings", GetUserStorageSettings)
+		auth.POST("/user/storage-settings", SaveUserStorageSettings)
+
+		// Remote Storage File Operations (for all authenticated users)
+		auth.GET("/remote-storage/:id/files", ListRemoteStorageFiles)
+		auth.GET("/remote-storage/:id/download", DownloadRemoteFile)
+		auth.POST("/remote-storage/:id/upload", UploadRemoteFile)
+		auth.POST("/remote-storage/:id/mkdir", CreateRemoteFolder)
+		auth.DELETE("/remote-storage/:id/file", DeleteRemoteFile)
+		auth.POST("/remote-storage/:id/test", TestRemoteStorageConnect)
+		auth.POST("/remote-storage/:id/disconnect", DisconnectRemoteStorageHandler)
 
 		// Operation Logs
 		auth.GET("/document/:id/logs", GetOperationLogs)
@@ -130,6 +152,18 @@ func RegisterRoutes(r *gin.Engine, hub *ws.Hub) {
 			admin.GET("/admin/settings/storage", GetStorageSettings)
 			admin.POST("/admin/settings/storage", SaveStorageSettings)
 			admin.POST("/admin/settings/storage/test", TestRemoteStorage)
+
+			// Storage Statistics (Admin)
+			admin.GET("/admin/storage/usage", GetAdminStorageUsage)
+
+			// Remote Storage Management
+			admin.GET("/admin/remote-storages", ListRemoteStorages)
+			admin.POST("/admin/remote-storages", CreateRemoteStorage)
+			admin.PUT("/admin/remote-storages/:id", UpdateRemoteStorage)
+			admin.DELETE("/admin/remote-storages/:id", DeleteRemoteStorage)
+			admin.POST("/admin/remote-storages/:id/test", TestRemoteStorageConnection)
+			admin.POST("/admin/remote-storages/:id/connect", ConnectRemoteStorage)
+			admin.POST("/admin/remote-storages/:id/disconnect", DisconnectRemoteStorage)
 
 			// LDAP/AD
 			admin.POST("/admin/ldap/test", TestLdapConnection)

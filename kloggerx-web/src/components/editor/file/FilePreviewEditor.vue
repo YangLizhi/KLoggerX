@@ -11,19 +11,6 @@
       <el-button @click="downloadFile">下载原文件</el-button>
     </div>
     <div v-else class="file-preview-content">
-      <div class="file-preview-toolbar">
-        <div class="toolbar-left">
-          <el-icon :size="20" :color="fileTypeColor"><component :is="fileTypeIcon" /></el-icon>
-          <span class="file-name">{{ fileName }}</span>
-          <el-tag size="small" :type="fileTypeTagType">{{ fileTypeLabel }}</el-tag>
-        </div>
-        <div class="toolbar-right">
-          <el-button size="small" @click="downloadFile"><el-icon><Download /></el-icon>下载</el-button>
-          <el-button v-if="canEdit" size="small" type="primary" @click="toggleEditMode">
-            <el-icon><Edit /></el-icon>{{ isEditMode ? '预览模式' : '编辑模式' }}
-          </el-button>
-        </div>
-      </div>
       <div class="file-preview-frame">
         <!-- Use OnlyOffice for Word/Excel/PPT -->
         <OnlyOfficeEditor
@@ -156,6 +143,20 @@ watch(() => props.documentId, () => {
 onMounted(() => {
   loadPreview()
 })
+
+// Expose file info and functions to parent component
+defineExpose({
+  fileName,
+  fileType,
+  fileTypeIcon,
+  fileTypeColor,
+  fileTypeLabel,
+  canEdit,
+  isEditMode,
+  toggleEditMode,
+  downloadFile,
+  loadPreview,
+})
 </script>
 
 <style scoped>
@@ -189,28 +190,6 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-}
-.file-preview-toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 16px;
-  background: #fff;
-  border-bottom: 1px solid var(--kx-border);
-  flex-shrink: 0;
-}
-.toolbar-left {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.file-name {
-  font-weight: 500;
-  font-size: 14px;
-}
-.toolbar-right {
-  display: flex;
-  gap: 4px;
 }
 .file-preview-frame {
   flex: 1;

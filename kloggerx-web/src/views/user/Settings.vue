@@ -141,25 +141,50 @@
               <div class="breakdown-item">
                 <div class="breakdown-color" style="background:#3370ff" />
                 <span class="breakdown-label">文档</span>
-                <span class="breakdown-size">128.5 MB</span>
+                <span class="breakdown-size">{{ formatSize(storageByType.doc) }}</span>
               </div>
               <div class="breakdown-item">
                 <div class="breakdown-color" style="background:#36b37e" />
                 <span class="breakdown-label">表格</span>
-                <span class="breakdown-size">45.2 MB</span>
+                <span class="breakdown-size">{{ formatSize(storageByType.sheet) }}</span>
               </div>
               <div class="breakdown-item">
                 <div class="breakdown-color" style="background:#ff7d00" />
                 <span class="breakdown-label">幻灯片</span>
-                <span class="breakdown-size">52.8 MB</span>
+                <span class="breakdown-size">{{ formatSize(storageByType.slide) }}</span>
               </div>
               <div class="breakdown-item">
                 <div class="breakdown-color" style="background:#9254de" />
                 <span class="breakdown-label">其他文件</span>
-                <span class="breakdown-size">29.5 MB</span>
+                <span class="breakdown-size">{{ formatSize(storageByType.other) }}</span>
               </div>
             </div>
           </div>
+        </div>
+        <div class="settings-section">
+          <h3 class="section-title">存储路径设置</h3>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-name">同步目录</div>
+              <div class="setting-desc">从云盘同步到本地的目录路径</div>
+            </div>
+            <el-input v-model="userStoragePaths.syncDir" placeholder="请输入同步目录路径" style="width:300px" />
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-name">下载目录</div>
+              <div class="setting-desc">从云盘下载文件的默认保存位置</div>
+            </div>
+            <el-input v-model="userStoragePaths.downloadDir" placeholder="请输入下载目录路径" style="width:300px" />
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-name">自动同步</div>
+              <div class="setting-desc">开启后文件变更将自动同步到本地</div>
+            </div>
+            <el-switch v-model="userStoragePaths.autoSync" />
+          </div>
+          <el-button type="primary" style="margin-top:16px" @click="handleSaveStoragePaths" :loading="savingStoragePaths">保存路径设置</el-button>
         </div>
         <div class="settings-section">
           <h3 class="section-title">存储管理</h3>
@@ -302,6 +327,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useUserStore } from '@/store/modules/user'
 import { updateUserInfo, changePassword } from '@/api/modules/user'
+import { getStorageUsage, getUserStorageSettings, saveUserStorageSettings } from '@/api/modules/admin'
 import { ElMessage, type FormInstance } from 'element-plus'
 
 const userStore = useUserStore()
@@ -341,15 +367,26 @@ const notifSettings = reactive({
 })
 
 // Storage settings
-const storageUsed = ref(256 * 1024 * 1024)
-const storageTotal = ref(10 * 1024 * 1024 * 1024)
-const storagePercent = computed(() => Math.round(storageUsed.value / storageTotal.value * 100))
+const storageUsed = ref(0)
+const storageTotal = ref(0)
+const storagePercent = computed(() => {
+  if (storageTotal.value === 0) return 0
+  return Math.round(storageUsed.value / storageTotal.value * 100)
+})
 const storageUsedText = computed(() => formatSize(storageUsed.value))
 const storageTotalText = computed(() => formatSize(storageTotal.value))
+const storageByType = ref({ doc: 0, sheet: 0, slide: 0, image: 0, other: 0 })
 const storageSettings = reactive({
   autoCleanRecycle: true,
   versionRetention: 20,
 })
+// User storage path settings
+const userStoragePaths = reactive({
+  syncDir: '',
+  downloadDir: '',
+  autoSync: true,
+})
+const savingStoragePaths = ref(false)
 
 // Appearance settings
 const appearance = reactive({
@@ -420,12 +457,60 @@ function handleSaveAppearance() {
   ElMessage.success('外观设置已保存')
 }
 
+// Fetch storage usage
+async function fetchStorageUsage() {
+  try {
+    const res = await getStorageUsage()
+    const data = res.data || {}
+    storageUsed.value = data.totalSize || 0
+    // Use a default total for now (could be from system config)
+    storageTotal.value = 10 * 1024 * 1024 * 1024 // 10GB default
+    if (data.byType) {
+      storageByType.value = data.byType
+    }
+  } catch (err) {
+    console.error('Failed to fetch storage usage:', err)
+  }
+}
+
+// Fetch user storage paths
+async function fetchUserStoragePaths() {
+  try {
+    const res = await getUserStorageSettings()
+    const data = res.data || {}
+    userStoragePaths.syncDir = data.syncDir || ''
+    userStoragePaths.downloadDir = data.downloadDir || ''
+    userStoragePaths.autoSync = data.autoSync !== false
+  } catch (err) {
+    console.error('Failed to fetch user storage paths:', err)
+  }
+}
+
+// Save user storage paths
+async function handleSaveStoragePaths() {
+  savingStoragePaths.value = true
+  try {
+    await saveUserStorageSettings({
+      syncDir: userStoragePaths.syncDir,
+      downloadDir: userStoragePaths.downloadDir,
+      autoSync: userStoragePaths.autoSync,
+    })
+    ElMessage.success('存储路径设置已保存')
+  } catch (err: any) {
+    ElMessage.error(err.message || '保存失败')
+  } finally {
+    savingStoragePaths.value = false
+  }
+}
+
 onMounted(() => {
   if (userStore.user) {
     profileForm.nickname = userStore.user.nickname
     profileForm.email = userStore.user.email
     profileForm.avatar = userStore.user.avatar
   }
+  fetchStorageUsage()
+  fetchUserStoragePaths()
 })
 </script>
 

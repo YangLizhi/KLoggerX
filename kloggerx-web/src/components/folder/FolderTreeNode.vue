@@ -58,7 +58,7 @@ interface FolderNode {
 const props = defineProps<{
   node: FolderNode
   level: number
-  selectedFolderId: number | null
+  selectedFolderId: number | string | null
 }>()
 
 const emit = defineEmits<{

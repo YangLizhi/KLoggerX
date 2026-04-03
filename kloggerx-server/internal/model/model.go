@@ -19,7 +19,7 @@ type Department struct {
 	ID          uint         `gorm:"primaryKey" json:"id"`
 	Name        string       `gorm:"size:100;not null" json:"name"`
 	ParentID    *uint        `json:"parentId"`
-	Children    []Department `gorm:"foreignKey:ParentID" json:"children,omitempty"`
+	Children    []Department `gorm:"foreignKey:ParentID" json:"children"`
 	MemberCount int          `gorm:"-" json:"memberCount"`
 	CreatedAt   time.Time    `json:"createdAt"`
 	UpdatedAt   time.Time    `json:"updatedAt"`
@@ -210,6 +210,80 @@ type KnowledgeChunk struct {
 	DocumentTitle   string    `gorm:"size:500" json:"documentTitle"`
 	Content         string    `gorm:"type:text;not null" json:"content"`
 	ChunkIndex      int       `gorm:"not null" json:"chunkIndex"`
+	QdrantPointID   string    `gorm:"size:64" json:"qdrantPointId"`           // Qdrant vector point ID
+	EmbeddingStatus string    `gorm:"size:20;default:pending" json:"embeddingStatus"` // pending, embedded, failed
 	CreatedAt       time.Time `json:"createdAt"`
 	UpdatedAt       time.Time `json:"updatedAt"`
+}
+
+// EmbeddingJob tracks the vectorization status of documents.
+type EmbeddingJob struct {
+	ID              uint       `gorm:"primaryKey" json:"id"`
+	KnowledgeBaseID uint       `gorm:"index;not null" json:"knowledgeBaseId"`
+	DocumentID      uint       `gorm:"index;not null" json:"documentId"`
+	Status          string     `gorm:"size:20;default:pending" json:"status"` // pending, processing, completed, failed
+	ChunkCount      int        `gorm:"default:0" json:"chunkCount"`
+	ErrorMessage    string     `gorm:"type:text" json:"errorMessage"`
+	CreatedAt       time.Time  `json:"createdAt"`
+	UpdatedAt       time.Time  `json:"updatedAt"`
+}
+
+// RaptorNode represents a node in the RAPTOR tree for hierarchical document summarization.
+type RaptorNode struct {
+	ID              uint       `gorm:"primaryKey" json:"id"`
+	KnowledgeBaseID uint       `gorm:"index;not null" json:"knowledgeBaseId"`
+	NodeType        string     `gorm:"size:20;not null" json:"nodeType"` // leaf, cluster, root
+	ParentID        *uint      `gorm:"index" json:"parentId"`
+	DocumentIDs     string     `gorm:"type:json" json:"documentIds"`     // JSON array of document IDs
+	Summary         string     `gorm:"type:longtext;not null" json:"summary"`
+	QdrantPointID   string     `gorm:"size:64" json:"qdrantPointId"`
+	Level           int        `gorm:"default:0" json:"level"`           // 0=leaf, 1=cluster, 2+=higher
+	CreatedAt       time.Time  `json:"createdAt"`
+}
+
+// UserStorageSetting stores user-specific storage path configurations.
+type UserStorageSetting struct {
+	ID          uint      `gorm:"primaryKey" json:"id"`
+	UserID      uint      `gorm:"uniqueIndex;not null" json:"userId"`
+	SyncDir     string    `gorm:"size:500" json:"syncDir"`      // Personal sync directory path
+	DownloadDir string    `gorm:"size:500" json:"downloadDir"`  // Personal download directory path
+	AutoSync    bool      `gorm:"default:true" json:"autoSync"` // Auto-sync toggle
+	CreatedAt   time.Time `json:"createdAt"`
+	UpdatedAt   time.Time `json:"updatedAt"`
+}
+
+// RemoteStorage stores remote storage connection configurations (SMB, FTP, etc.)
+type RemoteStorage struct {
+	ID           uint      `gorm:"primaryKey" json:"id"`
+	Name         string    `gorm:"size:100;not null" json:"name"`
+	Type         string    `gorm:"size:20;not null" json:"type"`         // ftp, sftp, smb, nfs, webdav, baidu, aliyun, tencent
+	Server       string    `gorm:"size:255" json:"server"`               // Server address (optional for cloud drives)
+	Port         int       `json:"port"`
+	Username     string    `gorm:"size:100" json:"username"`
+	Password     string    `gorm:"size:255" json:"-"`                    // Encrypted, not returned to frontend
+	SharePath    string    `gorm:"size:500" json:"sharePath"`            // Share path for SMB/NFS
+	Domain       string    `gorm:"size:100" json:"domain"`               // AD Domain for SMB
+	MountPoint   string    `gorm:"size:255;not null" json:"mountPoint"`  // Mount point name (virtual directory name)
+	Status       string    `gorm:"size:20;default:disconnected" json:"status"` // connected, disconnected, error
+	IsEnabled    bool      `gorm:"default:true" json:"isEnabled"`
+	
+	// Cloud drive specific fields
+	AccessToken  string    `gorm:"size:1000" json:"-"`       // OAuth access token (encrypted)
+	RefreshToken string    `gorm:"size:1000" json:"-"`       // OAuth refresh token (encrypted)
+	APIKey       string    `gorm:"size:255" json:"-"`        // API key for some services (encrypted)
+	ExpiresAt    int64     `json:"expiresAt"`                // Token expiration timestamp
+	RootPath     string    `gorm:"size:500" json:"rootPath"` // Root path to start browsing
+	
+	CreatedAt    time.Time `json:"createdAt"`
+	UpdatedAt    time.Time `json:"updatedAt"`
+}
+
+// StorageUsage tracks storage usage statistics per user by file type.
+type StorageUsage struct {
+	ID         uint      `gorm:"primaryKey" json:"id"`
+	UserID     uint      `gorm:"uniqueIndex:idx_user_type;not null" json:"userId"`
+	FileType   string    `gorm:"size:20;uniqueIndex:idx_user_type;not null" json:"fileType"` // doc, sheet, slide, image, other
+	TotalSize  int64     `json:"totalSize"`  // Total size in bytes
+	FileCount  int       `json:"fileCount"`  // Number of files
+	UpdatedAt  time.Time `json:"updatedAt"`
 }

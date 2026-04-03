@@ -470,18 +470,32 @@ async function confirmImport() {
 async function fetchDepartments() {
   try {
     const res: any = await getAdminDepartments()
-    departments.value = (res.data || []).map((d: any) => ({
-      id: d.id,
-      name: d.name,
-      parentId: d.parent_id || d.parentId || null,
-      memberCount: d.member_count || d.memberCount || 0,
-      description: d.description || '',
-      children: d.children || [],
-    }))
+    console.log('[DEBUG] API response:', JSON.stringify(res.data, null, 2))
+    // Backend already returns tree structure, flatten it for internal use
+    const flattenDepartments = (items: any[]): any[] => {
+      const result: any[] = []
+      for (const item of items) {
+        result.push({
+          id: item.id,
+          name: item.name,
+          parentId: item.parentId || item.parent_id || null,
+          memberCount: item.memberCount || item.member_count || 0,
+          description: item.description || '',
+        })
+        if (item.children && item.children.length > 0) {
+          result.push(...flattenDepartments(item.children))
+        }
+      }
+      return result
+    }
+    departments.value = flattenDepartments(res.data || [])
+    console.log('[DEBUG] Flattened departments:', departments.value)
+    // Auto expand first root
     if (departments.value.length > 0) {
       expandedKeys.value = [departments.value[0].id]
     }
-  } catch {
+  } catch (error) {
+    console.error('Failed to fetch departments:', error)
     // Fallback to mock data if API fails
     departments.value = [
       { id: 1, name: '技术部', parentId: null, memberCount: 15 },

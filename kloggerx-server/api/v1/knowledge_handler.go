@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"log"
 	"net/http"
 	"strconv"
 
@@ -230,12 +231,13 @@ func KnowledgeChat(c *gin.Context) {
 	var body struct {
 		Question string                 `json:"question" binding:"required"`
 		History  []service.ChatMessage  `json:"history"`
+		Model    string                 `json:"model"` // Optional: override model
 	}
 	if err := c.ShouldBindJSON(&body); err != nil {
 		c.JSON(http.StatusOK, model.ErrorMsg("参数错误"))
 		return
 	}
-	result, err := service.ChatWithKnowledge(uint(id), body.Question, body.History)
+	result, err := service.ChatWithKnowledgeOpts(uint(id), body.Question, body.History, body.Model)
 	if err != nil {
 		c.JSON(http.StatusOK, model.ErrorMsg(err.Error()))
 		return
@@ -247,9 +249,10 @@ func KnowledgeChat(c *gin.Context) {
 func KnowledgeChatGlobal(c *gin.Context) {
 	uid := utils.GetUserID(c.MustGet("userId"))
 	var body struct {
-		Question    string                `json:"question" binding:"required"`
-		History     []service.ChatMessage `json:"history"`
-		KBIDs       []uint                `json:"kbIds"`
+		Question string                `json:"question" binding:"required"`
+		History  []service.ChatMessage `json:"history"`
+		KBIDs    []uint                `json:"kbIds"`
+		Model    string                `json:"model"` // Optional: override model
 	}
 	if err := c.ShouldBindJSON(&body); err != nil {
 		c.JSON(http.StatusOK, model.ErrorMsg("参数错误"))
@@ -270,6 +273,14 @@ func KnowledgeChatGlobal(c *gin.Context) {
 		return
 	}
 
+	// Check if any chunks exist in the selected KBs
+	var totalChunks int64
+	mysql.DB.Model(&model.KnowledgeChunk{}).Where("knowledge_base_id IN ?", body.KBIDs).Count(&totalChunks)
+	if totalChunks == 0 {
+		c.JSON(http.StatusOK, model.ErrorMsg("当前知识库内没有内容，请先添加文档并同步"))
+		return
+	}
+
 	// Search chunks across all KBs
 	var allChunks []service.ChunkRef
 	for _, kbID := range body.KBIDs {
@@ -277,17 +288,144 @@ func KnowledgeChatGlobal(c *gin.Context) {
 		allChunks = append(allChunks, chunks...)
 	}
 
-	// If we have chunks, use first KB for full RAG; else just call AI without context
-	if len(body.KBIDs) > 0 {
-		result, err := service.ChatWithKnowledge(body.KBIDs[0], body.Question, body.History)
-		if err != nil {
-			c.JSON(http.StatusOK, model.ErrorMsg(err.Error()))
-			return
-		}
-		result.Sources = allChunks
-		c.JSON(http.StatusOK, model.Success(result))
+	// Use first KB for full RAG with model override
+	result, err := service.ChatWithKnowledgeOpts(body.KBIDs[0], body.Question, body.History, body.Model)
+	if err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg(err.Error()))
+		return
+	}
+	result.Sources = allChunks
+	c.JSON(http.StatusOK, model.Success(result))
+}
+
+// ─── RAPTOR Tree Management ────────────────────────────────────────────────
+
+// BuildRaptorTree handles building RAPTOR tree for a knowledge base
+func BuildRaptorTree(c *gin.Context) {
+	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+	kbID := uint(id)
+
+	// Check if KB exists
+	var kb model.KnowledgeBase
+	if err := mysql.DB.First(&kb, kbID).Error; err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg("知识库不存在"))
 		return
 	}
 
-	c.JSON(http.StatusOK, model.ErrorMsg("暂无知识库内容，请先向知识库添加文档"))
+	// Check if there are embedded chunks
+	var chunkCount int64
+	mysql.DB.Model(&model.KnowledgeChunk{}).Where("knowledge_base_id = ? AND embedding_status = ?", kbID, "embedded").Count(&chunkCount)
+	if chunkCount == 0 {
+		c.JSON(http.StatusOK, model.ErrorMsg("请先同步数据来源并等待向量化完成"))
+		return
+	}
+
+	// Check if RAPTOR service is initialized
+	if service.GetRaptorService() == nil {
+		c.JSON(http.StatusOK, model.ErrorMsg("RAPTOR服务未初始化，请检查AI模型配置"))
+		return
+	}
+
+	// Build tree in background
+	go func() {
+		if err := service.BuildKBTree(kbID); err != nil {
+			log.Printf("Failed to build RAPTOR tree for KB %d: %v", kbID, err)
+		}
+	}()
+
+	c.JSON(http.StatusOK, model.Success(map[string]string{
+		"message": "RAPTOR树构建已启动，请稍后查看结果",
+	}))
+}
+
+// GetRaptorTreeStats returns statistics about the RAPTOR tree
+func GetRaptorTreeStats(c *gin.Context) {
+	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+	kbID := uint(id)
+
+	raptorSvc := service.GetRaptorService()
+	if raptorSvc == nil {
+		c.JSON(http.StatusOK, model.ErrorMsg("RAPTOR服务未初始化"))
+		return
+	}
+
+	stats, err := raptorSvc.GetRaptorTreeStats(kbID)
+	if err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg(err.Error()))
+		return
+	}
+
+	c.JSON(http.StatusOK, model.Success(stats))
+}
+
+// GetEmbeddingStatus returns the embedding status for a knowledge base
+func GetEmbeddingStatus(c *gin.Context) {
+	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+	kbID := uint(id)
+
+	var totalChunks, embeddedChunks, pendingChunks, failedChunks int64
+
+	mysql.DB.Model(&model.KnowledgeChunk{}).Where("knowledge_base_id = ?", kbID).Count(&totalChunks)
+	mysql.DB.Model(&model.KnowledgeChunk{}).Where("knowledge_base_id = ? AND embedding_status = ?", kbID, "embedded").Count(&embeddedChunks)
+	mysql.DB.Model(&model.KnowledgeChunk{}).Where("knowledge_base_id = ? AND embedding_status = ?", kbID, "pending").Count(&pendingChunks)
+	mysql.DB.Model(&model.KnowledgeChunk{}).Where("knowledge_base_id = ? AND embedding_status = ?", kbID, "failed").Count(&failedChunks)
+
+	// Calculate progress percentage
+	progress := 0.0
+	if totalChunks > 0 {
+		progress = float64(embeddedChunks) / float64(totalChunks) * 100
+	}
+
+	// Get recent embedding jobs
+	var jobs []model.EmbeddingJob
+	mysql.DB.Where("knowledge_base_id = ?", kbID).Order("created_at DESC").Limit(10).Find(&jobs)
+
+	c.JSON(http.StatusOK, model.Success(map[string]interface{}{
+		"totalChunks":     totalChunks,
+		"embeddedChunks":  embeddedChunks,
+		"pendingChunks":   pendingChunks,
+		"failedChunks":    failedChunks,
+		"progress":        progress,
+		"recentJobs":      jobs,
+	}))
+}
+
+// RebuildEmbeddings rebuilds embeddings for all chunks in a knowledge base
+func RebuildEmbeddings(c *gin.Context) {
+	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+	kbID := uint(id)
+
+	// Check if there are documents in the KB
+	var docCount int64
+	mysql.DB.Model(&model.KnowledgeDocument{}).Where("knowledge_base_id = ?", kbID).Count(&docCount)
+	if docCount == 0 {
+		c.JSON(http.StatusOK, model.ErrorMsg("请先添加数据来源并同步"))
+		return
+	}
+
+	// Check if embedding service is available
+	if service.GetEmbeddingService() == nil {
+		c.JSON(http.StatusOK, model.ErrorMsg("嵌入服务未初始化，请检查AI模型配置"))
+		return
+	}
+
+	// Reset all chunks to pending
+	mysql.DB.Model(&model.KnowledgeChunk{}).
+		Where("knowledge_base_id = ?", kbID).
+		Update("embedding_status", "pending")
+
+	// Get all documents in the KB
+	var kdList []model.KnowledgeDocument
+	mysql.DB.Where("knowledge_base_id = ?", kbID).Find(&kdList)
+
+	// Re-index all documents
+	go func() {
+		for _, kd := range kdList {
+			service.IndexDocumentContent(kbID, kd.DocumentID)
+		}
+	}()
+
+	c.JSON(http.StatusOK, model.Success(map[string]string{
+		"message": "向量重建已启动",
+	}))
 }

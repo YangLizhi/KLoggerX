@@ -7,7 +7,9 @@ import (
 	"time"
 
 	"kloggerx-server/internal/model"
+	"kloggerx-server/internal/pkg/utils"
 	"kloggerx-server/internal/repository/mysql"
+	"kloggerx-server/internal/service"
 
 	"github.com/gin-gonic/gin"
 )
@@ -408,5 +410,300 @@ func ImportLdapUsers(c *gin.Context) {
 	// TODO: actual LDAP user import
 	c.JSON(http.StatusOK, model.Success(map[string]interface{}{
 		"imported": len(req.Users),
+	}))
+}
+
+// ===================== User Storage Settings =====================
+
+// GetUserStorageSettings returns user-specific storage settings
+func GetUserStorageSettings(c *gin.Context) {
+	userID := utils.GetUserID(c.MustGet("userId"))
+
+	var setting model.UserStorageSetting
+	if err := mysql.DB.Where("user_id = ?", userID).First(&setting).Error; err != nil {
+		// Return default settings
+		c.JSON(http.StatusOK, model.Success(map[string]interface{}{
+			"syncDir":     "",
+			"downloadDir": "",
+			"autoSync":    true,
+		}))
+		return
+	}
+
+	c.JSON(http.StatusOK, model.Success(map[string]interface{}{
+		"syncDir":     setting.SyncDir,
+		"downloadDir": setting.DownloadDir,
+		"autoSync":    setting.AutoSync,
+	}))
+}
+
+// SaveUserStorageSettings saves user-specific storage settings
+func SaveUserStorageSettings(c *gin.Context) {
+	userID := utils.GetUserID(c.MustGet("userId"))
+
+	var req struct {
+		SyncDir     string `json:"syncDir"`
+		DownloadDir string `json:"downloadDir"`
+		AutoSync    bool   `json:"autoSync"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg("参数错误"))
+		return
+	}
+
+	var setting model.UserStorageSetting
+	result := mysql.DB.Where("user_id = ?", userID).First(&setting)
+	if result.Error != nil {
+		// Create new
+		setting = model.UserStorageSetting{
+			UserID:      userID,
+			SyncDir:     req.SyncDir,
+			DownloadDir: req.DownloadDir,
+			AutoSync:    req.AutoSync,
+		}
+		mysql.DB.Create(&setting)
+	} else {
+		// Update existing
+		mysql.DB.Model(&setting).Updates(map[string]interface{}{
+			"sync_dir":     req.SyncDir,
+			"download_dir": req.DownloadDir,
+			"auto_sync":    req.AutoSync,
+		})
+	}
+
+	c.JSON(http.StatusOK, model.Success(nil))
+}
+
+// ===================== Remote Storage Management =====================
+
+// ListRemoteStorages returns list of remote storage configurations
+func ListRemoteStorages(c *gin.Context) {
+	var storages []model.RemoteStorage
+	mysql.DB.Find(&storages)
+
+	c.JSON(http.StatusOK, model.Success(storages))
+}
+
+// CreateRemoteStorage creates a new remote storage configuration
+func CreateRemoteStorage(c *gin.Context) {
+	var req struct {
+		Name       string `json:"name" binding:"required"`
+		Type       string `json:"type" binding:"required"`
+		Server     string `json:"server" binding:"required"`
+		Port       int    `json:"port"`
+		Username   string `json:"username"`
+		Password   string `json:"password"`
+		SharePath  string `json:"sharePath"`
+		Domain     string `json:"domain"`
+		MountPoint string `json:"mountPoint" binding:"required"`
+		IsEnabled  bool   `json:"isEnabled"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg("参数错误"))
+		return
+	}
+
+	// TODO: Encrypt password before saving
+	storage := model.RemoteStorage{
+		Name:       req.Name,
+		Type:       req.Type,
+		Server:     req.Server,
+		Port:       req.Port,
+		Username:   req.Username,
+		Password:   req.Password, // Should be encrypted
+		SharePath:  req.SharePath,
+		Domain:     req.Domain,
+		MountPoint: req.MountPoint,
+		Status:     "connected", // Set to connected after creation
+		IsEnabled:  req.IsEnabled,
+	}
+	mysql.DB.Create(&storage)
+
+	c.JSON(http.StatusOK, model.Success(storage))
+}
+
+// UpdateRemoteStorage updates an existing remote storage configuration
+func UpdateRemoteStorage(c *gin.Context) {
+	id := c.Param("id")
+
+	var req struct {
+		Name       string `json:"name" binding:"required"`
+		Type       string `json:"type" binding:"required"`
+		Server     string `json:"server" binding:"required"`
+		Port       int    `json:"port"`
+		Username   string `json:"username"`
+		Password   string `json:"password"`
+		SharePath  string `json:"sharePath"`
+		Domain     string `json:"domain"`
+		MountPoint string `json:"mountPoint" binding:"required"`
+		IsEnabled  bool   `json:"isEnabled"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg("参数错误"))
+		return
+	}
+
+	var storage model.RemoteStorage
+	if err := mysql.DB.First(&storage, id).Error; err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg("存储不存在"))
+		return
+	}
+
+	// Update fields
+	updates := map[string]interface{}{
+		"name":        req.Name,
+		"type":        req.Type,
+		"server":      req.Server,
+		"port":        req.Port,
+		"username":    req.Username,
+		"share_path":  req.SharePath,
+		"domain":      req.Domain,
+		"mount_point": req.MountPoint,
+		"is_enabled":  req.IsEnabled,
+	}
+	// Only update password if provided
+	if req.Password != "" {
+		updates["password"] = req.Password // Should be encrypted
+	}
+
+	mysql.DB.Model(&storage).Updates(updates)
+
+	// Disconnect cached client so it will reconnect with new config
+	service.GetRemoteStorageService().Disconnect(uint(storage.ID))
+
+	c.JSON(http.StatusOK, model.Success(nil))
+}
+
+// DeleteRemoteStorage deletes a remote storage configuration
+func DeleteRemoteStorage(c *gin.Context) {
+	id := c.Param("id")
+
+	result := mysql.DB.Delete(&model.RemoteStorage{}, id)
+	if result.RowsAffected == 0 {
+		c.JSON(http.StatusOK, model.ErrorMsg("存储不存在"))
+		return
+	}
+
+	c.JSON(http.StatusOK, model.Success(nil))
+}
+
+// TestRemoteStorageConnection tests connection to a specific remote storage
+func TestRemoteStorageConnection(c *gin.Context) {
+	id := c.Param("id")
+
+	var storage model.RemoteStorage
+	if err := mysql.DB.First(&storage, id).Error; err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg("存储不存在"))
+		return
+	}
+
+	// Disconnect any existing cached connection first
+	service.GetRemoteStorageService().Disconnect(uint(storage.ID))
+
+	// Build config for testing
+	config := service.RemoteStorageConfig{
+		Type:        storage.Type,
+		Server:      storage.Server,
+		Port:        storage.Port,
+		Username:    storage.Username,
+		Password:    storage.Password,
+		SharePath:   storage.SharePath,
+		Domain:      storage.Domain,
+		MountPoint:  storage.MountPoint,
+		AccessToken: storage.AccessToken,
+		RefreshToken: storage.RefreshToken,
+		APIKey:      storage.APIKey,
+		ExpiresAt:   storage.ExpiresAt,
+		RootPath:    storage.RootPath,
+	}
+
+	// Test connection using the service
+	err := service.GetRemoteStorageService().TestConnectionWithConfig(config)
+	if err != nil {
+		// Update status to error
+		mysql.DB.Model(&storage).Update("status", "error")
+		c.JSON(http.StatusOK, model.ErrorMsg("连接失败: "+err.Error()))
+		return
+	}
+
+	// Update status to connected
+	mysql.DB.Model(&storage).Update("status", "connected")
+
+	c.JSON(http.StatusOK, model.Success(map[string]interface{}{
+		"connected": true,
+		"message":   "连接成功",
+	}))
+}
+
+// ConnectRemoteStorage establishes connection to a remote storage
+func ConnectRemoteStorage(c *gin.Context) {
+	id := c.Param("id")
+
+	var storage model.RemoteStorage
+	if err := mysql.DB.First(&storage, id).Error; err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg("存储不存在"))
+		return
+	}
+
+	// Disconnect any existing cached connection first
+	service.GetRemoteStorageService().Disconnect(uint(storage.ID))
+
+	// Build config
+	config := service.RemoteStorageConfig{
+		Type:        storage.Type,
+		Server:      storage.Server,
+		Port:        storage.Port,
+		Username:    storage.Username,
+		Password:    storage.Password,
+		SharePath:   storage.SharePath,
+		Domain:      storage.Domain,
+		MountPoint:  storage.MountPoint,
+		AccessToken: storage.AccessToken,
+		RefreshToken: storage.RefreshToken,
+		APIKey:      storage.APIKey,
+		ExpiresAt:   storage.ExpiresAt,
+		RootPath:    storage.RootPath,
+	}
+
+	// Test connection
+	err := service.GetRemoteStorageService().TestConnectionWithConfig(config)
+	if err != nil {
+		mysql.DB.Model(&storage).Update("status", "error")
+		c.JSON(http.StatusOK, model.ErrorMsg("连接失败: "+err.Error()))
+		return
+	}
+
+	// Update status to connected
+	mysql.DB.Model(&storage).Update("status", "connected")
+
+	c.JSON(http.StatusOK, model.Success(map[string]interface{}{
+		"status":  "connected",
+		"message": "连接成功",
+	}))
+}
+
+// DisconnectRemoteStorage disconnects from a remote storage
+func DisconnectRemoteStorage(c *gin.Context) {
+	id := c.Param("id")
+
+	var storage model.RemoteStorage
+	if err := mysql.DB.First(&storage, id).Error; err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg("存储不存在"))
+		return
+	}
+
+	// Disconnect and clear cache
+	err := service.GetRemoteStorageService().Disconnect(uint(storage.ID))
+	if err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg("断开连接失败: "+err.Error()))
+		return
+	}
+
+	// Update status to disconnected
+	mysql.DB.Model(&storage).Update("status", "disconnected")
+
+	c.JSON(http.StatusOK, model.Success(map[string]interface{}{
+		"status":  "disconnected",
+		"message": "已断开连接",
 	}))
 }

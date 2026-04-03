@@ -10,7 +10,9 @@ import (
 	"kloggerx-server/internal/pkg/logger"
 	miniosvc "kloggerx-server/internal/pkg/minio"
 	"kloggerx-server/internal/repository/mysql"
+	"kloggerx-server/internal/repository/qdrant"
 	"kloggerx-server/internal/repository/redis"
+	"kloggerx-server/internal/service"
 	"kloggerx-server/internal/ws"
 
 	"github.com/gin-gonic/gin"
@@ -36,7 +38,41 @@ func main() {
 		log.Printf("Warning: Failed to connect MinIO: %v (file uploads may fail)", err)
 	}
 
+	// Initialize Qdrant (optional - will log warning if failed)
+	if config.Cfg.Qdrant.Host != "" {
+		if err := qdrant.Init(config.Cfg.Qdrant); err != nil {
+			log.Printf("Warning: Failed to connect Qdrant: %v (vector search disabled)", err)
+		} else {
+			qdrant.InitDefaultVectorClient(config.Cfg.Qdrant.Collection)
+		}
+	} else {
+		log.Println("Warning: Qdrant not configured, vector search disabled")
+	}
+
+	// Initialize embedding and retrieval services (optional - requires AI settings)
+	if qdrant.DefaultVectorClient != nil {
+		// Get AI settings for embedding service
+		embedBaseURL, embedAPIKey, embedModel, err := service.GetEmbeddingModelSettings()
+		if err == nil && embedAPIKey != "" {
+			// Initialize embedding service with the configured embedding model
+			service.InitEmbeddingService(embedBaseURL, embedAPIKey, embedModel)
+			// Set vector dimension based on the embedding model
+			vectorDim := service.GetEmbeddingDimensionForModel(embedModel)
+			qdrant.SetVectorSize(vectorDim)
+			// Initialize retrieval service
+			service.InitRetrievalService(service.GetEmbeddingService(), qdrant.DefaultVectorClient)
+			// Initialize RAPTOR service
+			service.InitRaptorService(service.GetEmbeddingService(), qdrant.DefaultVectorClient)
+			log.Printf("Vector search initialized with embedding model: %s (dimension: %d)", embedModel, vectorDim)
+		} else {
+			log.Printf("Warning: Embedding model settings not found, vector embeddings disabled: %v", err)
+		}
+	}
+
 	mysql.AutoMigrate()
+
+	// Start storage policy background jobs
+	service.StartStoragePolicyJobs()
 
 	hub := ws.NewHub()
 	go hub.Run()

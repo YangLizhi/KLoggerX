@@ -2,6 +2,7 @@ package service
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -11,6 +12,7 @@ import (
 
 	"kloggerx-server/internal/model"
 	"kloggerx-server/internal/repository/mysql"
+	"kloggerx-server/internal/repository/qdrant"
 )
 
 // ─── Knowledge Source Management ─────────────────────────────────────────────
@@ -108,32 +110,146 @@ func collectFolderDocIDs(folderID uint, result *[]uint) {
 const chunkSize = 500 // characters per chunk
 
 // IndexDocumentContent chunks a document's content and stores chunks in knowledge_chunks.
+// If vector search is enabled, it also generates embeddings and stores them in Qdrant.
 func IndexDocumentContent(kbID, docID uint) {
 	var doc model.Document
 	if err := mysql.DB.First(&doc, docID).Error; err != nil {
+		fmt.Printf("[DEBUG] IndexDocumentContent: document %d not found: %v\n", docID, err)
 		return
 	}
 
 	// Extract plain text from JSON content
 	plainText := extractPlainTextFromContent(doc.Content)
 	if plainText == "" {
+		fmt.Printf("[DEBUG] IndexDocumentContent: document %d (%s) has no extractable text, content length=%d\n", docID, doc.Title, len(doc.Content))
 		return
 	}
+
+	fmt.Printf("[DEBUG] IndexDocumentContent: processing document %d (%s), text length=%d\n", docID, doc.Title, len(plainText))
 
 	// Delete old chunks for this document in this KB
 	mysql.DB.Where("knowledge_base_id = ? AND document_id = ?", kbID, docID).Delete(&model.KnowledgeChunk{})
 
+	// Delete old vectors in Qdrant
+	if qdrant.DefaultVectorClient != nil {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		qdrant.DefaultVectorClient.DeleteByDocument(ctx, kbID, docID)
+	}
+
 	// Split into chunks
 	chunks := splitIntoChunks(plainText, chunkSize)
+
+	// Store chunks in MySQL
+	chunkRecords := make([]model.KnowledgeChunk, len(chunks))
 	for i, chunk := range chunks {
-		mysql.DB.Create(&model.KnowledgeChunk{
+		chunkRecords[i] = model.KnowledgeChunk{
 			KnowledgeBaseID: kbID,
 			DocumentID:      docID,
 			DocumentTitle:   doc.Title,
 			Content:         chunk,
 			ChunkIndex:      i,
-		})
+			EmbeddingStatus: "pending",
+		}
+		mysql.DB.Create(&chunkRecords[i])
 	}
+
+	// Generate embeddings and store in Qdrant (async)
+	if globalEmbeddingService != nil && qdrant.DefaultVectorClient != nil {
+		go generateEmbeddingsForChunks(kbID, docID, doc.Title, chunkRecords)
+	}
+}
+
+// generateEmbeddingsForChunks generates embeddings for chunks and stores them in Qdrant
+func generateEmbeddingsForChunks(kbID, docID uint, docTitle string, chunks []model.KnowledgeChunk) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer cancel()
+
+	// Create embedding job record
+	job := model.EmbeddingJob{
+		KnowledgeBaseID: kbID,
+		DocumentID:      docID,
+		Status:          "processing",
+		ChunkCount:      len(chunks),
+	}
+	mysql.DB.Create(&job)
+
+	// Get embedding settings dynamically (not from global cached service)
+	baseURL, apiKey, modelID, err := GetEmbeddingModelSettings()
+	if err != nil {
+		job.Status = "failed"
+		job.ErrorMessage = fmt.Sprintf("Failed to get embedding settings: %v", err)
+		mysql.DB.Save(&job)
+		return
+	}
+
+	// Create a new embedding service with the current settings
+	embedService := NewEmbeddingService(EmbeddingConfig{
+		BaseURL: baseURL,
+		APIKey:  apiKey,
+		Model:   modelID,
+	})
+
+	// Extract texts for embedding
+	texts := make([]string, len(chunks))
+	for i, c := range chunks {
+		texts[i] = c.Content
+	}
+
+	// Generate embeddings
+	embeddings, err := embedService.BatchGenerateEmbeddings(ctx, texts, 100)
+	if err != nil {
+		job.Status = "failed"
+		job.ErrorMessage = err.Error()
+		mysql.DB.Save(&job)
+		return
+	}
+
+	// Update vector size based on the embedding model
+	vectorDim := GetEmbeddingDimensionForModel(modelID)
+	qdrant.SetVectorSize(vectorDim)
+
+	// Prepare vector points
+	points := make([]*qdrant.VectorPoint, len(chunks))
+	for i, embedding := range embeddings {
+		if i < len(chunks) {
+			points[i] = &qdrant.VectorPoint{
+				Vector:        embedding,
+				DocumentID:    docID,
+				ChunkID:       chunks[i].ID,
+				ChunkIndex:    chunks[i].ChunkIndex,
+				Content:       chunks[i].Content,
+				DocumentTitle: docTitle,
+				KBID:          kbID,
+				RaptorLevel:   0,
+			}
+		}
+	}
+
+	// Upsert to Qdrant
+	pointIDs, err := qdrant.DefaultVectorClient.BatchUpsertVectors(ctx, points)
+	if err != nil {
+		job.Status = "failed"
+		job.ErrorMessage = fmt.Sprintf("Failed to store vectors: %v", err)
+		mysql.DB.Save(&job)
+		return
+	}
+
+	// Update chunk records with Qdrant point IDs
+	for i, pointID := range pointIDs {
+		if i < len(chunks) {
+			mysql.DB.Model(&model.KnowledgeChunk{}).
+				Where("id = ?", chunks[i].ID).
+				Updates(map[string]interface{}{
+					"qdrant_point_id":  pointID,
+					"embedding_status": "embedded",
+				})
+		}
+	}
+
+	// Mark job as completed
+	job.Status = "completed"
+	mysql.DB.Save(&job)
 }
 
 func extractPlainTextFromContent(content string) string {
@@ -143,11 +259,55 @@ func extractPlainTextFromContent(content string) string {
 	// Parse Tiptap/ProseMirror JSON and extract text nodes
 	var doc map[string]interface{}
 	if err := json.Unmarshal([]byte(content), &doc); err != nil {
-		return content // treat as plain text
+		// Not JSON, treat as plain text
+		return strings.TrimSpace(content)
 	}
+
+	// Check if it's a valid Tiptap document with content
+	if _, hasContent := doc["content"]; hasContent {
+		var sb strings.Builder
+		extractTextNodes(doc, &sb)
+		result := strings.TrimSpace(sb.String())
+		if result != "" {
+			return result
+		}
+	}
+
+	// Try to extract text from any string values in the JSON
 	var sb strings.Builder
-	extractTextNodes(doc, &sb)
-	return strings.TrimSpace(sb.String())
+	extractAllText(doc, &sb)
+	result := strings.TrimSpace(sb.String())
+	if result != "" {
+		return result
+	}
+
+	// Fallback: return raw content stripped of JSON syntax
+	return strings.TrimSpace(content)
+}
+
+// extractAllText recursively extracts all string values from a JSON structure
+func extractAllText(data interface{}, sb *strings.Builder) {
+	switch v := data.(type) {
+	case map[string]interface{}:
+		// Check for specific text fields
+		if text, ok := v["text"].(string); ok && text != "" {
+			sb.WriteString(text)
+			sb.WriteString(" ")
+		}
+		// Recurse into all values
+		for _, val := range v {
+			extractAllText(val, sb)
+		}
+	case []interface{}:
+		for _, item := range v {
+			extractAllText(item, sb)
+		}
+	case string:
+		if v != "" && len(v) > 1 {
+			sb.WriteString(v)
+			sb.WriteString(" ")
+		}
+	}
 }
 
 func extractTextNodes(node map[string]interface{}, sb *strings.Builder) {
@@ -265,9 +425,69 @@ type KBChatResult struct {
 }
 
 // ChatWithKnowledge performs a RAG-based Q&A against a knowledge base.
+// It uses hybrid search (vector + fulltext) when available, falling back to keyword search.
 func ChatWithKnowledge(kbID uint, question string, history []ChatMessage) (*KBChatResult, error) {
-	// 1. Retrieve relevant chunks
-	chunks := SearchChunks(kbID, question, 6)
+	return ChatWithKnowledgeOpts(kbID, question, history, "")
+}
+
+// ChatWithKnowledgeOpts performs a RAG-based Q&A against a knowledge base with optional model override.
+func ChatWithKnowledgeOpts(kbID uint, question string, history []ChatMessage, modelOverride string) (*KBChatResult, error) {
+	var chunks []ChunkRef
+
+	// Check if knowledge base has any content first
+	var totalChunks int64
+	mysql.DB.Model(&model.KnowledgeChunk{}).Where("knowledge_base_id = ?", kbID).Count(&totalChunks)
+	if totalChunks == 0 {
+		return nil, fmt.Errorf("当前知识库内没有内容，请先在知识库设置中添加数据来源并同步")
+	}
+
+	// Try vector search first if Qdrant is available
+	if qdrant.DefaultVectorClient != nil {
+		// Get embedding settings dynamically
+		embedBaseURL, embedAPIKey, embedModelID, err := GetEmbeddingModelSettings()
+		if err == nil && embedAPIKey != "" {
+			// Create embedding service for this query
+			embedSvc := NewEmbeddingService(EmbeddingConfig{
+				BaseURL: embedBaseURL,
+				APIKey:  embedAPIKey,
+				Model:   embedModelID,
+			})
+
+			// Create retrieval service dynamically
+			retrievalSvc := NewRetrievalService(embedSvc, qdrant.DefaultVectorClient)
+
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			results, searchErr := retrievalSvc.HybridSearch(ctx, kbID, question, DefaultHybridSearchOptions())
+			cancel()
+
+			if searchErr != nil {
+				fmt.Printf("[DEBUG] HybridSearch error: %v\n", searchErr)
+			} else if len(results) > 0 {
+				fmt.Printf("[DEBUG] HybridSearch found %d results\n", len(results))
+				for _, r := range results {
+					chunks = append(chunks, ChunkRef{
+						DocumentID:    r.DocumentID,
+						DocumentTitle: r.DocumentTitle,
+						Content:       r.Content,
+						ChunkIndex:    r.ChunkIndex,
+					})
+				}
+			} else {
+				fmt.Printf("[DEBUG] HybridSearch returned 0 results\n")
+			}
+		} else {
+			fmt.Printf("[DEBUG] GetEmbeddingModelSettings error: %v\n", err)
+		}
+	} else {
+		fmt.Printf("[DEBUG] Qdrant client is nil, skipping vector search\n")
+	}
+
+	// Fallback to keyword search if vector search failed or returned no results
+	if len(chunks) == 0 {
+		fmt.Printf("[DEBUG] Falling back to keyword search\n")
+		chunks = SearchChunks(kbID, question, 6)
+		fmt.Printf("[DEBUG] Keyword search found %d results\n", len(chunks))
+	}
 
 	// 2. Build context from chunks
 	var contextParts []string
@@ -281,8 +501,8 @@ func ChatWithKnowledge(kbID uint, question string, history []ChatMessage) (*KBCh
 		systemPrompt += "\n\n以下是相关文档内容：\n" + contextText
 	}
 
-	// 3. Call AI API
-	answer, err := callAIChat(systemPrompt, question, history)
+	// 3. Call AI API with optional model override
+	answer, err := callAIChatWithModel(systemPrompt, question, history, modelOverride)
 	if err != nil {
 		return nil, err
 	}
@@ -293,8 +513,86 @@ func ChatWithKnowledge(kbID uint, question string, history []ChatMessage) (*KBCh
 	}, nil
 }
 
-// getAISettings reads AI model settings from the database.
-func getAISettings() (baseURL, apiKey, modelID string, err error) {
+// GetEmbeddingModelSettings reads embedding model settings from the database.
+// Returns baseURL, apiKey, modelID for the embedding model.
+func GetEmbeddingModelSettings() (baseURL, apiKey, modelID string, err error) {
+	var setting model.SystemSetting
+	if dbErr := mysql.DB.Where("`key` = ?", "ai_model_settings").First(&setting).Error; dbErr != nil {
+		return "", "", "", fmt.Errorf("AI模型未配置，请在管理后台配置AI模型")
+	}
+
+	var data struct {
+		Providers []struct {
+			ID       int    `json:"id"`
+			Name     string `json:"name"`
+			BaseURL  string `json:"baseUrl"`
+			APIKey   string `json:"apiKey"`
+			IsActive bool   `json:"isActive"`
+			Models   []struct {
+				ID        string `json:"id"`
+				Name      string `json:"name"`
+				Type      string `json:"type"`
+				IsDefault bool   `json:"isDefault"`
+			} `json:"models"`
+		} `json:"providers"`
+		KBSettings struct {
+			ChatModel      string `json:"chatModel"`
+			EmbeddingModel string `json:"embeddingModel"`
+		} `json:"kbSettings"`
+	}
+	if parseErr := json.Unmarshal([]byte(setting.Value), &data); parseErr != nil {
+		return "", "", "", fmt.Errorf("AI配置解析失败")
+	}
+
+	// Log for debugging
+	fmt.Printf("[DEBUG] GetEmbeddingModelSettings: embeddingModel='%s', providers=%d\n",
+		data.KBSettings.EmbeddingModel, len(data.Providers))
+
+	// If embeddingModel is specified, find it in all active providers
+	if data.KBSettings.EmbeddingModel != "" {
+		targetModel := data.KBSettings.EmbeddingModel
+		for _, p := range data.Providers {
+			if !p.IsActive || p.BaseURL == "" || p.APIKey == "" {
+				fmt.Printf("[DEBUG] Skipping inactive provider: %s (active=%v, baseUrl='%s')\n", p.Name, p.IsActive, p.BaseURL)
+				continue
+			}
+			fmt.Printf("[DEBUG] Checking provider '%s' with %d models\n", p.Name, len(p.Models))
+			for _, m := range p.Models {
+				//fmt.Printf("[DEBUG]   - model: id='%s', type='%s'\n", m.ID, m.Type)
+				if m.ID == targetModel {
+					fmt.Printf("[DEBUG] Found embedding model '%s' in provider '%s' (baseUrl='%s')\n", m.ID, p.Name, p.BaseURL)
+					return p.BaseURL, p.APIKey, m.ID, nil
+				}
+			}
+		}
+		// Model ID not found in any active provider
+		return "", "", "", fmt.Errorf("指定的嵌入模型 '%s' 未在任何活跃的提供商中找到，请检查配置", targetModel)
+	}
+
+	// Find first active provider with an embedding model
+	for _, p := range data.Providers {
+		if !p.IsActive || p.BaseURL == "" || p.APIKey == "" {
+			continue
+		}
+		// First try to find default embedding model
+		for _, m := range p.Models {
+			if m.Type == "embedding" && m.IsDefault {
+				return p.BaseURL, p.APIKey, m.ID, nil
+			}
+		}
+		// If no default, use first embedding model
+		for _, m := range p.Models {
+			if m.Type == "embedding" {
+				return p.BaseURL, p.APIKey, m.ID, nil
+			}
+		}
+	}
+
+	return "", "", "", fmt.Errorf("未找到可用的嵌入模型，请在管理后台配置")
+}
+
+// GetAISettings reads AI model settings from the database.
+func GetAISettings() (baseURL, apiKey, modelID string, err error) {
 	var setting model.SystemSetting
 	if dbErr := mysql.DB.Where("`key` = ?", "ai_model_settings").First(&setting).Error; dbErr != nil {
 		return "", "", "", fmt.Errorf("AI模型未配置，请在管理后台配置AI模型")
@@ -354,8 +652,80 @@ func getAISettings() (baseURL, apiKey, modelID string, err error) {
 	return "", "", "", fmt.Errorf("未找到可用的AI聊天模型，请在管理后台配置")
 }
 
+// GetAISettingsWithModel reads AI model settings with optional model override
+func GetAISettingsWithModel(modelOverride string) (baseURL, apiKey, modelID string, err error) {
+	var setting model.SystemSetting
+	if dbErr := mysql.DB.Where("`key` = ?", "ai_model_settings").First(&setting).Error; dbErr != nil {
+		return "", "", "", fmt.Errorf("AI模型未配置，请在管理后台配置AI模型")
+	}
+
+	var data struct {
+		Providers []struct {
+			BaseURL  string `json:"baseUrl"`
+			APIKey   string `json:"apiKey"`
+			IsActive bool   `json:"isActive"`
+			Models   []struct {
+				ID        string `json:"id"`
+				Type      string `json:"type"`
+				IsDefault bool   `json:"isDefault"`
+			} `json:"models"`
+		} `json:"providers"`
+		KBSettings struct {
+			ChatModel string `json:"chatModel"`
+		} `json:"kbSettings"`
+	}
+	if parseErr := json.Unmarshal([]byte(setting.Value), &data); parseErr != nil {
+		return "", "", "", fmt.Errorf("AI配置解析失败")
+	}
+
+	// If modelOverride is provided, find that specific model
+	targetModel := modelOverride
+	if targetModel == "" {
+		targetModel = data.KBSettings.ChatModel
+	}
+
+	// If we have a target model, find it
+	if targetModel != "" {
+		for _, p := range data.Providers {
+			if !p.IsActive || p.BaseURL == "" || p.APIKey == "" {
+				continue
+			}
+			for _, m := range p.Models {
+				if m.ID == targetModel {
+					return p.BaseURL, p.APIKey, m.ID, nil
+				}
+			}
+		}
+	}
+
+	// Find first active provider with a chat model
+	for _, p := range data.Providers {
+		if !p.IsActive || p.BaseURL == "" || p.APIKey == "" {
+			continue
+		}
+		// First try to find default chat model
+		for _, m := range p.Models {
+			if m.Type == "chat" && m.IsDefault {
+				return p.BaseURL, p.APIKey, m.ID, nil
+			}
+		}
+		// If no default, use first chat model
+		for _, m := range p.Models {
+			if m.Type == "chat" {
+				return p.BaseURL, p.APIKey, m.ID, nil
+			}
+		}
+	}
+	return "", "", "", fmt.Errorf("未找到可用的AI聊天模型，请在管理后台配置")
+}
+
 func callAIChat(systemPrompt, question string, history []ChatMessage) (string, error) {
-	baseURL, apiKey, modelID, err := getAISettings()
+	return callAIChatWithModel(systemPrompt, question, history, "")
+}
+
+// callAIChatWithModel calls AI chat API with optional model override
+func callAIChatWithModel(systemPrompt, question string, history []ChatMessage, modelOverride string) (string, error) {
+	baseURL, apiKey, modelID, err := GetAISettingsWithModel(modelOverride)
 	if err != nil {
 		return "", err
 	}

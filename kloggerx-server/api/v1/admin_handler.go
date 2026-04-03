@@ -177,18 +177,32 @@ func AdminGetDepartmentTree(c *gin.Context) {
 		return
 	}
 
-	// Build tree
-	deptMap := make(map[uint]*model.Department)
-	for i := range departments {
-		deptMap[departments[i].ID] = &departments[i]
+	// Build tree structure using recursive approach
+	// Helper function to build tree recursively
+	var buildTree func(parentID *uint) []model.Department
+	buildTree = func(parentID *uint) []model.Department {
+		var result []model.Department
+		for i := range departments {
+			// Check if this department has the specified parent
+			var isChild bool
+			if parentID == nil && departments[i].ParentID == nil {
+				isChild = true
+			} else if parentID != nil && departments[i].ParentID != nil && *departments[i].ParentID == *parentID {
+				isChild = true
+			}
+
+			if isChild {
+				dept := departments[i]
+				// Recursively get children
+				dept.Children = buildTree(&dept.ID)
+				result = append(result, dept)
+			}
+		}
+		return result
 	}
 
-	var roots []model.Department
-	for i := range departments {
-		if departments[i].ParentID == nil {
-			roots = append(roots, departments[i])
-		}
-	}
+	// Build tree starting from root (nil parent)
+	roots := buildTree(nil)
 
 	c.JSON(http.StatusOK, model.Success(roots))
 }

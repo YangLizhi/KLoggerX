@@ -73,6 +73,57 @@ export function testRemoteStorage(data: { type: string; server: string; port?: n
   return post<ApiResponse<any>>('/api/v1/admin/settings/storage/test', data)
 }
 
+// Storage Statistics
+export function getStorageStats() {
+  return get<ApiResponse<{ total: number; used: number; available: number; fileCount: number }>>('/api/v1/storage/stats')
+}
+
+export function getStorageUsage() {
+  return get<ApiResponse<{ byType: { doc: number; sheet: number; slide: number; image: number; other: number }; totalSize: number; fileCount: number }>>('/api/v1/storage/usage')
+}
+
+export function getAdminStorageUsage() {
+  return get<ApiResponse<{ diskStats: any; byType: any; totalSize: number; fileCount: number }>>('/api/v1/admin/storage/usage')
+}
+
+// Remote Storage Management
+export function listRemoteStorages() {
+  return get<ApiResponse<any[]>>('/api/v1/admin/remote-storages')
+}
+
+export function createRemoteStorage(data: { name: string; type: string; server: string; port?: number; username?: string; password?: string; sharePath?: string; domain?: string; mountPoint: string; isEnabled?: boolean }) {
+  return post<ApiResponse<any>>('/api/v1/admin/remote-storages', data)
+}
+
+export function updateRemoteStorage(id: number, data: any) {
+  return put<ApiResponse>(`/api/v1/admin/remote-storages/${id}`, data)
+}
+
+export function deleteRemoteStorage(id: number) {
+  return del<ApiResponse>(`/api/v1/admin/remote-storages/${id}`)
+}
+
+export function testRemoteStorageConnection(id: number) {
+  return post<ApiResponse<{ connected: boolean; message: string }>>(`/api/v1/admin/remote-storages/${id}/test`)
+}
+
+export function connectRemoteStorage(id: number) {
+  return post<ApiResponse<any>>(`/api/v1/admin/remote-storages/${id}/connect`)
+}
+
+export function disconnectRemoteStorage(id: number) {
+  return post<ApiResponse<any>>(`/api/v1/admin/remote-storages/${id}/disconnect`)
+}
+
+// User Storage Settings
+export function getUserStorageSettings() {
+  return get<ApiResponse<{ syncDir: string; downloadDir: string; autoSync: boolean }>>('/api/v1/user/storage-settings')
+}
+
+export function saveUserStorageSettings(data: { syncDir?: string; downloadDir?: string; autoSync?: boolean }) {
+  return post<ApiResponse>('/api/v1/user/storage-settings', data)
+}
+
 // AD/LDAP
 export function testLdapConnection(data: { type: string; server: string; baseDN: string; bindDN: string; bindPassword: string }) {
   return post<ApiResponse<{ success: boolean }>>('/api/v1/admin/ldap/test', data)

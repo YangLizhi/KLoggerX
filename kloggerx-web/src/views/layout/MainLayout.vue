@@ -205,6 +205,28 @@
               <div class="drive-tree-empty">暂无共享文件夹</div>
             </div>
           </div>
+
+          <!-- Remote Storages -->
+          <div class="drive-tree-section" v-if="driveRemoteStorages.length > 0">
+            <div class="drive-section-header" @click="driveRemoteStoragesExpanded = !driveRemoteStoragesExpanded">
+              <el-icon class="drive-expand-arrow" :class="{ expanded: driveRemoteStoragesExpanded }"><ArrowRight /></el-icon>
+              <el-icon color="#9254de" :size="15"><Connection /></el-icon>
+              <span class="drive-section-title">远程存储</span>
+            </div>
+            <div v-show="driveRemoteStoragesExpanded" class="drive-section-body">
+              <div
+                v-for="storage in driveRemoteStorages"
+                :key="'remote-' + storage.id"
+                class="drive-tree-item remote-storage-item"
+                :class="{ active: selectedRemoteStorageId === storage.id }"
+                @click="selectRemoteStorage(storage)"
+              >
+                <el-icon color="#9254de" :size="15"><Connection /></el-icon>
+                <span class="drive-tree-name">{{ storage.name }}</span>
+                <el-tag size="small" type="success" style="margin-left: auto; font-size: 11px;">已连接</el-tag>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- New Folder button -->
@@ -450,6 +472,7 @@ import { useDocumentStore } from '@/store/modules/document'
 import { createDocument, getDocumentTree, getPinnedDocuments, pinDocument, deleteDocument, updateDocument } from '@/api/modules/document'
 import { createKnowledgeBase, getKnowledgeBaseList, deleteKnowledgeBase } from '@/api/modules/knowledge'
 import { getNotifications, markNotificationRead, markAllNotificationsRead } from '@/api/modules/collaborate'
+import { listRemoteStorages } from '@/api/modules/admin'
 import DocumentTree from '@/components/document-tree/DocumentTree.vue'
 import FolderTreeNode from '@/components/FolderTreeNode.vue'
 import type { Document, DocumentType, Notification } from '@/types'
@@ -465,6 +488,14 @@ interface DriveFolderNode {
   hasMore?: boolean    // 是否有更多子项需要懒加载
   children: DriveFolderNode[]
   [key: string]: any
+}
+
+interface RemoteStorageItem {
+  id: number
+  name: string
+  type: string
+  mountPoint: string
+  status: string
 }
 
 const route = useRoute()
@@ -614,8 +645,11 @@ const pinnedCtxMenu = ref({ visible: false, x: 0, y: 0, doc: null as Document | 
 const driveFolderSearch = ref('')
 const driveMyFoldersExpanded = ref(true)
 const driveSharedFoldersExpanded = ref(true)
+const driveRemoteStoragesExpanded = ref(true)
 const driveSelectedFolderId = ref<number | null>(null)
 const driveFolderTree = ref<DriveFolderNode[]>([])
+const driveRemoteStorages = ref<RemoteStorageItem[]>([])
+const selectedRemoteStorageId = ref<number | null>(null)
 
 // Provide selected folder to DocumentLibrary
 provide('driveSelectedFolderId', driveSelectedFolderId)
@@ -666,6 +700,22 @@ async function fetchDriveFolderTree() {
   } catch { /* ignore */ }
 }
 
+// Fetch remote storages for cloud drive sidebar
+async function fetchDriveRemoteStorages() {
+  try {
+    const res: any = await listRemoteStorages()
+    driveRemoteStorages.value = (res.data || [])
+      .filter((s: any) => s.isEnabled !== false && s.status === 'connected')
+      .map((s: any) => ({
+        id: s.id,
+        name: s.name,
+        type: s.type,
+        mountPoint: s.mountPoint,
+        status: s.status,
+      }))
+  } catch { /* ignore */ }
+}
+
 // ============= Expand State Persistence =============
 const DRIVE_EXPAND_KEY = 'kloggerx_drive_expanded'
 
@@ -711,8 +761,17 @@ function handleMyFoldersClick() {
 
 function selectDriveFolder(node: DriveFolderNode) {
   driveSelectedFolderId.value = node.id
+  selectedRemoteStorageId.value = null // Clear remote selection
   // The FolderTreeNode now handles expand/collapse internally
   router.push({ path: '/documents', query: { folderId: String(node.id) } })
+}
+
+// Select remote storage and navigate to documents page
+function selectRemoteStorage(storage: RemoteStorageItem) {
+  selectedRemoteStorageId.value = storage.id
+  driveSelectedFolderId.value = null // Clear folder selection
+  // Navigate to documents page with remote storage ID
+  router.push({ path: '/documents', query: { remoteStorageId: String(storage.id), remoteStorageName: storage.name } })
 }
 
 // 动态加载子文件夹
@@ -804,7 +863,10 @@ watch(() => route.query.folderId, (val) => {
 
 // Fetch drive tree when entering cloud drive page
 watch(isCloudDrivePage, (val) => {
-  if (val) fetchDriveFolderTree()
+  if (val) {
+    fetchDriveFolderTree()
+    fetchDriveRemoteStorages()
+  }
 }, { immediate: true })
 
 // ============= End Cloud Drive sidebar =============
@@ -1398,6 +1460,29 @@ onBeforeUnmount(() => {
   padding: 6px 18px;
   font-size: 12px;
   color: var(--kx-text-placeholder);
+}
+.drive-tree-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px 6px 18px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--kx-text-primary);
+  margin: 1px 4px;
+}
+.drive-tree-item:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+.drive-tree-item.remote-storage-item {
+  padding-left: 18px;
+}
+.drive-tree-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .drive-bottom-action {
   flex-shrink: 0;

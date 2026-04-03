@@ -50,6 +50,8 @@ func AutoMigrate() {
 		&model.KnowledgeDocument{},
 		&model.KnowledgeSource{},
 		&model.KnowledgeChunk{},
+		&model.EmbeddingJob{},
+		&model.RaptorNode{},
 		&model.Template{},
 		&model.Comment{},
 		&model.Notification{},
@@ -57,6 +59,10 @@ func AutoMigrate() {
 		&model.FileRecord{},
 		&model.OperationLog{},
 		&model.SystemSetting{},
+		// New storage-related models
+		&model.UserStorageSetting{},
+		&model.RemoteStorage{},
+		&model.StorageUsage{},
 	)
 
 	// Add FULLTEXT index on knowledge_chunks.content for efficient RAG retrieval

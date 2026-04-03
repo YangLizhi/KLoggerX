@@ -350,6 +350,70 @@
             </el-form-item>
           </el-form>
         </el-tab-pane>
+        <el-tab-pane label="向量化" name="vectorization">
+          <div class="vector-section">
+            <h4 class="vs-title">向量嵌入状态</h4>
+            <div v-loading="loadingEmbedding" class="embedding-status">
+              <div v-if="embeddingStatus" class="status-grid">
+                <div class="status-item">
+                  <span class="status-label">总分块数</span>
+                  <span class="status-value">{{ embeddingStatus.totalChunks }}</span>
+                </div>
+                <div class="status-item">
+                  <span class="status-label">已向量化</span>
+                  <span class="status-value success">{{ embeddingStatus.embeddedChunks }}</span>
+                </div>
+                <div class="status-item">
+                  <span class="status-label">待处理</span>
+                  <span class="status-value warning">{{ embeddingStatus.pendingChunks }}</span>
+                </div>
+                <div class="status-item">
+                  <span class="status-label">失败</span>
+                  <span class="status-value danger">{{ embeddingStatus.failedChunks }}</span>
+                </div>
+              </div>
+              <div v-else class="status-empty">暂无数据</div>
+              <div class="status-actions">
+                <el-button size="small" :loading="rebuildingEmbeddings" @click="handleRebuildEmbeddings">
+                  <el-icon><Refresh /></el-icon>重建向量索引
+                </el-button>
+              </div>
+            </div>
+
+            <h4 class="vs-title" style="margin-top:24px">RAPTOR 树状摘要</h4>
+            <div class="raptor-status">
+              <div v-if="raptorStats" class="status-grid">
+                <div class="status-item">
+                  <span class="status-label">总节点数</span>
+                  <span class="status-value">{{ raptorStats.totalNodes }}</span>
+                </div>
+                <div class="status-item">
+                  <span class="status-label">叶子节点</span>
+                  <span class="status-value">{{ raptorStats.leafNodes }}</span>
+                </div>
+                <div class="status-item">
+                  <span class="status-label">聚类节点</span>
+                  <span class="status-value">{{ raptorStats.clusterNodes }}</span>
+                </div>
+                <div class="status-item">
+                  <span class="status-label">最大层级</span>
+                  <span class="status-value">{{ raptorStats.maxLevel }}</span>
+                </div>
+              </div>
+              <div v-else class="status-empty">尚未构建 RAPTOR 树</div>
+              <div class="status-actions">
+                <el-button size="small" type="primary" :loading="buildingRaptor" @click="handleBuildRaptorTree">
+                  <el-icon><Share /></el-icon>构建 RAPTOR 树
+                </el-button>
+              </div>
+            </div>
+
+            <div class="vector-tip">
+              <el-icon color="#3370ff"><InfoFilled /></el-icon>
+              <span>RAPTOR（递归抽象处理树状检索）通过聚类相似文档并生成摘要，构建层级化的知识结构，提升 AI 检索的准确性和广度。</span>
+            </div>
+          </div>
+        </el-tab-pane>
         <el-tab-pane label="高级" name="advanced">
           <div class="danger-zone">
             <h4>危险操作</h4>
@@ -487,7 +551,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { getKnowledgeBaseDetail, getKnowledgeBaseTree, getKnowledgeMembers, deleteKnowledgeBase, updateKnowledgeBase, addKnowledgeMember, removeKnowledgeMember, publishDocument, searchKnowledge, getKnowledgeSources, addKnowledgeSource, removeKnowledgeSource, syncKnowledgeSource } from '@/api/modules/knowledge'
+import { getKnowledgeBaseDetail, getKnowledgeBaseTree, getKnowledgeMembers, deleteKnowledgeBase, updateKnowledgeBase, removeKnowledgeMember, publishDocument, searchKnowledge, getKnowledgeSources, addKnowledgeSource, removeKnowledgeSource, syncKnowledgeSource, getEmbeddingStatus, buildRaptorTree, getRaptorTreeStats, rebuildEmbeddings } from '@/api/modules/knowledge'
 import { createDocument, updateDocument, deleteDocument, copyDocument, moveDocument, pinDocument, favoriteDocument, getDocumentVersions, rollbackVersion, importDocument, getDocumentTree } from '@/api/modules/document'
 import type { KnowledgeBase, DocumentVersion } from '@/types'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -584,6 +648,13 @@ const moveTargetId = ref<number | null>(null)
 const moveTargetDoc = ref<KbDoc | null>(null)
 const newCatName = ref('')
 const importFiles = ref<File[]>([])
+
+// Vectorization state
+const embeddingStatus = ref<{ totalChunks: number; embeddedChunks: number; pendingChunks: number; failedChunks: number; progress: number } | null>(null)
+const raptorStats = ref<{ totalNodes: number; leafNodes: number; clusterNodes: number; rootNodes: number; maxLevel: number } | null>(null)
+const loadingEmbedding = ref(false)
+const buildingRaptor = ref(false)
+const rebuildingEmbeddings = ref(false)
 
 // Context menus
 const docCtxMenu = reactive({ visible: false, x: 0, y: 0, doc: null as KbDoc | null })
@@ -732,9 +803,14 @@ async function handleNewInKb(type: string) {
   showTreeNewMenu.value = false
   try {
     const res: any = await createDocument({ title: '无标题文档', type: type as any, parentId: null })
-    ElMessage.success('已创建')
-    fetchDocs()
     if (res.data?.id) {
+      // Auto-add to knowledge base as source
+      try {
+        await addKnowledgeSource(kbId, { sourceType: 'document', sourceId: res.data.id })
+      } catch { /* ignore if already added */ }
+      ElMessage.success('已创建并添加到知识库')
+      fetchDocs()
+      loadSources()
       // Open in new browser tab
       window.open(`/doc/${res.data.id}`, '_blank')
     }
@@ -1011,9 +1087,9 @@ async function handleAddMember() {
   if (!addMemberForm.keyword.trim()) { ElMessage.warning('请输入用户名'); return }
   // Add member to knowledge base
   members.value.push({
-    id: Date.now(),
-    name: addMemberForm.keyword,
-    avatar: '',
+    userId: Date.now(),
+    userName: addMemberForm.keyword,
+    userAvatar: '',
     role: addMemberForm.role,
   })
   ElMessage.success(`已添加成员 "${addMemberForm.keyword}"`)
@@ -1028,13 +1104,24 @@ function handleImportFileChange(file: UploadFile) {
 }
 
 async function handleImport() {
+  let importedCount = 0
   for (const file of importFiles.value) {
-    try { await importDocument(file, null) } catch { /* continue */ }
+    try {
+      const res: any = await importDocument(file, null)
+      if (res.data?.id) {
+        // Auto-add to knowledge base as source
+        try {
+          await addKnowledgeSource(kbId, { sourceType: 'document', sourceId: res.data.id })
+        } catch { /* ignore if already added */ }
+        importedCount++
+      }
+    } catch { /* continue */ }
   }
-  ElMessage.success('导入完成')
+  ElMessage.success(`已导入 ${importedCount} 个文档到知识库`)
   showImportDialog.value = false
   importFiles.value = []
   fetchDocs()
+  loadSources()
 }
 
 // Close menus
@@ -1109,12 +1196,78 @@ async function confirmAddSource() {
 
 watch(() => addSourceForm.type, () => { addSourceForm.sourceId = undefined })
 
+// Vectorization functions
+async function loadEmbeddingStatus() {
+  loadingEmbedding.value = true
+  try {
+    const res: any = await getEmbeddingStatus(kbId)
+    embeddingStatus.value = res.data
+  } catch (e: any) {
+    console.error('Failed to load embedding status:', e)
+  } finally {
+    loadingEmbedding.value = false
+  }
+}
+
+async function loadRaptorStats() {
+  try {
+    const res: any = await getRaptorTreeStats(kbId)
+    raptorStats.value = res.data
+  } catch (e: any) {
+    console.error('Failed to load raptor stats:', e)
+  }
+}
+
+async function handleBuildRaptorTree() {
+  try {
+    await ElMessageBox.confirm('构建 RAPTOR 树需要一定时间，确定开始构建？', '构建确认')
+  } catch {
+    return
+  }
+  buildingRaptor.value = true
+  try {
+    await buildRaptorTree(kbId, { clusterCount: 10, maxLevel: 3 })
+    ElMessage.success('RAPTOR 树构建已启动，请稍后刷新查看结果')
+    setTimeout(() => {
+      loadRaptorStats()
+    }, 2000)
+  } catch (e: any) {
+    const msg = e?.response?.data?.message || e?.message || '构建失败'
+    ElMessage.error(msg)
+  } finally {
+    buildingRaptor.value = false
+  }
+}
+
+async function handleRebuildEmbeddings() {
+  try {
+    await ElMessageBox.confirm('重建向量索引需要一定时间，确定开始？', '重建确认')
+  } catch {
+    return
+  }
+  rebuildingEmbeddings.value = true
+  try {
+    await rebuildEmbeddings(kbId)
+    ElMessage.success('向量索引重建已启动')
+    setTimeout(() => {
+      loadEmbeddingStatus()
+    }, 2000)
+  } catch (e: any) {
+    const msg = e?.response?.data?.message || e?.message || '重建失败'
+    ElMessage.error(msg)
+  } finally {
+    rebuildingEmbeddings.value = false
+  }
+}
+
 onMounted(() => {
   fetchDetail()
   fetchDocs()
   fetchMembers()
   loadSources()
   loadAllDocsFolders()
+  loadEmbeddingStatus()
+  loadRaptorStats()
   document.addEventListener('click', closeMenus)
 })
 onBeforeUnmount(() => {
@@ -1739,5 +1892,65 @@ onBeforeUnmount(() => {
 .chat-fab:hover {
   transform: scale(1.1);
   box-shadow: 0 6px 16px rgba(51, 112, 255, 0.5);
+}
+
+/* Vectorization */
+.vector-section {
+  padding: 0 4px;
+}
+.vs-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: var(--kx-text-primary);
+}
+.embedding-status, .raptor-status {
+  background: #f7f8fa;
+  border-radius: 8px;
+  padding: 16px;
+}
+.status-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+.status-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.status-label {
+  font-size: 12px;
+  color: var(--kx-text-placeholder);
+}
+.status-value {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--kx-text-primary);
+}
+.status-value.success { color: #36b37e; }
+.status-value.warning { color: #f5a623; }
+.status-value.danger { color: #f54a45; }
+.status-empty {
+  font-size: 13px;
+  color: var(--kx-text-placeholder);
+  text-align: center;
+  padding: 16px;
+}
+.status-actions {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--kx-border);
+}
+.vector-tip {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 12px;
+  background: #e8f3ff;
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--kx-text-secondary);
+  line-height: 1.6;
 }
 </style>

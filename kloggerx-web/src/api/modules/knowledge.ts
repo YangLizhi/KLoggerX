@@ -61,10 +61,44 @@ export function syncKnowledgeSource(kbId: number, srcId: number) {
   return post<ApiResponse>(`/api/v1/knowledge/${kbId}/source/${srcId}/sync`, {})
 }
 
-export function chatWithKnowledge(kbId: number, data: { question: string; history?: { role: string; content: string }[] }) {
+export function chatWithKnowledge(kbId: number, data: { question: string; history?: { role: string; content: string }[]; model?: string }) {
   return post<ApiResponse>(`/api/v1/knowledge/${kbId}/chat`, data)
 }
 
-export function chatWithKnowledgeGlobal(data: { question: string; history?: { role: string; content: string }[] }) {
+export function chatWithKnowledgeGlobal(data: { question: string; history?: { role: string; content: string }[]; model?: string; kbIds?: number[] }) {
   return post<ApiResponse>('/api/v1/knowledge/chat/global', data)
+}
+
+// RAPTOR API
+export interface RaptorTreeStats {
+  totalNodes: number
+  leafNodes: number
+  clusterNodes: number
+  rootNodes: number
+  maxLevel: number
+}
+
+export function buildRaptorTree(kbId: number, config?: { clusterCount?: number; maxLevel?: number }) {
+  return post<ApiResponse>(`/api/v1/knowledge/${kbId}/raptor/build`, config || {})
+}
+
+export function getRaptorTreeStats(kbId: number) {
+  return get<ApiResponse<RaptorTreeStats>>(`/api/v1/knowledge/${kbId}/raptor/stats`)
+}
+
+// Embedding API
+export interface EmbeddingStatus {
+  totalChunks: number
+  embeddedChunks: number
+  pendingChunks: number
+  failedChunks: number
+  progress: number
+}
+
+export function getEmbeddingStatus(kbId: number) {
+  return get<ApiResponse<EmbeddingStatus>>(`/api/v1/knowledge/${kbId}/embedding/status`)
+}
+
+export function rebuildEmbeddings(kbId: number) {
+  return post<ApiResponse>(`/api/v1/knowledge/${kbId}/embedding/rebuild`, {})
 }

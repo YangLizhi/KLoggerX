@@ -40,3 +40,9 @@ onlyoffice:
   jwt_secret: "mysecret"
   file_base_url: "http://192.168.95.52:8178"
   callback_url: "http://192.168.95.52:8178"
+
+qdrant:
+  host: localhost
+  port: 6333
+  collection: kloggerx_chunks
+  api_key: ""  # Optional, for Qdrant Cloud

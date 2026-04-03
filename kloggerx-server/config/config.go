@@ -14,6 +14,7 @@ type Config struct {
 	MinIO      MinIOConfig      `mapstructure:"minio"`
 	Log        LogConfig        `mapstructure:"log"`
 	OnlyOffice OnlyOfficeConfig `mapstructure:"onlyoffice"`
+	Qdrant     QdrantConfig     `mapstructure:"qdrant"`
 }
 
 type ServerConfig struct {
@@ -64,6 +65,13 @@ type OnlyOfficeConfig struct {
 	JWTSecret    string `mapstructure:"jwt_secret"`     // JWT secret for signing requests
 	FileBaseURL  string `mapstructure:"file_base_url"`  // Base URL for file downloads (this server)
 	CallbackURL  string `mapstructure:"callback_url"`   // Callback URL for OnlyOffice to save changes
+}
+
+type QdrantConfig struct {
+	Host       string `mapstructure:"host"`
+	Port       int    `mapstructure:"port"`
+	Collection string `mapstructure:"collection"`
+	APIKey     string `mapstructure:"api_key"` // Optional API key for Qdrant Cloud
 }
 
 var Cfg *Config

@@ -41,6 +41,27 @@
           />
         </div>
       </div>
+      <!-- Remote Storages Section -->
+      <div class="panel-section" v-if="remoteStorages.length > 0">
+        <div class="panel-section-header" @click="remoteStoragesExpanded = !remoteStoragesExpanded">
+          <el-icon class="expand-arrow" :class="{ expanded: remoteStoragesExpanded }"><ArrowRight /></el-icon>
+          <span class="panel-section-title">远程存储</span>
+        </div>
+        <div v-show="remoteStoragesExpanded" class="panel-section-body">
+          <div
+            v-for="storage in remoteStorages"
+            :key="'remote-' + storage.id"
+            class="folder-tree-item remote-storage-item"
+            :class="{ active: selectedFolderId === 'remote-' + storage.id }"
+            @click="selectRemoteStorage(storage)"
+          >
+            <el-icon color="#9254de" :size="16"><Connection /></el-icon>
+            <span class="folder-tree-name">{{ storage.name }}</span>
+            <el-tag v-if="storage.status === 'connected'" size="small" type="success" style="margin-left: auto">已连接</el-tag>
+            <el-tag v-else size="small" type="info" style="margin-left: auto">未连接</el-tag>
+          </div>
+        </div>
+      </div>
       <div class="panel-section">
         <div class="panel-section-header panel-quick-access">
           <el-icon :size="14" color="#3370ff"><Star /></el-icon>
@@ -129,7 +150,7 @@
       <div class="docs-section">
         <div class="docs-section-header">
           <div class="docs-breadcrumb">
-            <span v-for="(b, i) in breadcrumbs" :key="b.id" class="breadcrumb-item" @click="navigateTo(b.id)">
+            <span v-for="(b, i) in breadcrumbs" :key="String(b.id)" class="breadcrumb-item" @click="navigateTo(b.id)">
               {{ b.title }}<span v-if="i < breadcrumbs.length - 1" class="sep"> &gt; </span>
             </span>
           </div>
@@ -149,80 +170,83 @@
           </div>
         </div>
 
-        <div v-loading="loading">
-          <!-- Document list (folders first, then files) -->
-          <div v-if="sortedDocuments.length">
-            <!-- List view -->
-            <el-table
-              v-if="viewMode === 'list'"
-              :data="sortedDocuments"
-              style="width: 100%"
-              table-layout="auto"
-              @row-dblclick="handleDocClick"
-              @selection-change="handleSelectionChange"
-              @row-contextmenu="(row: Document, _column: any, e: MouseEvent) => showRowContextMenu(e, row)"
-            >
-              <el-table-column type="selection" width="50" />
-              <el-table-column label="标题" min-width="240" sortable>
-                <template #default="{ row }">
-                  <div class="doc-name-cell">
-                    <el-icon :color="getTypeColor(row.type)"><component :is="getTypeIcon(row.type)" /></el-icon>
-                    <span>{{ getDisplayName(row) }}</span>
-                    <el-icon v-if="row.isPinned" class="pin-badge" color="#3370ff"><Flag /></el-icon>
-                  </div>
-                </template>
-              </el-table-column>
-              <el-table-column label="文件类型" min-width="110">
-                <template #default="{ row }">
-                  <el-tag size="small" :type="getTypeTagType(row.type)" disable-transitions>{{ getTypeName(row) }}</el-tag>
-                </template>
-              </el-table-column>
-              <el-table-column label="文件大小" min-width="100">
-                <template #default="{ row }">
-                  <span>{{ row.fileSize > 0 ? formatFileSize(row.fileSize) : '—' }}</span>
-                </template>
-              </el-table-column>
-              <el-table-column label="修改时间" min-width="130" sortable>
-                <template #default="{ row }">{{ formatDate(row.updatedAt) }}</template>
-              </el-table-column>
-              <el-table-column label="创建时间" min-width="130" sortable>
-                <template #default="{ row }">{{ formatDate(row.createdAt) }}</template>
-              </el-table-column>
-            </el-table>
-
-            <!-- Grid view -->
-            <div v-else class="doc-grid">
-              <div
-                v-for="doc in sortedDocuments"
-                :key="doc.id"
-                class="doc-card"
-                :class="{ 'drag-over': dragOverDocId === doc.id }"
-                draggable="true"
-                @dblclick="handleDocClick(doc)"
-                @contextmenu.prevent="doc.type === 'folder' ? showFolderCtxMenu($event, doc) : showContextMenu($event, doc)"
-                @dragstart="handleDragStart($event, doc)"
-                @dragend="handleDragEnd"
-                @dragover.prevent="handleDragOver($event, doc)"
-                @dragleave="handleDragLeave"
-                @drop.prevent="handleDrop($event, doc)"
+        <!-- 文件列表滚动容器 -->
+        <div class="docs-list-container">
+          <div v-loading="loading || remoteLoading">
+            <!-- Document list (folders first, then files) -->
+            <div v-if="sortedDocuments.length">
+              <!-- List view -->
+              <el-table
+                v-if="viewMode === 'list'"
+                :data="sortedDocuments"
+                style="width: 100%"
+                table-layout="auto"
+                @row-dblclick="handleDocClick"
+                @selection-change="handleSelectionChange"
+                @row-contextmenu="(row: Document, _column: any, e: MouseEvent) => showRowContextMenu(e, row)"
               >
-                <div class="doc-card-icon">
-                  <el-icon :size="36" :color="getTypeColor(doc.type)"><component :is="getTypeIcon(doc.type)" /></el-icon>
+                <el-table-column type="selection" width="50" />
+                <el-table-column label="标题" min-width="240" sortable>
+                  <template #default="{ row }">
+                    <div class="doc-name-cell">
+                      <el-icon :color="getTypeColor(row.type, row.fileExt)"><component :is="getTypeIcon(row.type, row.fileExt)" /></el-icon>
+                      <span>{{ getDisplayName(row) }}</span>
+                      <el-icon v-if="row.isPinned" class="pin-badge" color="#3370ff"><Flag /></el-icon>
+                    </div>
+                  </template>
+                </el-table-column>
+                <el-table-column label="文件类型" min-width="110">
+                  <template #default="{ row }">
+                    <el-tag size="small" :type="getTypeTagType(row.type)" disable-transitions>{{ getTypeName(row) }}</el-tag>
+                  </template>
+                </el-table-column>
+                <el-table-column label="文件大小" min-width="100">
+                  <template #default="{ row }">
+                    <span>{{ row.fileSize > 0 ? formatFileSize(row.fileSize) : '—' }}</span>
+                  </template>
+                </el-table-column>
+                <el-table-column label="修改时间" min-width="130" sortable>
+                  <template #default="{ row }">{{ formatDate(row.updatedAt) }}</template>
+                </el-table-column>
+                <el-table-column label="创建时间" min-width="130" sortable>
+                  <template #default="{ row }">{{ formatDate(row.createdAt) }}</template>
+                </el-table-column>
+              </el-table>
+
+              <!-- Grid view -->
+              <div v-else class="doc-grid">
+                <div
+                  v-for="doc in sortedDocuments"
+                  :key="doc.id"
+                  class="doc-card"
+                  :class="{ 'drag-over': dragOverDocId === doc.id }"
+                  draggable="true"
+                  @dblclick="handleDocClick(doc)"
+                  @contextmenu.prevent="doc.type === 'folder' ? showFolderCtxMenu($event, doc) : showContextMenu($event, doc)"
+                  @dragstart="handleDragStart($event, doc)"
+                  @dragend="handleDragEnd"
+                  @dragover.prevent="handleDragOver($event, doc)"
+                  @dragleave="handleDragLeave"
+                  @drop.prevent="handleDrop($event, doc)"
+                >
+                  <div class="doc-card-icon">
+                    <el-icon :size="36" :color="getTypeColor(doc.type, doc.fileExt)"><component :is="getTypeIcon(doc.type, doc.fileExt)" /></el-icon>
+                  </div>
+                  <div class="doc-card-title">{{ getDisplayName(doc) }}</div>
+                  <div class="doc-card-meta">{{ formatDate(doc.updatedAt) }}</div>
                 </div>
-                <div class="doc-card-title">{{ getDisplayName(doc) }}</div>
-                <div class="doc-card-meta">{{ formatDate(doc.updatedAt) }}</div>
               </div>
             </div>
           </div>
+
+          <div class="end-marker" v-if="sortedDocuments.length">
+            <span>已经到底了</span>
+          </div>
+
+          <div v-if="!loading && !documents.length" class="empty-state">
+            <el-empty description="暂无文档" />
+          </div>
         </div>
-      </div>
-
-      <div class="end-marker" v-if="sortedDocuments.length">
-        <span>已经到底了</span>
-      </div>
-
-      <div v-if="!loading && !documents.length" class="empty-state">
-        <el-empty description="暂无文档" />
       </div>
     </div>
 
@@ -489,6 +513,8 @@
 import { ref, reactive, computed, onMounted, onBeforeUnmount, inject, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { getDocumentTree, pinDocument, favoriteDocument, deleteDocument, copyDocument, moveDocument, importDocument, createDocument, updateDocument } from '@/api/modules/document'
+import { listRemoteStorages } from '@/api/modules/admin'
+import { listRemoteFiles, downloadRemoteFile, deleteRemoteFile, uploadRemoteFile, type RemoteFileInfo } from '@/api/modules/remote-storage'
 import type { Document, DocumentType } from '@/types'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { UploadFile } from 'element-plus'
@@ -506,6 +532,14 @@ interface FolderNode {
   [key: string]: any
 }
 
+interface RemoteStorageFolder {
+  id: number
+  name: string
+  type: string
+  mountPoint: string
+  status: string
+}
+
 const router = useRouter()
 const route = useRoute()
 const loading = ref(false)
@@ -515,7 +549,7 @@ const driveSelectedFolderId = inject<import('vue').Ref<number | null>>('driveSel
 const viewMode = ref<'grid' | 'list'>('list')
 const documents = ref<Document[]>([])
 const currentParentId = ref<number | null>(null)
-const breadcrumbs = ref<{ id: number | null; title: string }[]>([{ id: null, title: '全部内容' }])
+const breadcrumbs = ref<{ id: number | string | null; title: string }[]>([{ id: null, title: '全部内容' }])
 const moveDialogVisible = ref(false)
 const moveTargetDoc = ref<Document | null>(null)
 const moveTargetParentId = ref<number | null>(null)
@@ -547,8 +581,17 @@ const sharedFolderTree = ref<FolderNode[]>([])
 const quickAccessFolders = ref<FolderNode[]>([])
 const myFoldersExpanded = ref(true)
 const sharedFoldersExpanded = ref(true)
-const selectedFolderId = ref<number | null>(null)
+const remoteStoragesExpanded = ref(true)
+const remoteStorages = ref<RemoteStorageFolder[]>([])
+const selectedFolderId = ref<number | string | null>(null)
 const allFoldersList = ref<Document[]>([])
+
+// Remote file browsing state
+const isRemoteMode = ref(false)
+const currentRemoteStorage = ref<RemoteStorageFolder | null>(null)
+const remotePath = ref('/')
+const remoteFiles = ref<RemoteFileInfo[]>([])
+const remoteLoading = ref(false)
 
 // Create folder dialog
 const createFolderVisible = ref(false)
@@ -642,21 +685,231 @@ const typeMap: Record<string, { icon: string; color: string }> = {
   code: { icon: 'Memo', color: '#3370ff' },
 }
 
+// Extension-based icon mapping for more specific icons
+const extIconMap: Record<string, { icon: string; color: string }> = {
+  // 文档类
+  pdf: { icon: 'Document', color: '#f54a45' },
+  doc: { icon: 'Document', color: '#2b579a' },
+  docx: { icon: 'Document', color: '#2b579a' },
+  txt: { icon: 'Document', color: '#666' },
+  rtf: { icon: 'Document', color: '#666' },
+  epub: { icon: 'Notebook', color: '#9254de' },
+  mobi: { icon: 'Notebook', color: '#9254de' },
+  md: { icon: 'Memo', color: '#3370ff' },
+
+  // 表格/数据类
+  xls: { icon: 'Grid', color: '#217346' },
+  xlsx: { icon: 'Grid', color: '#217346' },
+  csv: { icon: 'Grid', color: '#36b37e' },
+  db: { icon: 'Coin', color: '#f5a623' },
+  sqlite: { icon: 'Coin', color: '#36b37e' },
+  sql: { icon: 'Memo', color: '#3370ff' },
+
+  // 演示文稿
+  ppt: { icon: 'Monitor', color: '#d24726' },
+  pptx: { icon: 'Monitor', color: '#d24726' },
+
+  // 图片类
+  png: { icon: 'Picture', color: '#36b37e' },
+  jpg: { icon: 'Picture', color: '#36b37e' },
+  jpeg: { icon: 'Picture', color: '#36b37e' },
+  gif: { icon: 'Picture', color: '#ff7d00' },
+  bmp: { icon: 'Picture', color: '#36b37e' },
+  webp: { icon: 'Picture', color: '#36b37e' },
+  svg: { icon: 'Picture', color: '#ff7d00' },
+  ico: { icon: 'Picture', color: '#f5a623' },
+
+  // 音频
+  mp3: { icon: 'Headset', color: '#9254de' },
+  wav: { icon: 'Headset', color: '#9254de' },
+  flac: { icon: 'Headset', color: '#9254de' },
+  aac: { icon: 'Headset', color: '#9254de' },
+  ogg: { icon: 'Headset', color: '#9254de' },
+  m4a: { icon: 'Headset', color: '#9254de' },
+
+  // 视频
+  mp4: { icon: 'VideoPlay', color: '#ff7d00' },
+  mkv: { icon: 'VideoPlay', color: '#ff7d00' },
+  avi: { icon: 'VideoPlay', color: '#ff7d00' },
+  mov: { icon: 'VideoPlay', color: '#ff7d00' },
+  wmv: { icon: 'VideoPlay', color: '#ff7d00' },
+  flv: { icon: 'VideoPlay', color: '#ff7d00' },
+  webm: { icon: 'VideoPlay', color: '#ff7d00' },
+
+  // 压缩包
+  zip: { icon: 'Files', color: '#f5a623' },
+  rar: { icon: 'Files', color: '#f5a623' },
+  '7z': { icon: 'Files', color: '#f5a623' },
+  tar: { icon: 'Files', color: '#f5a623' },
+  gz: { icon: 'Files', color: '#f5a623' },
+
+  // 可执行/安装包
+  exe: { icon: 'Monitor', color: '#3370ff' },
+  msi: { icon: 'Monitor', color: '#3370ff' },
+  apk: { icon: 'Iphone', color: '#36b37e' },
+  ipa: { icon: 'Iphone', color: '#666' },
+  app: { icon: 'Monitor', color: '#666' },
+  dmg: { icon: 'Coin', color: '#666' },
+  deb: { icon: 'Box', color: '#f54a45' },
+  rpm: { icon: 'Box', color: '#f54a45' },
+  sh: { icon: 'Memo', color: '#36b37e' },
+  iso: { icon: 'Disc', color: '#666' },
+
+  // 网页
+  html: { icon: 'Link', color: '#ff7d00' },
+  htm: { icon: 'Link', color: '#ff7d00' },
+  css: { icon: 'Memo', color: '#264de4' },
+  js: { icon: 'Memo', color: '#f7df1e' },
+  ts: { icon: 'Memo', color: '#3178c6' },
+  vue: { icon: 'Memo', color: '#42b883' },
+  jsx: { icon: 'Memo', color: '#61dafb' },
+  json: { icon: 'Memo', color: '#f5a623' },
+  xml: { icon: 'Memo', color: '#f5a623' },
+  yaml: { icon: 'Memo', color: '#f5a623' },
+  yml: { icon: 'Memo', color: '#f5a623' },
+
+  // 编程源码
+  c: { icon: 'Memo', color: '#00599c' },
+  cpp: { icon: 'Memo', color: '#00599c' },
+  h: { icon: 'Memo', color: '#00599c' },
+  java: { icon: 'Memo', color: '#f54a45' },
+  jar: { icon: 'Box', color: '#f54a45' },
+  py: { icon: 'Memo', color: '#3776ab' },
+  go: { icon: 'Memo', color: '#00add8' },
+  php: { icon: 'Memo', color: '#777bb4' },
+  rs: { icon: 'Memo', color: '#f54a45' },
+  rb: { icon: 'Memo', color: '#cc342d' },
+  swift: { icon: 'Memo', color: '#f54a45' },
+  kt: { icon: 'Memo', color: '#7f52ff' },
+}
+
 const typeNameMap: Record<string, string> = {
   folder: '文件夹', doc: '文档', sheet: '表格', slide: '幻灯片',
   mindnote: '思维笔记', bitable: '多维表格', survey: '问卷',
-  file: '文件', image: '图片', code: '代码',
+  file: '其他', image: '图片', code: '代码',
 }
 const extTypeMap: Record<string, string> = {
-  pdf: 'PDF文件', docx: 'Word文档', doc: 'Word文档',
-  xlsx: 'Excel表格', xls: 'Excel表格', pptx: 'PPT幻灯片', ppt: 'PPT幻灯片',
-  png: 'PNG图片', jpg: 'JPEG图片', jpeg: 'JPEG图片', gif: 'GIF图片',
-  mp4: '视频', mp3: '音频', zip: '压缩包', rar: '压缩包',
-  txt: '文本文件', md: 'Markdown', json: 'JSON文件', csv: 'CSV文件',
+  // 文档类
+  txt: '文本文档',
+  doc: 'Word文档',
+  docx: 'Word文档',
+  pdf: 'PDF文档',
+  rtf: '富文本',
+  epub: '电子书',
+  mobi: '电子书',
+
+  // 表格/数据类
+  xls: 'Excel表格',
+  xlsx: 'Excel表格',
+  csv: 'Csv表格',
+  db: '数据库',
+  sqlite: '数据库',
+  sql: '数据库',
+
+  // 演示文稿
+  ppt: '幻灯片',
+  pptx: '幻灯片',
+  pot: '幻灯片模板',
+
+  // 图片类
+  png: 'PNG图片',
+  jpg: 'JPEG图片',
+  jpeg: 'JPEG图片',
+  gif: 'GIF动图',
+  bmp: 'BMP图片',
+  webp: 'WebP图片',
+  svg: '矢量图片',
+  ico: '图标文件',
+
+  // 音频
+  mp3: '音频文件',
+  wav: '无损音频',
+  flac: 'FLAC无损音频',
+  aac: 'AAC音频',
+  ogg: 'OGG音频',
+  m4a: 'M4A音频',
+
+  // 视频
+  mp4: '视频文件',
+  mkv: 'MKV视频',
+  avi: 'AVI视频',
+  mov: 'MOV视频',
+  wmv: 'WMV视频',
+  flv: 'FLV视频',
+  webm: 'WEBM视频',
+
+  // 压缩包
+  zip: '压缩包',
+  rar: '压缩包',
+  '7z': '7Z压缩包',
+  tar: 'TAR打压缩包',
+  gz: 'GZ压缩包',
+  'tar.gz': 'TAR.GZ压缩包',
+  bz2: 'BZ2压缩包',
+
+  // 系统/安装包
+  exe: 'Windows程序',
+  msi: 'Windows安装包',
+  dll: '系统库文件',
+  apk: '安卓安装包',
+  aab: '安卓应用捆绑包',
+  ipa: 'iOS安装包',
+  app: 'macOS应用',
+  dmg: '苹果磁盘镜像',
+  deb: 'Ubuntu安装包',
+  rpm: 'RedHat安装包',
+  AppImage: 'Linux便携程序',
+  sh: 'Shell脚本',
+  iso: '光盘镜像',
+
+  // 网页/代码
+  html: '网页文件',
+  htm: '网页文件',
+  css: '样式文件',
+  js: 'JavaScript',
+  ts: 'TypeScript',
+  vue: 'Vue组件',
+  jsx: 'React组件',
+  md: 'Markdown文档',
+  json: 'JSON配置',
+  xml: 'XML文件',
+  yaml: 'YAML文件',
+  yml: 'YAML文件',
+
+  // 编程源码
+  c: 'C语言代码',
+  cpp: 'C++代码',
+  h: '头文件',
+  java: 'Java代码',
+  class: 'Java编译文件',
+  jar: 'Java包',
+  py: 'Python代码',
+  go: 'Go代码',
+  php: 'PHP脚本',
+
+  // 其他
+  log: '日志文件',
+  tmp: '临时文件',
+  vmdk: '虚拟机磁盘',
+  vdi: '虚拟机磁盘',
 }
 
-function getTypeIcon(type: string) { return typeMap[type]?.icon || 'Document' }
-function getTypeColor(type: string) { return typeMap[type]?.color || '#888' }
+function getTypeIcon(type: string, ext?: string): string {
+  // First check extension-based icon
+  if (ext) {
+    const e = ext.replace('.', '').toLowerCase()
+    if (extIconMap[e]) return extIconMap[e].icon
+  }
+  return typeMap[type]?.icon || 'Document'
+}
+function getTypeColor(type: string, ext?: string): string {
+  // First check extension-based color
+  if (ext) {
+    const e = ext.replace('.', '').toLowerCase()
+    if (extIconMap[e]) return extIconMap[e].color
+  }
+  return typeMap[type]?.color || '#888'
+}
 
 function getDisplayName(doc: Document): string {
   if (doc.originalName) return doc.originalName
@@ -666,7 +919,8 @@ function getDisplayName(doc: Document): string {
 function getTypeName(doc: Document): string {
   const ext = (doc.fileExt || '').replace('.', '').toLowerCase()
   if (ext && extTypeMap[ext]) return extTypeMap[ext]
-  return typeNameMap[doc.type] || doc.type
+  if (typeNameMap[doc.type]) return typeNameMap[doc.type]
+  return '其他'
 }
 function getTypeTagType(type: string): '' | 'success' | 'warning' | 'info' | 'danger' {
   const m: Record<string, '' | 'success' | 'warning' | 'info' | 'danger'> = {
@@ -721,6 +975,10 @@ async function fetchDocuments() {
 }
 
 function selectFolder(node: FolderNode | Document) {
+  // Exit remote mode when selecting local folder
+  isRemoteMode.value = false
+  currentRemoteStorage.value = null
+  
   selectedFolderId.value = node.id
   currentParentId.value = node.id
   breadcrumbs.value = [{ id: null, title: '全部内容' }, { id: node.id, title: node.title }]
@@ -731,7 +989,123 @@ function toggleExpand(node: FolderNode) {
   node.isExpanded = !node.isExpanded
 }
 
+// Fetch remote storages for virtual directory display
+async function fetchRemoteStorages() {
+  try {
+    const res: any = await listRemoteStorages()
+    console.log('Remote storages response:', res.data) // Debug log
+    remoteStorages.value = (res.data || [])
+      .filter((s: any) => s.isEnabled !== false && s.status === 'connected')
+      .map((s: any) => ({
+        id: s.id,
+        name: s.name,
+        type: s.type,
+        mountPoint: s.mountPoint,
+        status: s.status,
+      }))
+    console.log('Filtered remote storages:', remoteStorages.value) // Debug log
+  } catch (err) {
+    console.error('Failed to fetch remote storages:', err)
+    remoteStorages.value = []
+  }
+}
+
+// Select remote storage virtual folder
+async function selectRemoteStorage(storage: RemoteStorageFolder) {
+  selectedFolderId.value = 'remote-' + storage.id
+  currentRemoteStorage.value = storage
+  remotePath.value = '/'
+  isRemoteMode.value = true
+  breadcrumbs.value = [
+    { id: null, title: '全部内容' },
+    { id: 'remote-' + storage.id, title: storage.name }
+  ]
+  await loadRemoteFiles()
+}
+
+// Load files from remote storage
+async function loadRemoteFiles() {
+  if (!currentRemoteStorage.value) return
+  remoteLoading.value = true
+  try {
+    const res: any = await listRemoteFiles(currentRemoteStorage.value.id, remotePath.value)
+    remoteFiles.value = res.data?.files || []
+    // Convert remote files to document-like format for display
+    documents.value = remoteFiles.value.map(f => ({
+      id: 'remote-file-' + f.path,
+      title: f.name,
+      type: f.isDir ? 'folder' : 'file',
+      fileSize: f.size,
+      updatedAt: f.modTime,
+      createdAt: f.modTime,
+      parentId: null,
+      originalName: f.name,
+      fileExt: getFileExtension(f.name),
+    })) as any
+    // Update breadcrumbs for remote path
+    updateRemoteBreadcrumbs()
+  } catch (err: any) {
+    ElMessage.error(`加载远程文件失败: ${err.message || '未知错误'}`)
+    documents.value = []
+  } finally {
+    remoteLoading.value = false
+  }
+}
+
+// Get file extension from filename
+function getFileExtension(filename: string): string {
+  const idx = filename.lastIndexOf('.')
+  if (idx > 0 && idx < filename.length - 1) {
+    return filename.substring(idx).toLowerCase()
+  }
+  return ''
+}
+
+// Update breadcrumbs for remote navigation
+function updateRemoteBreadcrumbs() {
+  if (!currentRemoteStorage.value) return
+  const parts = remotePath.value.split('/').filter(p => p)
+  breadcrumbs.value = [
+    { id: null, title: '全部内容' },
+    { id: 'remote-' + currentRemoteStorage.value!.id, title: currentRemoteStorage.value!.name }
+  ]
+  let pathSoFar = ''
+  for (const part of parts) {
+    pathSoFar += '/' + part
+    breadcrumbs.value.push({
+      id: 'remote-path-' + pathSoFar,
+      title: part
+    })
+  }
+}
+
+// Handle remote file click
+async function handleRemoteFileClick(file: RemoteFileInfo) {
+  if (file.isDir) {
+    // Navigate into directory - use the full path from backend
+    remotePath.value = file.path
+    await loadRemoteFiles()
+  } else {
+    // Download file with auth token
+    try {
+      await downloadRemoteFile(currentRemoteStorage.value!.id, file.path)
+    } catch (err: any) {
+      ElMessage.error(`下载失败: ${err.message || '未知错误'}`)
+    }
+  }
+}
+
 async function handleDocClick(doc: Document) {
+  // Handle remote file click
+  if (isRemoteMode.value) {
+    const docId = String(doc.id)
+    const remoteFile = remoteFiles.value.find(f => 'remote-file-' + f.path === docId)
+    if (remoteFile) {
+      await handleRemoteFileClick(remoteFile)
+    }
+    return
+  }
+  
   if (doc.type === 'folder') {
     // 点击内容区文件夹时，只加载该文件夹内容，不更新面包屑
     // 面包屑只通过左侧栏点击更新
@@ -748,10 +1122,36 @@ async function handleDocClick(doc: Document) {
   }
 }
 
-function navigateTo(id: number | null) {
+function navigateTo(id: number | string | null) {
+  // Handle remote breadcrumb navigation
+  if (isRemoteMode.value && typeof id === 'string' && id.startsWith('remote-path-')) {
+    const path = id.replace('remote-path-', '')
+    remotePath.value = path || '/'
+    loadRemoteFiles()
+    return
+  }
+  
+  // If clicking on root or non-remote item, exit remote mode
+  if (isRemoteMode.value && (id === null || (typeof id === 'string' && id.startsWith('remote-') && id === 'remote-' + currentRemoteStorage.value?.id))) {
+    if (id === null) {
+      // Clicked root, exit remote mode
+      isRemoteMode.value = false
+      currentRemoteStorage.value = null
+      currentParentId.value = null
+      selectedFolderId.value = null
+      fetchDocuments()
+      return
+    } else {
+      // Clicked on the remote storage root, go to its root
+      remotePath.value = '/'
+      loadRemoteFiles()
+      return
+    }
+  }
+  
   const idx = breadcrumbs.value.findIndex((b) => b.id === id)
   if (idx >= 0) breadcrumbs.value = breadcrumbs.value.slice(0, idx + 1)
-  currentParentId.value = id
+  currentParentId.value = typeof id === 'number' ? id : null
   selectedFolderId.value = id
   fetchDocuments()
 }
@@ -1067,6 +1467,24 @@ async function confirmMove() {
 }
 async function handleDelete(doc: Document) {
   contextMenu.visible = false
+  
+  // Handle remote file deletion
+  if (isRemoteMode.value) {
+    const docId = String(doc.id)
+    const remoteFile = remoteFiles.value.find(f => 'remote-file-' + f.path === docId)
+    if (remoteFile && currentRemoteStorage.value) {
+      await ElMessageBox.confirm(`确定删除"${doc.title}"？`, '删除确认')
+      try {
+        await deleteRemoteFile(currentRemoteStorage.value.id, remoteFile.path)
+        ElMessage.success('已删除')
+        loadRemoteFiles()
+      } catch (err: any) {
+        ElMessage.error(`删除失败: ${err.message || '未知错误'}`)
+      }
+      return
+    }
+  }
+  
   await ElMessageBox.confirm(`确定将"${doc.title}"移至回收站？`, '删除确认')
   await deleteDocument(doc.id)
   ElMessage.success('已移至回收站')
@@ -1099,6 +1517,12 @@ function handleFolderSelect(file: any) {
 }
 
 async function handleImport() {
+  // Handle remote storage upload
+  if (isRemoteMode.value && currentRemoteStorage.value) {
+    await handleRemoteUpload()
+    return
+  }
+  
   // Single file import
   if (importFile.value) {
     importLoading.value = true
@@ -1148,6 +1572,49 @@ async function handleImport() {
     } else {
       ElMessage.error('上传失败')
     }
+  }
+}
+
+// Handle upload to remote storage
+async function handleRemoteUpload() {
+  const files = importFiles.value.length > 0 ? importFiles.value : (importFile.value ? [importFile.value] : [])
+  if (files.length === 0) return
+  
+  importLoading.value = true
+  importProgress.value = 0
+  let successCount = 0
+  let failCount = 0
+  const total = files.length
+
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i]
+    try {
+      await uploadRemoteFile(
+        currentRemoteStorage.value!.id,
+        remotePath.value === '/' ? '/' + file.name : remotePath.value + '/' + file.name,
+        file,
+        (p) => {
+          importProgress.value = Math.round(((i + p / 100) / total) * 100)
+        }
+      )
+      successCount++
+    } catch (err: any) {
+      console.error('Upload failed:', err)
+      failCount++
+    }
+  }
+
+  importLoading.value = false
+  importProgress.value = 0
+
+  if (successCount > 0) {
+    ElMessage.success(`成功上传 ${successCount} 个文件${failCount > 0 ? `，${failCount} 个失败` : ''}`)
+    showImportDialog.value = false
+    importFile.value = null
+    importFiles.value = []
+    loadRemoteFiles()
+  } else {
+    ElMessage.error('上传失败')
   }
 }
 
@@ -1255,15 +1722,28 @@ async function handleDrop(e: DragEvent, targetDoc: Document) {
   draggedDoc.value = null
 }
 
-onMounted(() => {
-  fetchFolderTree()
-  fetchDocuments()
+onMounted(async () => {
+  await fetchFolderTree()
+  await fetchRemoteStorages()
   document.addEventListener('click', closeMenus)
+  
+  // Check for remote storage selection from MainLayout
+  if (route.query.remoteStorageId) {
+    const storageId = Number(route.query.remoteStorageId)
+    const storage = remoteStorages.value.find(s => s.id === storageId)
+    if (storage) {
+      await selectRemoteStorage(storage)
+      return
+    }
+  }
+  
   // Sync with route query folderId
   if (route.query.folderId) {
     const fid = Number(route.query.folderId)
     selectedFolderId.value = fid
     currentParentId.value = fid
+    fetchDocuments()
+  } else {
     fetchDocuments()
   }
 })
@@ -1271,6 +1751,9 @@ onMounted(() => {
 // Watch driveSelectedFolderId from MainLayout sidebar
 watch(driveSelectedFolderId, (val) => {
   if (val !== null && val !== undefined) {
+    // Exit remote mode when selecting local folder
+    isRemoteMode.value = false
+    currentRemoteStorage.value = null
     selectedFolderId.value = val
     currentParentId.value = val
     fetchDocuments()
@@ -1281,9 +1764,22 @@ watch(driveSelectedFolderId, (val) => {
 watch(() => route.query.folderId, (val) => {
   if (val) {
     const fid = Number(val)
+    isRemoteMode.value = false
+    currentRemoteStorage.value = null
     selectedFolderId.value = fid
     currentParentId.value = fid
     fetchDocuments()
+  }
+})
+
+// Watch route query for remote storage navigation
+watch(() => route.query.remoteStorageId, async (val) => {
+  if (val) {
+    const storageId = Number(val)
+    const storage = remoteStorages.value.find(s => s.id === storageId)
+    if (storage) {
+      await selectRemoteStorage(storage)
+    }
   }
 })
 onBeforeUnmount(() => {
@@ -1406,12 +1902,30 @@ onBeforeUnmount(() => {
   /* nested children */
 }
 
+/* Remote Storage Items */
+.remote-storage-item {
+  position: relative;
+}
+.remote-storage-item::before {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 16px;
+  background: #9254de;
+  border-radius: 2px;
+}
+
 /* Right Content */
 .drive-content {
   flex: 1;
-  overflow-y: auto;
-  padding: 20px 24px 24px;
+  display: flex;
+  flex-direction: column;
   min-width: 0;
+  overflow: hidden;
+  padding: 20px 24px 24px;
 }
 .page-title {
   font-size: 22px;
@@ -1426,6 +1940,7 @@ onBeforeUnmount(() => {
   gap: 12px;
   margin-bottom: 20px;
   margin-top: 8px;
+  flex-shrink: 0;
 }
 .action-card {
   position: relative;
@@ -1589,6 +2104,11 @@ onBeforeUnmount(() => {
 /* Docs Section */
 .docs-section {
   margin-top: 8px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
 }
 .docs-section-header {
   display: flex;
@@ -1596,6 +2116,12 @@ onBeforeUnmount(() => {
   align-items: center;
   margin-bottom: 12px;
   padding: 8px 0;
+  flex-shrink: 0;
+}
+.docs-list-container {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
 }
 .docs-breadcrumb {
   display: flex;
