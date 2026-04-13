@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
+![Version](https://img.shields.io/badge/version-1.1.0-blue.svg)
 ![Go](https://img.shields.io/badge/Go-1.22+-00ADD8?logo=go)
 ![Vue](https://img.shields.io/badge/Vue-3.5+-4FC08D?logo=vue.js)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
@@ -24,8 +24,11 @@ KloggerX 是一款可私有化部署的在线知识协作和管理平台，支�
 - **私有化部署**：完全自主可控，数据存储在自有服务器
 - **实时协作**：基于 Yjs + WebSocket 的多人协同编辑
 - **多格式支持**：富文本文档、表格、幻灯片、思维导图、代码文件
-- **远程存储**：支持 SFTP、FTP、SMB、WebDAV 等协议接入
+- **远程存储**：支持 SFTP、FTP、SMB、WebDAV、NFS 等协议接入
 - **AI 能力**：集成知识库 AI 问答功能
+- **评论与批注**：文档级评论和行内批注功能
+- **文档模板库**：内置模板库，快速创建标准文档
+- **协作者感知**：实时显示在线协作者及加入/离开通知
 
 ---
 
@@ -50,10 +53,10 @@ KloggerX 是一款可私有化部署的在线知识协作和管理平台，支�
 - 实时协作编辑
 
 #### 表格编辑
-- 完整的电子表格功能
-- 支持公式、格式设置、合并单元格
+- 基于 Univer Sheet 的专业电子表格引擎
+- Excel 级别的公式引擎
+- 完整的格式化工具栏
 - 多工作表管理
-- 数据排序、筛选
 
 #### 幻灯片编辑
 - 幻灯片创建、复制、删除、排序
@@ -66,6 +69,25 @@ KloggerX 是一款可私有化部署的在线知识协作和管理平台，支�
 - 拖拽布局
 - 多种主题样式
 
+### 评论与批注
+
+- 行内评论标记
+- 评论面板（侧边栏形式）
+- 评论气泡（浮动标记）
+
+### 文档模板库
+
+- 内置模板管理
+- 模板预览
+- 从模板快速创建文档
+- 保存文档为模板
+
+### 协作管理
+
+- 多人协作者在线状态显示
+- 用户加入/离开实时通知
+- WebSocket 实时通信
+
 ### 远程存储
 
 支持多种远程存储协议接入：
@@ -76,6 +98,13 @@ KloggerX 是一款可私有化部署的在线知识协作和管理平台，支�
 | FTP | 文件传输协议，支持匿名/用户认证 |
 | SMB | Windows 共享文件夹，支持域认证 |
 | WebDAV | Web 分布式创作和版本控制 |
+| NFS | 网络文件系统 |
+
+### 云存储
+
+- 阿里云 OSS
+- 腾讯云 COS
+- 百度云 BOS
 
 ### AI 能力
 
@@ -98,6 +127,7 @@ KloggerX 是一款可私有化部署的在线知识协作和管理平台，支�
 | Pinia | 3.0+ | 状态管理 |
 | Vue Router | 4.6+ | 路由管理 |
 | Tiptap | 3.20+ | 富文本编辑器 |
+| Univer Sheet | 0.20+ | 电子表格引擎 |
 | Yjs | 13.6+ | 实时协作 |
 | Axios | 1.13+ | HTTP 客户端 |
 
@@ -265,7 +295,7 @@ npm run build
 
 #### 5. 访问应用
 
-- 前端开发服务：http://localhost:5173
+- 前端开发服务：http://localhost:5178
 - 后端 API 服务：http://localhost:8178
 
 ---
@@ -398,23 +428,27 @@ qdrant:
 
 ## 路线图
 
-### v1.0 (当前)
+### v1.1 (当前)
+
+- [x] 评论与批注系统
+- [x] 文档模板库
+- [x] 协作者在线感知
+- [x] Univer 专业表格引擎集成
+- [x] 操作日志与审计
+- [x] 存储策略管理
+
+### v1.0
 
 - [x] 文档基础管理
 - [x] 富文本编辑器
 - [x] 表格编辑器
 - [x] 幻灯片编辑器
 - [x] 思维导图编辑器
-- [x] 远程存储接入 (SFTP/FTP/SMB)
+- [x] 远程存储接入 (SFTP/FTP/SMB/WebDAV/NFS)
+- [x] 云存储 (阿里云OSS/腾讯COS/百度BOS)
 - [x] 文件预览 (PDF/Office)
 - [x] 用户认证与权限
-
-### v1.1 (计划中)
-
-- [ ] 实时协作增强
-- [ ] 评论与批注
-- [ ] 文档模板库
-- [ ] 全文搜索优化
+- [x] AI 知识库问答
 
 ### v1.2 (规划中)
 
@@ -474,6 +508,8 @@ A: 在配置文件中配置 OnlyOffice 服务器地址和 JWT 密钥即可。
 - [Vue.js](https://vuejs.org/)
 - [Element Plus](https://element-plus.org/)
 - [Tiptap](https://tiptap.dev/)
+- [Univer](https://univer.ai/) - 电子表格引擎
+- [Yjs](https://yjs.dev/) - 实时协作
 - [Gin](https://gin-gonic.com/)
 - [GORM](https://gorm.io/)
 
