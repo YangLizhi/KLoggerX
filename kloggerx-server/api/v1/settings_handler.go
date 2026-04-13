@@ -44,15 +44,25 @@ func SaveAIModelSettings(c *gin.Context) {
 		return
 	}
 
-	data, _ := json.Marshal(req)
+	data, err := json.Marshal(req)
+	if err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg("序列化数据失败: " + err.Error()))
+		return
+	}
 
 	var setting model.SystemSetting
 	result := mysql.DB.Where("`key` = ?", "ai_model_settings").First(&setting)
 	if result.Error != nil {
 		setting = model.SystemSetting{Key: "ai_model_settings", Value: string(data)}
-		mysql.DB.Create(&setting)
+		if err := mysql.DB.Create(&setting).Error; err != nil {
+			c.JSON(http.StatusOK, model.ErrorMsg("保存设置失败: "+err.Error()))
+			return
+		}
 	} else {
-		mysql.DB.Model(&model.SystemSetting{}).Where("`key` = ?", "ai_model_settings").Update("value", string(data))
+		if err := mysql.DB.Model(&model.SystemSetting{}).Where("`key` = ?", "ai_model_settings").Update("value", string(data)).Error; err != nil {
+			c.JSON(http.StatusOK, model.ErrorMsg("保存设置失败: "+err.Error()))
+			return
+		}
 	}
 
 	c.JSON(http.StatusOK, model.Success(nil))

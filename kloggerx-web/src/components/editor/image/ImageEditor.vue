@@ -59,7 +59,7 @@ const emit = defineEmits<{
   (e: 'save', content: string): void
 }>()
 
-const containerRef = ref<HTMLElement>()
+// const containerRef = ref<HTMLElement>()
 const imageUrl = ref('')
 const imageInfo = ref<ImageInfo | null>(null)
 const scale = ref(100)

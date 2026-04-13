@@ -77,7 +77,7 @@
 
 <script setup lang="ts">
 import { ref, computed, nextTick, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
+// import { ElMessage } from 'element-plus'
 import { post } from '@/api/request'
 
 interface Message {

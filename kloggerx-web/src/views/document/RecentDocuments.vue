@@ -1,7 +1,7 @@
 <template>
   <div class="recent-docs-page">
     <h2>最近访问</h2>
-    <el-table v-loading="loading" :data="documents" style="width: 100%; margin-top: 16px" table-layout="auto" @row-click="(row: any) => window.open(`/doc/${row.id}`, '_blank')">
+    <el-table v-loading="loading" :data="documents" style="width: 100%; margin-top: 16px" table-layout="auto" @row-click="handleRowClick">
       <el-table-column label="名称" min-width="200">
         <template #default="{ row }">
           <div style="display:flex;align-items:center;gap:8px">
@@ -46,5 +46,9 @@ async function fetchData() {
     total.value = res.data?.total || 0
   } finally { loading.value = false }
 }
+function handleRowClick(row: any) {
+  window.open(`/doc/${row.id}`, '_blank')
+}
+
 onMounted(fetchData)
 </script>

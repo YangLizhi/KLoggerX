@@ -151,7 +151,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import SurveyToolbar from './SurveyToolbar.vue'
-import { ElMessage } from 'element-plus'
+// import { ElMessage } from 'element-plus'
 
 interface Question {
   id: string

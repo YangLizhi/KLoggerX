@@ -5,6 +5,16 @@ export function getCollaborators(documentId: number) {
   return get<ApiResponse<Collaborator[]>>(`/api/v1/collaborate/${documentId}/users`)
 }
 
+export interface UserSearchResult {
+  id: number
+  username: string
+  avatar: string
+}
+
+export function searchUsers(query: string) {
+  return get<ApiResponse<UserSearchResult[]>>(`/api/v1/users/search`, { q: query })
+}
+
 export function addComment(data: { documentId: number; content: string; selection?: any; parentId?: number }) {
   return post<ApiResponse>('/api/v1/collaborate/comment/add', data)
 }

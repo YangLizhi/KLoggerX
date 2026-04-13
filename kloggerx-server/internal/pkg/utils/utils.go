@@ -3,6 +3,9 @@ package utils
 import (
 	"crypto/rand"
 	"encoding/hex"
+	"os"
+	"path/filepath"
+	"strings"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -34,4 +37,39 @@ func GetUserID(v interface{}) uint {
 	default:
 		return 0
 	}
+}
+
+// DirEntry represents a directory entry for listing
+type DirEntry struct {
+	Name string `json:"name"`
+	Path string `json:"path"`
+}
+
+// ListDirectories lists subdirectories in the given path
+func ListDirectories(path string) ([]DirEntry, error) {
+	// Clean the path
+	path = filepath.Clean(path)
+
+	// Open the directory
+	entries, err := os.ReadDir(path)
+	if err != nil {
+		return nil, err
+	}
+
+	var dirs []DirEntry
+	for _, entry := range entries {
+		// Only include directories
+		if entry.IsDir() {
+			// Skip hidden directories
+			if strings.HasPrefix(entry.Name(), ".") {
+				continue
+			}
+			dirs = append(dirs, DirEntry{
+				Name: entry.Name(),
+				Path: filepath.Join(path, entry.Name()),
+			})
+		}
+	}
+
+	return dirs, nil
 }

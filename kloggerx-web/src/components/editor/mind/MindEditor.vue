@@ -79,7 +79,7 @@ const emit = defineEmits<{
   (e: 'save', content: string): void
 }>()
 
-const canvasRef = ref<HTMLElement>()
+// const canvasRef = ref<HTMLElement>()
 const nodes = ref<MindNode[]>([])
 const selectedNode = ref<FlatNode | null>(null)
 const editingId = ref<string | null>(null)

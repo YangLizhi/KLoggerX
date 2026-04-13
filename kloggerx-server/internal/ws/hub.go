@@ -6,8 +6,10 @@ import (
 	"net/http"
 	"strconv"
 	"sync"
+	"time"
 
 	"kloggerx-server/internal/pkg/jwt"
+	"kloggerx-server/internal/service"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
@@ -33,6 +35,7 @@ type Client struct {
 	Send       chan ClientMessage
 	UserID     uint
 	UserName   string
+	UserAvatar string
 	DocumentID uint
 	Color      string
 }
@@ -62,8 +65,15 @@ func NewHub() *Hub {
 }
 
 func (h *Hub) Run() {
+	// 定期清理空闲的 Yjs 房间（每分钟一次）
+	cleanupTicker := time.NewTicker(1 * time.Minute)
+	defer cleanupTicker.Stop()
+
 	for {
 		select {
+		case <-cleanupTicker.C:
+			GlobalYjsManager.CleanupIdleRooms()
+
 		case client := <-h.register:
 			h.mu.Lock()
 			if h.rooms[client.DocumentID] == nil {
@@ -72,6 +82,23 @@ func (h *Hub) Run() {
 			h.rooms[client.DocumentID][client] = true
 			h.mu.Unlock()
 			h.broadcastCollaborators(client.DocumentID)
+			h.broadcastToRoom(client.DocumentID, Message{
+				Type: "user_join",
+				Data: map[string]interface{}{
+					"userId":    client.UserID,
+					"userName":  client.UserName,
+					"userAvatar": client.UserAvatar,
+					"color":     client.Color,
+					"isOnline":  true,
+				},
+			}, nil)
+			// Record join event asynchronously (non-blocking)
+			// Note: For Yjs connections, documentID is offset by 1000000
+			actualDocID := client.DocumentID
+			if actualDocID > 1000000 {
+				actualDocID = actualDocID - 1000000
+			}
+			service.RecordCollaborateEventAsync("join", actualDocID, client.UserID, "加入了文档协作")
 
 		case client := <-h.unregister:
 			h.mu.Lock()
@@ -90,6 +117,13 @@ func (h *Hub) Run() {
 				Type: "user_leave",
 				Data: map[string]interface{}{"userId": client.UserID},
 			}, nil)
+			// Record leave event asynchronously (non-blocking)
+			// Note: For Yjs connections, documentID is offset by 1000000
+			actualDocID := client.DocumentID
+			if actualDocID > 1000000 {
+				actualDocID = actualDocID - 1000000
+			}
+			service.RecordCollaborateEventAsync("leave", actualDocID, client.UserID, "离开了文档协作")
 
 		case msg := <-h.broadcast:
 			h.mu.RLock()
@@ -109,25 +143,45 @@ func (h *Hub) Run() {
 	}
 }
 
-var colors = []string{"#3370ff", "#f54a45", "#36b37e", "#ff7d00", "#9254de", "#00b8d9", "#f5a623", "#eb2f96"}
+// 12 distinct colors for collaboration
+var colors = []string{
+	"#3370ff", // 蓝色
+	"#f54a45", // 红色
+	"#36b37e", // 绿色
+	"#ff7d00", // 橙色
+	"#9254de", // 紫色
+	"#00b8d9", // 青色
+	"#f5a623", // 金色
+	"#eb2f96", // 粉色
+	"#722ed1", // 深紫
+	"#13c2c2", // 青绿
+	"#fa8c16", // 橙黄
+	"#52c41a", // 草绿
+}
+
+// getUserColor returns a fixed color for a user based on their userId hash
+func getUserColor(userID uint) string {
+	// Simple hash: use userID modulo number of colors
+	index := int(userID) % len(colors)
+	return colors[index]
+}
 
 func (h *Hub) broadcastCollaborators(docID uint) {
 	h.mu.RLock()
 	clients := h.rooms[docID]
 	var collaborators []map[string]interface{}
-	i := 0
 	for c := range clients {
 		collaborators = append(collaborators, map[string]interface{}{
-			"userId":   c.UserID,
-			"userName": c.UserName,
-			"color":    colors[i%len(colors)],
-			"isOnline": true,
+			"userId":    c.UserID,
+			"userName":  c.UserName,
+			"userAvatar": c.UserAvatar,
+			"color":     c.Color,
+			"isOnline":  true,
 		})
-		i++
 	}
 	h.mu.RUnlock()
 
-	h.broadcastToRoom(docID, Message{Type: "collaborators", Data: collaborators}, nil)
+	h.broadcastToRoom(docID, Message{Type: "collaborators_update", Data: collaborators}, nil)
 }
 
 func (h *Hub) broadcastToRoom(docID uint, msg Message, exclude *Client) {
@@ -161,13 +215,22 @@ func HandleWebSocket(hub *Hub, c *gin.Context) {
 		return
 	}
 
+	// Get user avatar from database
+	user, err := service.GetUserByID(claims.UserID)
+	userAvatar := ""
+	if err == nil && user != nil {
+		userAvatar = user.Avatar
+	}
+
 	client := &Client{
 		Hub:        hub,
 		Conn:       conn,
 		Send:       make(chan ClientMessage, 256),
 		UserID:     claims.UserID,
 		UserName:   claims.Username,
+		UserAvatar: userAvatar,
 		DocumentID: uint(docID),
+		Color:      getUserColor(claims.UserID),
 	}
 
 	hub.register <- client
@@ -194,13 +257,22 @@ func HandleYjsWebSocket(hub *Hub, c *gin.Context) {
 		return
 	}
 
+	// Get user avatar from database
+	user, err := service.GetUserByID(claims.UserID)
+	userAvatar := ""
+	if err == nil && user != nil {
+		userAvatar = user.Avatar
+	}
+
 	client := &Client{
 		Hub:        hub,
 		Conn:       conn,
 		Send:       make(chan ClientMessage, 256),
 		UserID:     claims.UserID,
 		UserName:   claims.Username,
+		UserAvatar: userAvatar,
 		DocumentID: uint(docID),
+		Color:      getUserColor(claims.UserID),
 	}
 
 	// For Yjs, we use a separate hub namespace by offsetting document IDs
@@ -258,21 +330,30 @@ func (c *Client) readPump() {
 }
 
 func (c *Client) readYjsPump() {
+	// 获取真实的文档 ID（去除偏移量）
+	actualDocID := c.DocumentID
+	if actualDocID > 1000000 {
+		actualDocID = actualDocID - 1000000
+	}
+
+	// 获取或创建 Yjs 房间
+	yjsRoom := GlobalYjsManager.GetOrCreateRoom(actualDocID)
+	yjsRoom.AddClient(c)
+
 	defer func() {
 		c.Hub.unregister <- c
+		yjsRoom.RemoveClient(c)
 		c.Conn.Close()
 	}()
+
 	for {
 		msgType, message, err := c.Conn.ReadMessage()
 		if err != nil {
 			break
 		}
-		// Forward all messages (binary Yjs data) to room
-		c.Hub.broadcast <- &RoomMessage{
-			DocumentID: c.DocumentID,
-			MsgType:    msgType,
-			Data:       message,
-			Sender:     c,
+		// 只处理二进制消息（Yjs 协议）
+		if msgType == websocket.BinaryMessage {
+			yjsRoom.HandleMessage(c, message)
 		}
 	}
 }
@@ -283,6 +364,15 @@ func (c *Client) writePump() {
 		if err := c.Conn.WriteMessage(msg.MsgType, msg.Data); err != nil {
 			break
 		}
+	}
+}
+
+// SendBinary 发送二进制消息（用于 Yjs 协议）
+func (c *Client) SendBinary(data []byte) {
+	select {
+	case c.Send <- ClientMessage{MsgType: websocket.BinaryMessage, Data: data}:
+	default:
+		// channel 满了，客户端可能已断开
 	}
 }
 

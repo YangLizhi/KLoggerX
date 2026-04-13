@@ -188,3 +188,44 @@
   pointer-events: none;
   height: 0;
 }
+
+/* Comment Mark 评论标记样式 */
+.tiptap .comment-mark {
+  background-color: #fef3cd;
+  border-bottom: 2px solid #f0c040;
+  cursor: pointer;
+  transition: background-color 0.2s, border-color 0.2s;
+  border-radius: 2px;
+  padding: 0 1px;
+}
+
+.tiptap .comment-mark:hover {
+  background-color: #fce588;
+  border-bottom-color: #e0b030;
+}
+
+/* 已解决的评论标记 */
+.tiptap .comment-mark.resolved {
+  background-color: #f0f0f0;
+  border-bottom-color: #ccc;
+}
+
+.tiptap .comment-mark.resolved:hover {
+  background-color: #e8e8e8;
+}
+
+/* Editor Content Container - 为评论气泡定位 */
+.editor-content-wrapper {
+  position: relative;
+  display: flex;
+  justify-content: center;
+}
+
+.editor-content {
+  position: relative;
+}
+
+/* 编辑器右侧留白用于评论气泡 */
+.editor-content.has-comment-bubbles {
+  margin-right: 40px;
+}

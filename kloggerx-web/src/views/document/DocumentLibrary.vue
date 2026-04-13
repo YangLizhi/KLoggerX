@@ -426,26 +426,36 @@
     </el-dialog>
 
     <!-- Template Library Dialog -->
-    <el-dialog v-model="showTemplateLibrary" title="模板库" width="800px" destroy-on-close>
-      <div class="template-library">
+    <el-dialog v-model="showTemplateLibrary" title="模板库" width="800px" destroy-on-close @open="loadTemplates">
+      <div v-loading="templatesLoading" class="template-library">
         <div class="template-categories">
           <div
-            v-for="cat in templateCategories"
-            :key="cat.id"
             class="template-cat"
-            :class="{ active: selectedTemplateCat === cat.id }"
-            @click="selectedTemplateCat = cat.id"
+            :class="{ active: selectedTemplateCat === '' }"
+            @click="selectedTemplateCat = ''"
           >
-            {{ cat.name }}
+            全部
+          </div>
+          <div
+            v-for="cat in templateCategories"
+            :key="cat"
+            class="template-cat"
+            :class="{ active: selectedTemplateCat === cat }"
+            @click="selectedTemplateCat = cat"
+          >
+            {{ cat }}
           </div>
         </div>
         <div class="template-grid">
           <div v-for="tpl in filteredTemplates" :key="tpl.id" class="template-card" @click="useTemplate(tpl)">
-            <div class="template-preview" :style="{ background: tpl.previewColor }">
-              <el-icon :size="32"><component :is="tpl.icon" /></el-icon>
+            <div class="template-preview" :style="{ background: getTypeBg(tpl.type) }">
+              <el-icon :size="32" :color="getTypeColor(tpl.type)"><component :is="getTypeIcon(tpl.type)" /></el-icon>
             </div>
             <div class="template-name">{{ tpl.name }}</div>
-            <div class="template-desc">{{ tpl.description }}</div>
+            <div class="template-desc">{{ tpl.preview || tpl.description || '暂无预览内容' }}</div>
+          </div>
+          <div v-if="!templatesLoading && filteredTemplates.length === 0" class="template-empty">
+            <el-empty description="暂无模板" />
           </div>
         </div>
       </div>
@@ -511,8 +521,9 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, onBeforeUnmount, inject, watch } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { getDocumentTree, pinDocument, favoriteDocument, deleteDocument, copyDocument, moveDocument, importDocument, createDocument, updateDocument } from '@/api/modules/document'
+import { getTemplates, useTemplate as apiUseTemplate, type Template } from '@/api/modules/template'
 import { listRemoteStorages } from '@/api/modules/admin'
 import { listRemoteFiles, downloadRemoteFile, deleteRemoteFile, uploadRemoteFile, type RemoteFileInfo } from '@/api/modules/remote-storage'
 import type { Document, DocumentType } from '@/types'
@@ -540,7 +551,6 @@ interface RemoteStorageFolder {
   status: string
 }
 
-const router = useRouter()
 const route = useRoute()
 const loading = ref(false)
 
@@ -559,12 +569,12 @@ const importFiles = ref<File[]>([])
 const importLoading = ref(false)
 const importProgress = ref(0)
 const uploadType = ref<'file' | 'folder' | 'import'>('import')
-const uploadRef = ref()
+// const uploadRef = ref<any>()
 const showNewMenu = ref(false)
 const showUploadMenu = ref(false)
 const showMoreTypes = ref(false)
 const showTemplateLibrary = ref(false)
-const folderTab = ref<'my' | 'shared'>('my')
+// const folderTab = ref<'my' | 'shared'>('my')
 const sortBy = ref('updated')
 
 const uploadDialogTitle = computed(() => {
@@ -621,35 +631,42 @@ const shareInvitePermission = ref('edit')
 
 // Template library
 const showUpgradeDialog = ref(false)
-const selectedTemplateCat = ref('all')
-const templateCategories = ref([
-  { id: 'all', name: '全部' },
-  { id: 'doc', name: '文档' },
-  { id: 'sheet', name: '表格' },
-  { id: 'slide', name: '演示' },
-  { id: 'project', name: '项目管理' },
-  { id: 'hr', name: '人力资源' },
-])
-const templates = ref([
-  { id: 1, name: '空白文档', category: 'doc', icon: 'Document', previewColor: '#e8f0fe', description: '从空白开始创建' },
-  { id: 2, name: '会议纪要', category: 'doc', icon: 'Notebook', previewColor: '#fef3e0', description: '团队会议记录模板' },
-  { id: 3, name: '项目计划', category: 'project', icon: 'TrendCharts', previewColor: '#e6f7ef', description: '项目规划与跟踪' },
-  { id: 4, name: '周报模板', category: 'doc', icon: 'Document', previewColor: '#fce4ec', description: '工作周报格式' },
-  { id: 5, name: '空白表格', category: 'sheet', icon: 'Grid', previewColor: '#e6f7ef', description: '空白电子表格' },
-  { id: 6, name: '项目排期表', category: 'sheet', icon: 'Calendar', previewColor: '#e8f0fe', description: '项目时间规划' },
-  { id: 7, name: '空白演示', category: 'slide', icon: 'Monitor', previewColor: '#fef3e0', description: '空白幻灯片' },
-  { id: 8, name: '产品介绍', category: 'slide', icon: 'Monitor', previewColor: '#e8f0fe', description: '产品展示模板' },
-  { id: 9, name: '员工入职', category: 'hr', icon: 'User', previewColor: '#e6f7ef', description: '新员工入职流程' },
-  { id: 10, name: '需求文档', category: 'doc', icon: 'Document', previewColor: '#f0f5ff', description: '产品需求模板' },
-])
+const selectedTemplateCat = ref('')
+const templateCategories = ref<string[]>([])
+const templates = ref<Template[]>([])
+const templatesLoading = ref(false)
+
 const filteredTemplates = computed(() => {
-  if (selectedTemplateCat.value === 'all') return templates.value
+  if (!selectedTemplateCat.value) return templates.value
   return templates.value.filter(t => t.category === selectedTemplateCat.value)
 })
-function useTemplate(tpl: any) {
+
+async function loadTemplates() {
+  templatesLoading.value = true
+  try {
+    const res = await getTemplates() as any
+    templates.value = res.data?.list || []
+    templateCategories.value = res.data?.categories || []
+  } finally {
+    templatesLoading.value = false
+  }
+}
+
+async function useTemplate(tpl: Template) {
   showTemplateLibrary.value = false
-  handleCreate(tpl.category === 'sheet' ? 'sheet' : tpl.category === 'slide' ? 'slide' : 'doc')
-  ElMessage.success(`已使用模板"${tpl.name}"创建`)
+  try {
+    const res = await apiUseTemplate(tpl.id, {
+      title: tpl.name,
+      parentId: currentParentId.value,
+    }) as any
+    ElMessage.success(`已使用模板"${tpl.name}"创建文档`)
+    if (res.data?.id) {
+      window.open(`/doc/${res.data.id}`, '_blank')
+    }
+    fetchDocuments()
+  } catch {
+    ElMessage.error('创建文档失败')
+  }
 }
 
 // Transfer list
@@ -909,6 +926,14 @@ function getTypeColor(type: string, ext?: string): string {
     if (extIconMap[e]) return extIconMap[e].color
   }
   return typeMap[type]?.color || '#888'
+}
+
+const typeBgMap: Record<string, string> = {
+  doc: '#e8f0fe', sheet: '#e6f7ef', slide: '#fef3e0',
+  mindnote: '#f3edfd', bitable: '#e0f7fa', survey: '#fce4ec', folder: '#fff3e0',
+}
+function getTypeBg(type: string): string {
+  return typeBgMap[type] || '#f5f5f5'
 }
 
 function getDisplayName(doc: Document): string {
@@ -1704,7 +1729,7 @@ function handleDragLeave() {
   dragOverDocId.value = null
 }
 
-async function handleDrop(e: DragEvent, targetDoc: Document) {
+async function handleDrop(_e: DragEvent, targetDoc: Document) {
   dragOverDocId.value = null
   if (!draggedDoc.value || draggedDoc.value.id === targetDoc.id) return
   
@@ -2526,6 +2551,12 @@ onBeforeUnmount(() => {
 .template-desc {
   font-size: 12px;
   color: var(--kx-text-placeholder);
+}
+.template-empty {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: center;
+  padding: 40px 0;
 }
 
 /* More Types Dropdown Submenu */

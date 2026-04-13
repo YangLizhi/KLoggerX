@@ -330,7 +330,7 @@ async function submitUser() {
         nickname: userForm.value.nickname,
         email: userForm.value.email,
         role: userForm.value.role,
-        departmentId: userForm.value.departmentId,
+        departmentId: userForm.value.departmentId ?? undefined,
       })
       ElMessage.success('用户信息已更新')
     } else {
@@ -340,7 +340,7 @@ async function submitUser() {
         password: userForm.value.password,
         nickname: userForm.value.nickname,
         role: userForm.value.role,
-        departmentId: userForm.value.departmentId,
+        departmentId: userForm.value.departmentId ?? undefined,
       })
       ElMessage.success('用户已创建')
     }
@@ -382,15 +382,15 @@ function editPermissions(user: UserItem) {
   kbPermissions.value = []
 }
 
-function updateDocPerm(p: any) {
+function updateDocPerm(_p: any) {
   ElMessage.success('权限已更新')
 }
 
-function updateDrivePerm(p: any) {
+function updateDrivePerm(_p: any) {
   ElMessage.success('权限已更新')
 }
 
-function updateKbPerm(p: any) {
+function updateKbPerm(_p: any) {
   ElMessage.success('权限已更新')
 }
 

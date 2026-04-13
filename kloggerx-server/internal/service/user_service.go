@@ -104,3 +104,17 @@ func GetUserList(page, pageSize int, keyword string) ([]model.User, int64, error
 	err := db.Offset((page - 1) * pageSize).Limit(pageSize).Find(&users).Error
 	return users, total, err
 }
+
+// SearchUsersByUsername searches users by username prefix (for @mention feature)
+// Returns up to limit results
+func SearchUsersByUsername(prefix string, limit int) ([]model.User, error) {
+	var users []model.User
+	if limit <= 0 {
+		limit = 10
+	}
+	err := mysql.DB.Model(&model.User{}).
+		Where("username LIKE ?", prefix+"%").
+		Limit(limit).
+		Find(&users).Error
+	return users, err
+}

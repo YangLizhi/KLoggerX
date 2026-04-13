@@ -173,7 +173,7 @@ type OperationLog struct {
 
 type SystemSetting struct {
 	Key   string `gorm:"primaryKey;size:100" json:"key"`
-	Value string `gorm:"type:text" json:"value"`
+	Value string `gorm:"type:longtext" json:"value"`
 }
 
 // Template is a pre-built document template that can be used to quickly create documents.
@@ -184,6 +184,7 @@ type Template struct {
 	Type        string    `gorm:"size:20;not null" json:"type"` // doc, sheet, slide, mindnote, bitable
 	Category    string    `gorm:"size:50;index" json:"category"`
 	Content     string    `gorm:"type:longtext" json:"content"`
+	Preview     string    `gorm:"type:text" json:"preview"` // Text preview extracted from content
 	IsBuiltin   bool      `gorm:"default:false" json:"isBuiltin"`
 	CreatedAt   time.Time `json:"createdAt"`
 }

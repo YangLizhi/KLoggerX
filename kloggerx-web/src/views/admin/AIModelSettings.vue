@@ -166,7 +166,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessageBox } from 'element-plus'
 import type { FormInstance, FormRules } from 'element-plus'
 import { getAIModelSettings, saveAIModelSettings, detectAIModels, testAIModel } from '@/api/modules/admin'
 import { useNotify } from '@/composables/useNotify'
@@ -350,8 +350,9 @@ async function saveAllProviders() {
       })),
       kbSettings: kbSettings.value,
     })
-  } catch {
-    // silent save
+  } catch (e: any) {
+    $notify.error('保存设置失败: ' + (e?.message || '未知错误'))
+    console.error('Failed to save AI settings:', e)
   }
 }
 
@@ -399,13 +400,14 @@ async function detectModels(p: Provider) {
   }
 }
 
-function setDefaultModel(m: Model) {
+async function setDefaultModel(m: Model) {
   const provider = providers.value.find(p => p.models.includes(m))
   provider?.models.forEach(x => {
     if (x.type === m.type) x.isDefault = false
   })
   m.isDefault = true
   $notify.success(`已将 ${m.name} 设为默认`)
+  await saveAllProviders()
 }
 
 // Test model

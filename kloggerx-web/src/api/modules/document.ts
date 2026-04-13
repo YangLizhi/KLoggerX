@@ -100,3 +100,36 @@ export function exportDocument(id: number, format: string) {
 export function getDocumentFilePreview(id: number) {
   return get<ApiResponse<{ url: string; fileType: string; fileName: string }>>(`/api/v1/document/${id}/file-preview`)
 }
+
+export function saveDocumentAsTemplate(docId: number, data: { name: string; description: string; category: string }) {
+  return post<ApiResponse>(`/api/v1/document/${docId}/save-as-template`, data)
+}
+
+export interface EnhancedSearchResult {
+  id: number
+  title: string
+  preview: string
+  type: string
+  updatedAt: string
+  ownerId: number
+}
+
+export interface EnhancedSearchResponse {
+  items: EnhancedSearchResult[]
+  total: number
+  page: number
+  pageSize: number
+}
+
+export function enhancedSearchDocuments(data: {
+  query: string
+  type?: string
+  page?: number
+  pageSize?: number
+}) {
+  return post<ApiResponse<EnhancedSearchResponse>>('/api/v1/document/search', data)
+}
+
+export function getSearchSuggestions(q: string) {
+  return get<ApiResponse<{ suggestions: string[] }>>('/api/v1/search/suggestions', { q })
+}

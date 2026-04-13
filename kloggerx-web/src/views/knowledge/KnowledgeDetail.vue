@@ -1228,8 +1228,19 @@ async function handleBuildRaptorTree() {
   try {
     await buildRaptorTree(kbId, { clusterCount: 10, maxLevel: 3 })
     ElMessage.success('RAPTOR 树构建已启动，请稍后刷新查看结果')
-    setTimeout(() => {
-      loadRaptorStats()
+    // 轮询机制：每2秒查询一次，最多30次（60秒）
+    let retryCount = 0
+    const maxRetries = 30
+    const pollTimer = setInterval(async () => {
+      retryCount++
+      await loadRaptorStats()
+      // 如果已有数据或超过最大重试次数，停止轮询
+      if ((raptorStats.value && raptorStats.value.totalNodes > 0) || retryCount >= maxRetries) {
+        clearInterval(pollTimer)
+        if (retryCount >= maxRetries) {
+          ElMessage.info('构建可能仍在进行中，请稍后手动刷新')
+        }
+      }
     }, 2000)
   } catch (e: any) {
     const msg = e?.response?.data?.message || e?.message || '构建失败'

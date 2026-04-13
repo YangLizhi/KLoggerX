@@ -335,7 +335,7 @@ const activeTab = ref('profile')
 const saving = ref(false)
 const changingPwd = ref(false)
 const showUpgradeDialog = ref(false)
-const profileFormRef = ref<FormInstance>()
+// const profileFormRef = ref<FormInstance>()
 const pwdFormRef = ref<FormInstance>()
 
 const profileForm = reactive({ nickname: '', email: '', avatar: '', department: '' })

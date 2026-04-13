@@ -16,10 +16,29 @@
         </template>
       </div>
       <div class="editor-header-center">
-        <div class="collab-avatars" v-if="collaborators.length">
-          <el-tooltip v-for="c in collaborators" :key="c.userId" :content="c.userName">
-            <el-avatar :size="24" :style="{ border: `2px solid ${c.color}` }" :src="c.userAvatar">{{ c.userName[0] }}</el-avatar>
-          </el-tooltip>
+        <div class="collab-container" v-if="displayCollaborators.length">
+          <transition-group name="collab-fade" tag="div" class="collab-avatars">
+            <el-tooltip
+              v-for="c in displayCollaborators"
+              :key="c.userId"
+              :content="c.userName"
+              placement="bottom"
+            >
+              <div class="collab-avatar-wrapper">
+                <el-avatar
+                  :size="32"
+                  :style="{ borderColor: c.color }"
+                  :src="c.userAvatar || undefined"
+                  class="collab-avatar"
+                >
+                  {{ c.userName?.[0]?.toUpperCase() || '?' }}
+                </el-avatar>
+              </div>
+            </el-tooltip>
+          </transition-group>
+          <el-badge :value="collaborators.length" :hidden="collaborators.length <= maxDisplayAvatars" class="collab-badge">
+            <span class="collab-count">{{ collaborators.length }}人在线</span>
+          </el-badge>
         </div>
       </div>
       <div class="editor-header-right">
@@ -41,6 +60,7 @@
               <el-dropdown-item command="export">导出</el-dropdown-item>
               <el-dropdown-item command="pin">{{ doc.isPinned.value ? '取消置顶' : '置顶' }}</el-dropdown-item>
               <el-dropdown-item command="favorite">{{ doc.isFavorite.value ? '取消收藏' : '收藏' }}</el-dropdown-item>
+              <el-dropdown-item command="saveAsTemplate">保存为模板</el-dropdown-item>
             </el-dropdown-menu>
           </template>
         </el-dropdown>
@@ -48,12 +68,21 @@
       </div>
     </header>
 
-    <EditorToolbar v-if="editor && doc.docType.value === 'doc'" :editor="editor" />
+    <EditorToolbar v-if="editor && doc.docType.value === 'doc'" :editor="editor as any" />
 
     <div class="editor-body" v-loading="doc.loading.value">
       <template v-if="doc.docType.value === 'doc'">
-        <div class="editor-content">
-          <EditorContent :editor="editor" />
+        <div class="editor-content-wrapper">
+          <div ref="editorContentRef" class="editor-content" :class="{ 'has-comment-bubbles': showComments }">
+            <EditorContent :editor="(editor as any)" />
+            <CommentBubble
+              v-if="editor"
+              :editor="(editor as any)"
+              :document-id="docId"
+              :editor-container="editorContentRef"
+              @click-comment="handleCommentBubbleClick"
+            />
+          </div>
         </div>
       </template>
       <template v-else-if="doc.docType.value === 'sheet'">
@@ -96,10 +125,24 @@
       </template>
     </div>
 
+    <!-- 协作通知提示 -->
+    <div class="collaborate-notices">
+      <TransitionGroup name="notice-fade">
+        <div v-for="notice in collaborateNotices" :key="notice.id" class="collaborate-notice">
+          <span class="notice-avatar" :style="{ borderColor: notice.color }">
+            {{ notice.username?.charAt(0)?.toUpperCase() || '?' }}
+          </span>
+          <span>{{ notice.username }} {{ notice.action === 'join' ? '加入了编辑' : '离开了编辑' }}</span>
+        </div>
+      </TransitionGroup>
+    </div>
+
     <CommentPanel
       v-if="showComments"
       :document-id="docId"
-      :editor="editor"
+      :editor="(editor as any)"
+      :active-comment-id="activeCommentId"
+      :owner-id="documentOwnerId"
       @close="showComments = false"
     />
 
@@ -120,11 +163,29 @@
         <el-button @click="doExport('markdown')">导出为 Markdown</el-button>
       </div>
     </el-dialog>
+
+    <el-dialog v-model="showSaveAsTemplateDialog" title="保存为模板" width="480px">
+      <el-form :model="templateForm" label-width="80px">
+        <el-form-item label="模板名称" required>
+          <el-input v-model="templateForm.name" placeholder="请输入模板名称" />
+        </el-form-item>
+        <el-form-item label="模板描述">
+          <el-input v-model="templateForm.description" type="textarea" :rows="3" placeholder="请输入模板描述（可选）" />
+        </el-form-item>
+        <el-form-item label="模板分类">
+          <el-input v-model="templateForm.category" placeholder="请输入分类名称（可选）" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="showSaveAsTemplateDialog = false">取消</el-button>
+        <el-button type="primary" :loading="templateSaving" @click="handleSaveAsTemplate">保存</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, watch, defineAsyncComponent } from 'vue'
+import { ref, onMounted, onBeforeUnmount, watch, defineAsyncComponent, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useEditor, EditorContent } from '@tiptap/vue-3'
 import StarterKit from '@tiptap/starter-kit'
@@ -140,10 +201,17 @@ import { Table } from '@tiptap/extension-table'
 import TableRow from '@tiptap/extension-table-row'
 import TableCell from '@tiptap/extension-table-cell'
 import TableHeader from '@tiptap/extension-table-header'
-import { getDocumentVersions, rollbackVersion } from '@/api/modules/document'
+// Yjs 协作扩展已禁用
+// import Collaboration from '@tiptap/extension-collaboration'
+// import CollaborationCursor from '@tiptap/extension-collaboration-cursor'
+import { CommentMark } from '@/components/editor/rich-text/extensions/CommentMark'
+import CommentBubble from '@/components/editor/rich-text/CommentBubble.vue'
+import { getDocumentVersions, rollbackVersion, saveDocumentAsTemplate } from '@/api/modules/document'
 import { getDocWs, closeDocWs } from '@/api/websocket'
 import { useCollaborateStore } from '@/store/modules/collaborate'
+import { useUserStore } from '@/store/modules/user'
 import { useDocument } from '@/hooks/useDocument'
+import { useYjsCollaboration } from '@/composables/useYjsCollaboration'
 import EditorToolbar from '@/components/editor/rich-text/EditorToolbar.vue'
 import PermissionDialog from '@/components/permission/PermissionDialog.vue'
 import ShareDialog from '@/components/share/ShareDialog.vue'
@@ -163,14 +231,75 @@ const FilePreviewEditor = defineAsyncComponent(() => import('@/components/editor
 
 const route = useRoute()
 const collabStore = useCollaborateStore()
+const userStore = useUserStore()
 const docId = ref(Number(route.params.id))
 const showPermDialog = ref(false)
 const showShareDialog = ref(false)
 const showComments = ref(false)
+const activeCommentId = ref<string | null>(null)
+const editorContentRef = ref<HTMLElement | null>(null)
 const showHistory = ref(false)
 const showExportDialog = ref(false)
+const showSaveAsTemplateDialog = ref(false)
+const templateForm = ref({
+  name: '',
+  description: '',
+  category: ''
+})
+const templateSaving = ref(false)
 const versions = ref<DocumentVersion[]>([])
 const collaborators = ref<Collaborator[]>([])
+const maxDisplayAvatars = 5
+const documentOwnerId = ref<number | undefined>(undefined)
+
+// 协作通知提示
+interface CollaborateNotice {
+  id: number
+  username: string
+  avatar: string
+  color: string
+  action: 'join' | 'leave'
+  timestamp: number
+}
+const collaborateNotices = ref<CollaborateNotice[]>([])
+let noticeIdCounter = 0
+
+// 添加协作通知
+function addCollaborateNotice(username: string, avatar: string, color: string, action: 'join' | 'leave') {
+  // 最多同时显示3条，多余的排队（通过移除旧的实现）
+  if (collaborateNotices.value.length >= 3) {
+    collaborateNotices.value.shift()
+  }
+  
+  const notice: CollaborateNotice = {
+    id: ++noticeIdCounter,
+    username,
+    avatar,
+    color,
+    action,
+    timestamp: Date.now()
+  }
+  
+  collaborateNotices.value.push(notice)
+  
+  // 3秒后自动移除
+  setTimeout(() => {
+    const index = collaborateNotices.value.findIndex(n => n.id === notice.id)
+    if (index > -1) {
+      collaborateNotices.value.splice(index, 1)
+    }
+  }, 3000)
+}
+
+// Yjs 协作相关（已禁用）
+const yjsCollaboration = ref<ReturnType<typeof useYjsCollaboration> | null>(null)
+const currentUserColor = ref('#3b82f6') // 默认颜色，将从协作者列表中获取
+// Yjs 已禁用，不再使用回退定时器
+
+// Computed property to limit displayed collaborators
+const displayCollaborators = computed(() => {
+  return collaborators.value.slice(0, maxDisplayAvatars)
+})
 
 // Reference to FilePreviewEditor component for accessing file info
 const filePreviewRef = ref<{
@@ -193,9 +322,30 @@ function getFileTagType(fileType: string): string {
 
 const doc = useDocument(() => docId.value)
 
-const editor = useEditor({
-  extensions: [
-    StarterKit.configure({ history: true }),
+// 获取当前用户名（Yjs 已禁用，保留以备后续启用）
+// function getCurrentUserName(): string { ... }
+
+// 获取当前用户 ID
+function getCurrentUserId(): number {
+  const userStr = localStorage.getItem('kx_user')
+  if (userStr) {
+    try {
+      const user = JSON.parse(userStr)
+      return user.id || 0
+    } catch {
+      return 0
+    }
+  }
+  return 0
+}
+
+// 获取当前用户头像（Yjs 已禁用，保留以备后续启用）
+// function getCurrentUserAvatar(): string { ... }
+
+// 编辑器扩展配置（非协作模式）
+const createEditorExtensions = () => {
+  const extensions: any[] = [
+    StarterKit.configure({}),
     Placeholder.configure({ placeholder: '输入 / 唤起菜单...' }),
     Underline,
     TextAlign.configure({ types: ['heading', 'paragraph'] }),
@@ -208,24 +358,72 @@ const editor = useEditor({
     TableRow,
     TableCell,
     TableHeader,
-  ],
+    CommentMark,
+  ]
+  // Yjs 已禁用，不再添加 Collaboration 和 CollaborationCursor
+  return extensions
+}
+
+// 处理编辑器点击事件（用于评论标记点击）
+const handleEditorClick = (event: MouseEvent) => {
+  const target = event.target as HTMLElement
+  const commentMark = target.closest('.comment-mark') as HTMLElement
+  if (commentMark) {
+    const commentId = commentMark.getAttribute('data-comment-id')
+    if (commentId) {
+      // 打开评论面板并激活对应评论
+      showComments.value = true
+      activeCommentId.value = commentId
+      // 重置 activeCommentId 以便下次点击可以再次触发
+      setTimeout(() => {
+        activeCommentId.value = null
+      }, 100)
+    }
+  }
+}
+
+// 处理评论气泡点击事件
+const handleCommentBubbleClick = (commentId: string) => {
+  // 打开评论面板
+  showComments.value = true
+  // 设置激活的评论ID
+  activeCommentId.value = commentId
+  // 重置 activeCommentId 以便下次点击可以再次触发
+  setTimeout(() => {
+    activeCommentId.value = null
+  }, 100)
+}
+
+// 编辑器实例 - 在 script setup 顶层同步创建，确保 onMounted 钩子正确注册
+const editor = useEditor({
+  extensions: createEditorExtensions(),
   onUpdate: () => {
     if (!editor.value) return
+    if (doc.docType.value !== 'doc') return
     doc.scheduleSave(() => JSON.stringify(editor.value!.getJSON()))
+  },
+  editorProps: {
+    handleClick: (_view: any, _pos: any, event: any) => {
+      handleEditorClick(event as MouseEvent)
+      return false
+    },
   },
 })
 
 async function loadDocument() {
   const data = await doc.load()
-  if (editor.value && data.content && data.type === 'doc') {
+  documentOwnerId.value = data.ownerId
+  
+  updateFavicon(data.type, data.fileExt)
+  
+  // doc 类型：编辑器已在 setup 顶层通过 useEditor 创建，这里只需设置内容
+  if (data.type === 'doc' && editor.value && data.content) {
     try {
       editor.value.commands.setContent(JSON.parse(data.content))
     } catch {
       editor.value.commands.setContent(data.content)
     }
   }
-  // Update favicon based on document type
-  updateFavicon(data.type, data.fileExt)
 }
 
 // Store original favicon info for restoration
@@ -320,19 +518,53 @@ function updateFavicon(docType: string, fileExt?: string) {
 
 function initWebSocket() {
   const ws = getDocWs(docId.value)
-  ws.on('collaborators', (data: Collaborator[]) => {
+  ws.on('collaborators_update', (data: Collaborator[]) => {
     collaborators.value = data
     collabStore.setCollaborators(data)
+    
+    const currentUserId = getCurrentUserId()
+    const currentUser = data.find(c => c.userId === currentUserId)
+    if (currentUser && currentUser.color) {
+      currentUserColor.value = currentUser.color
+    }
+    
+    // Yjs 已禁用，不再调用 initYjsCollaboration()
   })
   ws.on('user_join', (data: Collaborator) => {
-    collabStore.addCollaborator(data)
-    collaborators.value = [...collabStore.collaborators]
+    // Add new collaborator if not already in list
+    const exists = collaborators.value.some(c => c.userId === data.userId)
+    if (!exists) {
+      collaborators.value = [...collaborators.value, data]
+      collabStore.setCollaborators(collaborators.value)
+    }
+    // 显示加入通知（不显示自己的加入）
+    const currentUserId = getCurrentUserId()
+    if (data.userId !== currentUserId) {
+      addCollaborateNotice(data.userName, data.userAvatar || '', data.color || '#3b82f6', 'join')
+    }
   })
-  ws.on('user_leave', (data: { userId: number }) => {
-    collabStore.removeCollaborator(data.userId)
-    collaborators.value = [...collabStore.collaborators]
+  ws.on('user_leave', (data: { userId: number; userName?: string; userAvatar?: string; color?: string }) => {
+    // 找到离开的用户信息，用于显示通知
+    const leavingUser = collaborators.value.find(c => c.userId === data.userId)
+    collaborators.value = collaborators.value.filter(c => c.userId !== data.userId)
+    collabStore.setCollaborators(collaborators.value)
+    // 显示离开通知（使用已有的用户信息或消息中的信息）
+    const currentUserId = getCurrentUserId()
+    if (data.userId !== currentUserId) {
+      const username = leavingUser?.userName || data.userName || '未知用户'
+      const avatar = leavingUser?.userAvatar || data.userAvatar || ''
+      const color = leavingUser?.color || data.color || '#3b82f6'
+      addCollaborateNotice(username, avatar, color, 'leave')
+    }
   })
 }
+
+// 并发编辑提示处理（Yjs 已禁用，保留以备后续启用）
+// function handleConcurrentEdit(info: { userName: string; color: string; nodeId: number }) { ... }
+
+// Yjs 协作相关函数已禁用
+// function loadContentIfEmpty() { ... }
+// function initYjsCollaboration() { ... }
 
 async function handleMore(cmd: string) {
   if (cmd === 'history') {
@@ -345,6 +577,33 @@ async function handleMore(cmd: string) {
     await doc.togglePin()
   } else if (cmd === 'favorite') {
     await doc.toggleFavorite()
+  } else if (cmd === 'saveAsTemplate') {
+    // Pre-fill form with document title
+    templateForm.value.name = (doc.title.value || '未命名文档') + ' 模板'
+    templateForm.value.description = ''
+    templateForm.value.category = ''
+    showSaveAsTemplateDialog.value = true
+  }
+}
+
+async function handleSaveAsTemplate() {
+  if (!templateForm.value.name.trim()) {
+    ElMessage.warning('请输入模板名称')
+    return
+  }
+  templateSaving.value = true
+  try {
+    await saveDocumentAsTemplate(docId.value, {
+      name: templateForm.value.name,
+      description: templateForm.value.description,
+      category: templateForm.value.category
+    })
+    ElMessage.success('已保存为模板')
+    showSaveAsTemplateDialog.value = false
+  } catch (error) {
+    ElMessage.error('保存模板失败')
+  } finally {
+    templateSaving.value = false
   }
 }
 
@@ -415,15 +674,21 @@ function onSubEditorSave(content: string) {
   doc.saveContent(content)
 }
 
-onMounted(() => {
-  loadDocument()
-  initWebSocket()
+onMounted(async () => {
+  userStore.fetchUserInfo()
+  initWebSocket()   // WebSocket 仅用于协作者在线状态
+  await loadDocument()  // 加载文档数据并初始化编辑器
 })
 
 onBeforeUnmount(() => {
   doc.cleanup()
   if (editor.value && doc.docType.value === 'doc') {
     doc.saveContent(JSON.stringify(editor.value.getJSON()))
+  }
+  // 清理 Yjs 协作（已禁用，保留代码以备后续启用）
+  if (yjsCollaboration.value) {
+    yjsCollaboration.value.destroy()
+    yjsCollaboration.value = null
   }
   closeDocWs()
   // Restore default favicon
@@ -459,6 +724,11 @@ function restoreFavicon() {
 
 watch(() => route.params.id, (newId) => {
   if (newId) {
+    // 清理旧的 Yjs 协作（已禁用，保留代码以备后续启用）
+    if (yjsCollaboration.value) {
+      yjsCollaboration.value.destroy()
+      yjsCollaboration.value = null
+    }
     docId.value = Number(newId)
     loadDocument()
     closeDocWs()
@@ -517,11 +787,71 @@ watch(() => route.params.id, (newId) => {
   display: flex;
   justify-content: center;
 }
+.collab-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
 .collab-avatars {
   display: flex;
+  align-items: center;
 }
-.collab-avatars .el-avatar {
-  margin-left: -4px;
+.collab-avatar-wrapper {
+  margin-left: -8px;
+}
+.collab-avatar-wrapper:first-child {
+  margin-left: 0;
+}
+.collab-avatar {
+  border: 2px solid;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.collab-avatar:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  z-index: 10;
+  position: relative;
+}
+.collab-badge {
+  display: flex;
+  align-items: center;
+}
+.collab-count {
+  font-size: 12px;
+  color: var(--kx-text-secondary);
+  background: var(--kx-bg-secondary);
+  padding: 4px 8px;
+  border-radius: 12px;
+  white-space: nowrap;
+}
+/* Fade animation for collaborators */
+.collab-fade-enter-active,
+.collab-fade-leave-active {
+  transition: all 0.3s ease;
+}
+.collab-fade-enter-from,
+.collab-fade-leave-to {
+  opacity: 0;
+  transform: scale(0.8);
+}
+.collab-fade-move {
+  transition: transform 0.3s ease;
+}
+/* Responsive styles */
+@media (max-width: 768px) {
+  .collab-avatar {
+    width: 24px !important;
+    height: 24px !important;
+    line-height: 24px !important;
+  }
+  .collab-avatar-wrapper {
+    margin-left: -6px;
+  }
+  .collab-count {
+    font-size: 11px;
+    padding: 2px 6px;
+  }
 }
 .editor-header-right {
   display: flex;
@@ -541,11 +871,22 @@ watch(() => route.params.id, (newId) => {
   display: flex;
   justify-content: center;
 }
+.editor-content-wrapper {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  max-width: 880px;
+}
 .editor-content {
+  position: relative;
   width: 100%;
   max-width: 800px;
   padding: 40px 24px;
   min-height: calc(100vh - 96px);
+}
+.editor-content.has-comment-bubbles {
+  padding-right: 48px;
 }
 .version-item {
   padding: 12px 0;
@@ -570,5 +911,107 @@ watch(() => route.params.id, (newId) => {
 }
 .export-options .el-button {
   width: 100%;
+}
+
+/* 远程光标样式 - CollaborationCursor */
+/* 远程光标线 */
+.collaboration-cursor__caret {
+  position: relative;
+  margin-left: -1px;
+  margin-right: -1px;
+  border-left: 1px solid;
+  border-right: 1px solid;
+  word-break: normal;
+  pointer-events: none;
+}
+
+/* 用户名标签 */
+.collaboration-cursor__label {
+  position: absolute;
+  top: -1.4em;
+  left: -1px;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: normal;
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px 3px 3px 0;
+  color: #fff;
+  white-space: nowrap;
+  user-select: none;
+  pointer-events: none;
+}
+
+/* 远程选区高亮 */
+.collaboration-cursor__selection {
+  opacity: 0.3;
+}
+
+/* 协作通知提示样式 */
+.collaborate-notices {
+  position: absolute;
+  top: 60px;
+  right: 16px;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.collaborate-notice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 8px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  font-size: 13px;
+  color: #333;
+  backdrop-filter: blur(4px);
+}
+
+.notice-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: 2px solid;
+}
+
+.notice-fade-enter-active {
+  animation: noticeIn 0.3s ease;
+}
+
+.notice-fade-leave-active {
+  animation: noticeOut 0.3s ease;
+}
+
+@keyframes noticeIn {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes noticeOut {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(20px);
+  }
 }
 </style>

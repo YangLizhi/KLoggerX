@@ -69,10 +69,10 @@ const fileTypeLabel = computed(() => {
   return map[fileType.value] || '文件'
 })
 
-const fileTypeTagType = computed(() => {
-  const map: Record<string, string> = { pdf: 'danger', word: '', excel: 'success', ppt: 'warning' }
-  return (map[fileType.value] || 'info') as any
-})
+// const fileTypeTagType = computed(() => {
+//   const map: Record<string, string> = { pdf: 'danger', word: '', excel: 'success', ppt: 'warning' }
+//   return (map[fileType.value] || 'info') as any
+// })
 
 // Check if file type can be edited with OnlyOffice
 const canEdit = computed(() => {

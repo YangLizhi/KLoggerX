@@ -523,6 +523,47 @@ func ExportDocument(c *gin.Context) {
 	}))
 }
 
+// SaveDocumentAsTemplate saves the current document content as a user-defined template
+func SaveDocumentAsTemplate(c *gin.Context) {
+	uid := utils.GetUserID(c.MustGet("userId"))
+	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+
+	var req struct {
+		Name        string `json:"name" binding:"required"`
+		Description string `json:"description"`
+		Category    string `json:"category"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg("请填写模板名称"))
+		return
+	}
+
+	// Get document detail to verify access and get content
+	doc, err := service.GetDocumentDetail(uint(id), uid)
+	if err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg("文档不存在或无权限"))
+		return
+	}
+
+	// Create template from document
+	t := &model.Template{
+		Name:        req.Name,
+		Description: req.Description,
+		Category:    req.Category,
+		Type:        doc.Type,
+		Content:     doc.Content,
+		IsBuiltin:   false, // User-defined template
+	}
+
+	if err := service.CreateTemplate(t); err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg("保存模板失败: "+err.Error()))
+		return
+	}
+
+	service.CreateOperationLog(uid, "", "save_as_template", "document", uint(id), doc.Title, "template:"+t.Name, c.ClientIP())
+	c.JSON(http.StatusOK, model.Success(t))
+}
+
 // DownloadDocumentFile streams the original uploaded file to the client with its original filename.
 func DownloadDocumentFile(c *gin.Context) {
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
@@ -565,4 +606,112 @@ func DownloadDocumentFile(c *gin.Context) {
 		// Connection may have closed, ignore
 		_ = err
 	}
+}
+
+// SearchSuggestions returns document title suggestions based on query prefix
+func SearchSuggestions(c *gin.Context) {
+	q := c.Query("q")
+	if q == "" {
+		c.JSON(http.StatusOK, model.Success(map[string]interface{}{"suggestions": []string{}}))
+		return
+	}
+
+	uid := utils.GetUserID(c.MustGet("userId"))
+	var titles []string
+	mysql.DB.Model(&model.Document{}).
+		Where("title LIKE ? AND is_deleted = ? AND user_id = ?", q+"%", false, uid).
+		Limit(10).
+		Pluck("title", &titles)
+
+	c.JSON(http.StatusOK, model.Success(map[string]interface{}{"suggestions": titles}))
+}
+
+// EnhancedSearchDocuments performs enhanced document search with multi-keyword support
+// Supports searching both title and content, with pagination and type filtering
+func EnhancedSearchDocuments(c *gin.Context) {
+	var req struct {
+		Query    string `json:"query"`
+		Type     string `json:"type"`
+		Page     int    `json:"page"`
+		PageSize int    `json:"pageSize"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg("参数错误"))
+		return
+	}
+
+	// Set defaults
+	if req.Page <= 0 {
+		req.Page = 1
+	}
+	if req.PageSize <= 0 {
+		req.PageSize = 20
+	}
+	if req.PageSize > 100 {
+		req.PageSize = 100
+	}
+
+	uid := utils.GetUserID(c.MustGet("userId"))
+
+	// Build base query - only search documents user has access to
+	query := mysql.DB.Model(&model.Document{}).Where("is_deleted = ? AND owner_id = ?", false, uid)
+
+	// Apply keyword search if provided
+	if req.Query != "" {
+		// Split query into keywords by whitespace
+		keywords := strings.Fields(req.Query)
+		for _, kw := range keywords {
+			if kw == "" {
+				continue
+			}
+			like := "%" + kw + "%"
+			query = query.Where("title LIKE ? OR content LIKE ?", like, like)
+		}
+	}
+
+	// Apply type filter
+	if req.Type != "" && req.Type != "all" {
+		query = query.Where("type = ?", req.Type)
+	}
+
+	// Get total count
+	var total int64
+	query.Count(&total)
+
+	// Get paginated results
+	var docs []model.Document
+	offset := (req.Page - 1) * req.PageSize
+	if err := query.Order("updated_at DESC").
+		Offset(offset).
+		Limit(req.PageSize).
+		Find(&docs).Error; err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg("搜索失败"))
+		return
+	}
+
+	// Format results with preview
+	results := make([]map[string]interface{}, 0, len(docs))
+	for _, doc := range docs {
+		preview := doc.Content
+		// Truncate preview to 200 characters
+		if len(preview) > 200 {
+			preview = preview[:200] + "..."
+		}
+
+		results = append(results, map[string]interface{}{
+			"id":         doc.ID,
+			"title":      doc.Title,
+			"preview":    preview,
+			"type":       doc.Type,
+			"updatedAt":  doc.UpdatedAt,
+			"ownerId":    doc.OwnerID,
+		})
+	}
+
+	c.JSON(http.StatusOK, model.Success(map[string]interface{}{
+		"items":    results,
+		"total":    total,
+		"page":     req.Page,
+		"pageSize": req.PageSize,
+	}))
 }

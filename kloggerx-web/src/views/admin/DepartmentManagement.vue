@@ -30,7 +30,7 @@
             highlight-current
             @node-click="selectDepartment"
           >
-            <template #default="{ node, data }">
+            <template #default="{ data }">
               <div class="tree-node">
                 <el-icon color="#f5a623"><Folder /></el-icon>
                 <span class="node-name">{{ data.name }}</span>
@@ -254,7 +254,7 @@ const searchKeyword = ref('')
 const departments = ref<Department[]>([])
 const selectedDept = ref<Department | null>(null)
 const expandedKeys = ref<number[]>([])
-const treeRef = ref()
+// const treeRef = ref()
 
 const departmentTree = computed(() => {
   const buildTree = (parentId: number | null = null): Department[] => {

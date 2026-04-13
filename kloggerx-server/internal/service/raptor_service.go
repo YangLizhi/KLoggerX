@@ -514,13 +514,28 @@ func (s *RaptorService) GetRaptorTreeStats(kbID uint) (map[string]interface{}, e
 	mysql.DB.Where("knowledge_base_id = ?", kbID).Find(&nodes)
 
 	levelCounts := make(map[int]int)
+	maxLevel := 0
+	leafNodeCount := 0
+	clusterNodeCount := 0
+
 	for _, node := range nodes {
 		levelCounts[node.Level]++
+		if node.Level == 0 {
+			leafNodeCount++
+		} else {
+			clusterNodeCount++
+		}
+		if node.Level > maxLevel {
+			maxLevel = node.Level
+		}
 	}
 
-	stats["total_nodes"] = len(nodes)
-	stats["level_counts"] = levelCounts
-	stats["has_tree"] = len(nodes) > 0
+	stats["totalNodes"] = len(nodes)
+	stats["leafNodes"] = leafNodeCount
+	stats["clusterNodes"] = clusterNodeCount
+	stats["maxLevel"] = maxLevel
+	stats["levelCounts"] = levelCounts
+	stats["hasTree"] = len(nodes) > 0
 
 	return stats, nil
 }

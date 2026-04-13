@@ -22,6 +22,7 @@ func RegisterRoutes(r *gin.Engine, hub *ws.Hub) {
 		auth.POST("/user/update", UpdateUserInfo)
 		auth.POST("/user/change-password", ChangeUserPassword)
 		auth.GET("/user/list", GetUserList)
+		auth.GET("/users/search", SearchUsers)
 
 		// Document
 		auth.GET("/document/tree", GetDocumentTree)
@@ -42,12 +43,15 @@ func RegisterRoutes(r *gin.Engine, hub *ws.Hub) {
 		auth.GET("/document/pinned", GetPinnedDocuments)
 		auth.GET("/document/recent", GetRecentDocuments)
 		auth.GET("/document/search", SearchDocuments)
+		auth.POST("/document/search", EnhancedSearchDocuments)
+		auth.GET("/search/suggestions", SearchSuggestions)
 		auth.GET("/document/:id/versions", GetDocumentVersions)
 		auth.POST("/document/:id/rollback", RollbackVersion)
 		auth.POST("/document/import", ImportDocument)
 		auth.GET("/document/:id/export", ExportDocument)
 		auth.GET("/document/:id/file-preview", GetDocumentFilePreview)
 		auth.GET("/document/:id/download", DownloadDocumentFile)
+		auth.POST("/document/:id/save-as-template", SaveDocumentAsTemplate)
 
 		// Permission
 		auth.GET("/auth/document/:id", GetDocumentPermissions)
@@ -97,6 +101,7 @@ func RegisterRoutes(r *gin.Engine, hub *ws.Hub) {
 		auth.POST("/collaborate/notification/:id/read", MarkNotificationRead)
 		auth.POST("/collaborate/notification/read-all", MarkAllNotificationsRead)
 		auth.POST("/collaborate/notification/create", CreateSystemNotification)
+		auth.POST("/collaborate/invite", InviteCollaborators)
 
 		// File
 		auth.POST("/file/upload", UploadFile)
@@ -165,10 +170,19 @@ func RegisterRoutes(r *gin.Engine, hub *ws.Hub) {
 			admin.POST("/admin/remote-storages/:id/connect", ConnectRemoteStorage)
 			admin.POST("/admin/remote-storages/:id/disconnect", DisconnectRemoteStorage)
 
+			// Directory listing for path selection
+			admin.GET("/admin/directories", AdminListDirectories)
+
 			// LDAP/AD
 			admin.POST("/admin/ldap/test", TestLdapConnection)
 			admin.POST("/admin/ldap/users", FetchLdapUsers)
 			admin.POST("/admin/ldap/import", ImportLdapUsers)
+
+			// Template Management
+			admin.GET("/admin/templates", GetAllTemplatesHandler)
+			admin.POST("/admin/template/create", CreateTemplateHandler)
+			admin.PUT("/admin/template/:id", UpdateTemplateHandler)
+			admin.DELETE("/admin/template/:id", DeleteTemplateHandler)
 		}
 	}
 

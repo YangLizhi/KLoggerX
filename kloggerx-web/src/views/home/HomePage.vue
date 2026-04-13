@@ -1,5 +1,14 @@
 <template>
   <div class="home-page">
+    <!-- Enhanced Search Bar -->
+    <div class="search-section">
+      <EnhancedSearchBar
+        ref="searchBarRef"
+        placeholder="搜索文档、知识库..."
+        @select="handleSearchSelect"
+      />
+    </div>
+
     <!-- Top Action Bar (fixed, 3 cards) -->
     <div class="action-bar">
       <div class="action-card" @click.stop="showNewMenu = !showNewMenu; showUploadMenu = false">
@@ -212,7 +221,7 @@
           @contextmenu.prevent="showContextMenu($event, doc)"
         >
           <div class="doc-card-check" @click.stop>
-            <el-checkbox v-model="doc._selected" />
+            <el-checkbox :model-value="(doc as any)._selected" @update:model-value="(val: any) => (doc as any)._selected = val" />
           </div>
           <div class="doc-card-icon">
             <el-icon :size="36" :color="getTypeColor(doc.type, doc.fileExt)"><component :is="getTypeIcon(doc.type, doc.fileExt)" /></el-icon>
@@ -414,8 +423,9 @@ import {
   createDocument, pinDocument, favoriteDocument, deleteDocument,
   copyDocument, importDocument, moveDocument, updateDocument
 } from '@/api/modules/document'
-import type { Document, DocumentType } from '@/types'
+import type { Document, DocumentType, KnowledgeBase } from '@/types'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import EnhancedSearchBar from '@/components/common/EnhancedSearchBar.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -424,6 +434,7 @@ const viewMode = ref<'list' | 'grid'>('list')
 const documents = ref<Document[]>([])
 const allFolders = ref<Document[]>([])
 const activeTab = ref('recent')
+// const searchBarRef = ref<InstanceType<typeof EnhancedSearchBar>>()
 const showNewMenu = ref(false)
 const showUploadMenu = ref(false)
 const showMoreTypes = ref(false)
@@ -890,9 +901,10 @@ async function batchAction(action: string) {
     showMoveDialog.value = true
   } else if (action === 'share') {
     // Batch share - open share dialog
-    shareLink.value = `${window.location.origin}/documents?ids=${selectedDocs.value.map(d => d.id).join(',')}`
-    shareLinkScope.value = 'collaborator'
-    shareDialogVisible.value = true
+    // shareLink.value = `${window.location.origin}/documents?ids=${selectedDocs.value.map(d => d.id).join(',')}`
+    // shareLinkScope.value = 'collaborator'
+    // shareDialogVisible.value = true
+    ElMessage.info('批量分享功能开发中')
   }
   clearSelection()
 }
@@ -1103,6 +1115,13 @@ function copyShareLink() {
   }
 }
 
+// Handle search result selection from EnhancedSearchBar
+function handleSearchSelect(_result: { type: 'document' | 'knowledge'; data: Document | KnowledgeBase }) {
+  // Navigation is already handled in the component
+  // Just close any open menus and ensure clean state
+  closeMenus()
+}
+
 watch(() => route.query.keyword, (val) => {
   if (val) {
     loading.value = true
@@ -1139,6 +1158,12 @@ onBeforeUnmount(() => {
 }
 
 /* Action Bar */
+/* Search Section */
+.search-section {
+  margin-bottom: 24px;
+  padding: 0;
+}
+
 .action-bar {
   display: grid;
   grid-template-columns: repeat(3, 1fr);

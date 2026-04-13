@@ -68,6 +68,13 @@ func AutoMigrate() {
 	// Add FULLTEXT index on knowledge_chunks.content for efficient RAG retrieval
 	DB.Exec("ALTER TABLE knowledge_chunks ADD FULLTEXT INDEX IF NOT EXISTS idx_chunk_content (content)")
 
+	// Extend system_settings.value to LONGTEXT for large JSON data (AI model settings)
+	if err := DB.Exec("ALTER TABLE system_settings MODIFY COLUMN `value` LONGTEXT").Error; err != nil {
+		log.Printf("[AutoMigrate] Warning: Failed to alter system_settings.value to LONGTEXT: %v", err)
+	} else {
+		log.Println("[AutoMigrate] Successfully altered system_settings.value to LONGTEXT")
+	}
+
 	seedData()
 	seedTemplates()
 }

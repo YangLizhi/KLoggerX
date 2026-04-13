@@ -43,6 +43,7 @@ type HybridSearchOptions struct {
 	VectorWeight float64 // Weight for vector search results (default: 0.5)
 	RRF_K        int     // RRF constant (default: 60)
 	RaptorLevel  *int    // Filter by RAPTOR level (nil = all levels)
+	UserID       *uint   // Optional: filter results by user permission (nil = no filter)
 }
 
 // DefaultHybridSearchOptions returns default search options
@@ -140,6 +141,11 @@ func (s *RetrievalService) HybridSearch(ctx context.Context, kbID uint, query st
 
 	// Apply RRF fusion
 	merged := s.rrfFusion(vectorResults, fulltextResults, opts.RRF_K)
+
+	// Apply permission filtering if UserID is provided
+	if opts.UserID != nil {
+		merged = filterResultsByPermission(merged, opts.UserID, kbID)
+	}
 
 	// Return top K results
 	if len(merged) > opts.TopK {
@@ -257,6 +263,11 @@ func (s *RetrievalService) rrfFusion(vectorResults, fulltextResults []SearchResu
 
 // VectorSearch performs pure vector similarity search
 func (s *RetrievalService) VectorSearch(ctx context.Context, kbID uint, query string, topK int) ([]SearchResult, error) {
+	return s.VectorSearchWithPermission(ctx, kbID, query, topK, nil)
+}
+
+// VectorSearchWithPermission performs vector search with optional permission filtering
+func (s *RetrievalService) VectorSearchWithPermission(ctx context.Context, kbID uint, query string, topK int, userID *uint) ([]SearchResult, error) {
 	if s.embeddingSvc == nil || s.vectorClient == nil {
 		return nil, nil
 	}
@@ -285,6 +296,11 @@ func (s *RetrievalService) VectorSearch(ctx context.Context, kbID uint, query st
 		}
 	}
 
+	// Apply permission filtering if userID is provided
+	if userID != nil {
+		results = filterResultsByPermission(results, userID, kbID)
+	}
+
 	return results, nil
 }
 
@@ -300,3 +316,105 @@ func InitRetrievalService(embeddingSvc *EmbeddingService, vectorClient *qdrant.V
 func GetRetrievalService() *RetrievalService {
 	return globalRetrievalService
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Permission Filtering Functions
+// ─────────────────────────────────────────────────────────────────────────────
+
+// getUserAllowedDocIDs returns a set of document IDs that the user has permission to access.
+// Permission rules:
+// 1. For knowledge base search: user must be a member of the knowledge base
+// 2. Documents within the KB are accessible to all KB members
+func getUserAllowedDocIDs(userID uint, kbID *uint) (map[uint]bool, error) {
+	allowedIDs := make(map[uint]bool)
+
+	// If searching within a specific knowledge base, check KB membership first
+	if kbID != nil {
+		var member model.KnowledgeMember
+		if err := mysql.DB.Where("knowledge_base_id = ? AND user_id = ?", *kbID, userID).First(&member).Error; err != nil {
+			// User is not a member of this KB, return empty set
+			return allowedIDs, nil
+		}
+		// User is a member, get all documents in this KB
+		var kbDocIDs []uint
+		mysql.DB.Model(&model.KnowledgeDocument{}).Where("knowledge_base_id = ?", *kbID).Pluck("document_id", &kbDocIDs)
+		for _, id := range kbDocIDs {
+			allowedIDs[id] = true
+		}
+		return allowedIDs, nil
+	}
+
+	// For global search, check document ownership
+	var ownedDocIDs []uint
+	mysql.DB.Model(&model.Document{}).Where("owner_id = ? AND is_deleted = ?", userID, false).Pluck("id", &ownedDocIDs)
+	for _, id := range ownedDocIDs {
+		allowedIDs[id] = true
+	}
+
+	// Get documents user has explicit permission for
+	var permDocIDs []uint
+	mysql.DB.Model(&model.Permission{}).Where("user_id = ?", userID).Pluck("document_id", &permDocIDs)
+	for _, id := range permDocIDs {
+		allowedIDs[id] = true
+	}
+
+	// Get documents from knowledge bases the user is a member of
+	var kbIDs []uint
+	mysql.DB.Model(&model.KnowledgeMember{}).Where("user_id = ?", userID).Pluck("knowledge_base_id", &kbIDs)
+	if len(kbIDs) > 0 {
+		var kbDocIDs []uint
+		mysql.DB.Model(&model.KnowledgeDocument{}).Where("knowledge_base_id IN ?", kbIDs).Pluck("document_id", &kbDocIDs)
+		for _, id := range kbDocIDs {
+			allowedIDs[id] = true
+		}
+	}
+
+	return allowedIDs, nil
+}
+
+// filterResultsByPermission filters search results based on user permissions.
+// If userID is nil, no filtering is performed.
+func filterResultsByPermission(results []SearchResult, userID *uint, kbID uint) []SearchResult {
+	if userID == nil || len(results) == 0 {
+		return results
+	}
+
+	// Get allowed document IDs
+	allowedIDs, err := getUserAllowedDocIDs(*userID, &kbID)
+	if err != nil {
+		// On error, return empty results to be safe
+		return nil
+	}
+
+	// Filter results
+	var filtered []SearchResult
+	for _, r := range results {
+		if allowedIDs[r.DocumentID] {
+			filtered = append(filtered, r)
+		}
+	}
+	return filtered
+}
+
+// FilterResultsByDocIDs filters search results to only include specified document IDs.
+// This is useful when caller has already determined allowed document IDs.
+func FilterResultsByDocIDs(results []SearchResult, allowedDocIDs map[uint]bool) []SearchResult {
+	if allowedDocIDs == nil || len(results) == 0 {
+		return results
+	}
+
+	var filtered []SearchResult
+	for _, r := range results {
+		if allowedDocIDs[r.DocumentID] {
+			filtered = append(filtered, r)
+		}
+	}
+	return filtered
+}
+
+// GetUserAllowedDocumentIDs is a public wrapper for getUserAllowedDocIDs.
+// It returns a set of document IDs that the user has permission to access.
+func GetUserAllowedDocumentIDs(userID uint, kbID *uint) (map[uint]bool, error) {
+	return getUserAllowedDocIDs(userID, kbID)
+}
+

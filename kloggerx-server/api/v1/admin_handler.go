@@ -300,3 +300,25 @@ func AdminGetDepartmentMembers(c *gin.Context) {
 
 	c.JSON(http.StatusOK, model.Success(users))
 }
+
+// AdminListDirectories lists subdirectories for path selection
+func AdminListDirectories(c *gin.Context) {
+	path := c.Query("path")
+	if path == "" {
+		path = "/"
+	}
+
+	// Security check: only allow absolute paths
+	if len(path) == 0 || path[0] != '/' {
+		c.JSON(http.StatusOK, model.ErrorMsg("路径必须是绝对路径"))
+		return
+	}
+
+	dirs, err := utils.ListDirectories(path)
+	if err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg("获取目录列表失败: "+err.Error()))
+		return
+	}
+
+	c.JSON(http.StatusOK, model.Success(dirs))
+}

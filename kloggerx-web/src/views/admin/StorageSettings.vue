@@ -70,7 +70,7 @@
         <el-form-item label="云盘存储路径">
           <el-input v-model="systemStoragePaths.uploadPath" style="width: 400px">
             <template #append>
-              <el-button @click="selectSystemDir('upload')">浏览</el-button>
+              <el-button @click="openDirSelector('upload')">浏览</el-button>
             </template>
           </el-input>
           <div class="form-tip">云盘文件的默认存储位置（系统级设置）</div>
@@ -78,7 +78,7 @@
         <el-form-item label="远程文件路径">
           <el-input v-model="systemStoragePaths.remotePath" style="width: 400px">
             <template #append>
-              <el-button @click="selectSystemDir('remote')">浏览</el-button>
+              <el-button @click="openDirSelector('remote')">浏览</el-button>
             </template>
           </el-input>
           <div class="form-tip">远程存储接入的文件更新存放位置</div>
@@ -89,6 +89,41 @@
       </el-form>
     </div>
 
+    <!-- Directory Selector Dialog -->
+    <el-dialog v-model="showDirSelector" title="选择目录" width="500px">
+      <div class="dir-selector">
+        <div class="dir-path">
+          <el-input v-model="currentDirPath" placeholder="输入或选择目录路径">
+            <template #prepend>
+              <el-button @click="goToParentDir" :disabled="!currentDirPath || currentDirPath === '/'">
+                <el-icon><ArrowUp /></el-icon>
+              </el-button>
+            </template>
+          </el-input>
+        </div>
+        <div class="dir-list" v-loading="loadingDirs">
+          <div
+            v-for="dir in availableDirs"
+            :key="dir.path"
+            class="dir-item"
+            :class="{ selected: selectedDirPath === dir.path }"
+            @click="selectDir(dir)"
+            @dblclick="enterDir(dir)"
+          >
+            <el-icon><Folder /></el-icon>
+            <span>{{ dir.name }}</span>
+          </div>
+          <div v-if="availableDirs.length === 0 && !loadingDirs" class="no-dirs">
+            暂无子目录
+          </div>
+        </div>
+      </div>
+      <template #footer>
+        <el-button @click="showDirSelector = false">取消</el-button>
+        <el-button type="primary" @click="confirmDirSelection">确定</el-button>
+      </template>
+    </el-dialog>
+
     <!-- Remote Storage -->
     <div class="settings-section">
       <div class="section-header">
@@ -98,27 +133,29 @@
         </el-button>
       </div>
       <el-table :data="remoteStorages" stripe>
-        <el-table-column prop="name" label="名称" min-width="120" />
-        <el-table-column prop="type" label="类型" width="100">
+        <el-table-column prop="name" label="名称" min-width="100" show-overflow-tooltip align="center"/>
+        <el-table-column prop="type" label="类型" width="120" align="center">
           <template #default="{ row }">
             <el-tag size="small">{{ row.type.toUpperCase() }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="server" label="服务器地址" min-width="200" />
-        <el-table-column prop="status" label="状态" width="100">
+        <el-table-column prop="server" label="服务器地址" min-width="130" show-overflow-tooltip align="center"/>
+        <el-table-column prop="status" label="状态" width="120" align="center">
           <template #default="{ row }">
             <span :class="['status-badge', row.status]">
               {{ row.status === 'connected' ? '已连接' : row.status === 'error' ? '连接失败' : '未连接' }}
             </span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="280" fixed="right">
+        <el-table-column label="操作" min-width="80" align="center">
           <template #default="{ row }">
-            <el-button link type="primary" @click="testStorageConnection(row)" :loading="row.testing">测试连接</el-button>
-            <el-button link type="primary" @click="reconnectStorage(row)" :loading="row.reconnecting">重新连接</el-button>
-            <el-button link type="warning" @click="disconnectStorage(row)" :loading="row.disconnecting">断开</el-button>
-            <el-button link type="primary" @click="editStorage(row)">编辑</el-button>
-            <el-button link type="danger" @click="deleteStorage(row)">删除</el-button>
+            <div class="action-buttons">
+              <el-button link size="small" type="primary" @click="testStorageConnection(row)" :loading="row.testing">测试</el-button>
+              <el-button link size="small" type="primary" @click="reconnectStorage(row)" :loading="row.reconnecting">重连</el-button>
+              <el-button link size="small" type="warning" @click="disconnectStorage(row)" :loading="row.disconnecting">断开</el-button>
+              <el-button link size="small" type="primary" @click="editStorage(row)">编辑</el-button>
+              <el-button link size="small" type="danger" @click="deleteStorage(row)">删除</el-button>
+            </div>
           </template>
         </el-table-column>
       </el-table>
@@ -247,6 +284,7 @@ import {
   testRemoteStorageConnection,
   connectRemoteStorage,
   disconnectRemoteStorage,
+  listDirectories,
 } from '@/api/modules/admin'
 
 interface RemoteStorage {
@@ -300,8 +338,63 @@ const systemStoragePaths = ref({
 })
 const savingSystemPaths = ref(false)
 
-function selectSystemDir(_type: string) {
-  ElMessage.info('请在实际环境中选择目录')
+// Directory selector
+const showDirSelector = ref(false)
+const currentDirType = ref<'upload' | 'remote'>('upload')
+const currentDirPath = ref('/')
+const selectedDirPath = ref('')
+const availableDirs = ref<{ name: string; path: string }[]>([])
+const loadingDirs = ref(false)
+
+function openDirSelector(type: 'upload' | 'remote') {
+  currentDirType.value = type
+  const currentPath = type === 'upload' ? systemStoragePaths.value.uploadPath : systemStoragePaths.value.remotePath
+  currentDirPath.value = currentPath || '/'
+  selectedDirPath.value = ''
+  showDirSelector.value = true
+  loadAvailableDirs()
+}
+
+async function loadAvailableDirs() {
+  loadingDirs.value = true
+  try {
+    const res = await listDirectories(currentDirPath.value)
+    availableDirs.value = res.data || []
+  } catch (err: any) {
+    ElMessage.error(err.message || '获取目录列表失败')
+    availableDirs.value = []
+  } finally {
+    loadingDirs.value = false
+  }
+}
+
+function selectDir(dir: { name: string; path: string }) {
+  selectedDirPath.value = dir.path
+}
+
+function enterDir(dir: { name: string; path: string }) {
+  currentDirPath.value = dir.path
+  selectedDirPath.value = ''
+  loadAvailableDirs()
+}
+
+function goToParentDir() {
+  if (!currentDirPath.value || currentDirPath.value === '/') return
+  const parts = currentDirPath.value.split('/').filter(Boolean)
+  parts.pop()
+  currentDirPath.value = '/' + parts.join('/')
+  selectedDirPath.value = ''
+  loadAvailableDirs()
+}
+
+function confirmDirSelection() {
+  const finalPath = selectedDirPath.value || currentDirPath.value
+  if (currentDirType.value === 'upload') {
+    systemStoragePaths.value.uploadPath = finalPath
+  } else {
+    systemStoragePaths.value.remotePath = finalPath
+  }
+  showDirSelector.value = false
 }
 
 async function saveSystemStoragePaths() {
@@ -722,5 +815,52 @@ onMounted(() => {
 .status-badge.error {
   background: #fef0f0;
   color: #f54a45;
+}
+
+/* Directory Selector */
+.dir-selector {
+  border: 1px solid var(--kx-border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.dir-path {
+  padding: 12px;
+  background: #f5f6f7;
+  border-bottom: 1px solid var(--kx-border);
+}
+.dir-list {
+  max-height: 300px;
+  overflow-y: auto;
+  min-height: 150px;
+}
+.dir-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.dir-item:hover {
+  background: #f5f6f7;
+}
+.dir-item.selected {
+  background: #e8f0fe;
+  color: #3370ff;
+}
+.no-dirs {
+  padding: 40px;
+  text-align: center;
+  color: #8f959e;
+}
+
+/* Action Buttons */
+.action-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.action-buttons .el-button {
+  padding: 4px 8px;
 }
 </style>

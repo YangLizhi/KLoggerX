@@ -45,7 +45,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 const route = useRoute()
@@ -55,6 +55,7 @@ const sidebarCollapsed = ref(false)
 const menuItems = [
   { path: '/admin/users', label: '用户和权限', icon: 'User' },
   { path: '/admin/departments', label: '部门管理', icon: 'OfficeBuilding' },
+  { path: '/admin/templates', label: '模板管理', icon: 'Document' },
   { path: '/admin/ai-models', label: 'AI模型设置', icon: 'Cpu' },
   { path: '/admin/storage', label: '云盘存储', icon: 'FolderOpened' },
 ]

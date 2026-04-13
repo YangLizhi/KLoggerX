@@ -5,7 +5,7 @@
       <el-icon class="tree-action" @click="refreshTree"><Refresh /></el-icon>
     </div>
     <el-tree
-      ref="treeRef"
+      ref="treeEl"
       :data="treeData"
       :props="treeProps"
       node-key="id"
@@ -18,7 +18,7 @@
       @node-contextmenu="handleContextMenu"
       @node-drop="handleNodeDrop"
     >
-      <template #default="{ node, data }">
+      <template #default="{ data }">
         <div class="tree-node" @mouseenter="hoverNodeId = data.id" @mouseleave="hoverNodeId = 0">
           <el-icon class="node-icon" :style="{ color: getNodeColor(data.type) }">
             <Folder v-if="data.type === 'folder'" />
@@ -72,7 +72,7 @@ import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { getDocumentTree, createDocument, pinDocument, favoriteDocument, copyDocument, deleteDocument, updateDocument, moveDocument } from '@/api/modules/document'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import type { Document } from '@/types'
+// import type { Document } from '@/types'
 
 const props = withDefaults(defineProps<{
   showHeader?: boolean
@@ -83,7 +83,6 @@ const emit = defineEmits<{
 }>()
 
 const router = useRouter()
-const treeRef = ref()
 const treeData = ref<any[]>([])
 const expandedKeys = ref<number[]>([])
 const hoverNodeId = ref(0)
@@ -215,7 +214,7 @@ async function handleCommand(cmd: string, data: any) {
   }
 }
 
-function allowDrop(draggingNode: any, dropNode: any, type: string) {
+function allowDrop(_draggingNode: any, dropNode: any, type: string) {
   if (type === 'inner') return dropNode.data.type === 'folder'
   return true
 }

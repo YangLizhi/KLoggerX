@@ -305,14 +305,14 @@ async function fetchData() {
   } finally { loading.value = false }
 }
 
-function handleCreateCommand(cmd: string) {
-  createMode.value = cmd as 'blank' | 'template'
-  selectedTemplate.value = null
-  createForm.name = ''
-  createForm.description = ''
-  createForm.visibility = 'private'
-  showCreate.value = true
-}
+// function handleCreateCommand(cmd: string) {
+//   createMode.value = cmd as 'blank' | 'template'
+//   selectedTemplate.value = null
+//   createForm.name = ''
+//   createForm.description = ''
+//   createForm.visibility = 'private'
+//   showCreate.value = true
+// }
 
 function handleSortChange(cmd: string) {
   sortBy.value = cmd

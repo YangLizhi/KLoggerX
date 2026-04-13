@@ -95,7 +95,7 @@
           </el-select>
         </el-form-item>
         <el-form-item v-if="editingFieldType === 'select' || editingFieldType === 'multiSelect'" label="选项">
-          <div v-for="(opt, i) in editingFieldOptions" :key="i" style="display:flex;gap:8px;margin-bottom:4px">
+          <div v-for="(_, i) in editingFieldOptions" :key="i" style="display:flex;gap:8px;margin-bottom:4px">
             <el-input v-model="editingFieldOptions[i]" size="small" />
             <el-button size="small" @click="editingFieldOptions.splice(i, 1)"><el-icon><Close /></el-icon></el-button>
           </div>
@@ -122,9 +122,9 @@ interface Field {
   options?: string[]
 }
 
-interface Record {
+interface RecordItem {
   id: string
-  data: Record<string, any>
+  data: Record<string, unknown>
 }
 
 interface View {
@@ -135,7 +135,7 @@ interface View {
 
 interface BitableData {
   fields: Field[]
-  records: Record[]
+  items: RecordItem[]
   views: View[]
 }
 
@@ -149,7 +149,8 @@ const emit = defineEmits<{
 }>()
 
 const fields = ref<Field[]>([])
-const records = ref<Record[]>([])
+const records = ref<RecordItem[]>([])
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const views = ref<View[]>([])
 const currentViewId = ref('')
 const selectedRecord = ref<string | null>(null)
@@ -173,7 +174,7 @@ function initData() {
       const parsed: BitableData = JSON.parse(props.content)
       if (parsed.fields && Array.isArray(parsed.fields)) {
         fields.value = parsed.fields
-        records.value = parsed.records || []
+        records.value = (parsed as any).records || []
         views.value = parsed.views || [{ id: genId(), name: '表格视图', type: 'table' }]
         if (views.value.length > 0) {
           currentViewId.value = views.value[0].id
@@ -190,16 +191,16 @@ function initData() {
     { id: genId(), name: '截止日期', type: 'date' },
   ]
   records.value = [
-    { id: genId(), data: {} },
-    { id: genId(), data: {} },
-    { id: genId(), data: {} },
+    { id: genId(), data: {} } as RecordItem,
+    { id: genId(), data: {} } as RecordItem,
+    { id: genId(), data: {} } as RecordItem,
   ]
   views.value = [{ id: genId(), name: '表格视图', type: 'table' }]
   currentViewId.value = views.value[0].id
 }
 
 function getFieldIcon(type: string): string {
-  const icons: Record<string, string> = {
+  const icons: { [key: string]: string } = {
     text: 'EditPen',
     number: 'Hashtag',
     select: 'ArrowDown',
@@ -215,7 +216,7 @@ function getFieldIcon(type: string): string {
 }
 
 function getViewIcon(type: string): string {
-  const icons: Record<string, string> = {
+  const icons: { [key: string]: string } = {
     table: 'Grid',
     kanban: 'Menu',
     calendar: 'Calendar',
@@ -272,7 +273,7 @@ function handleToolbarAction(event: { action: string; params?: any }) {
 }
 
 function addRecord() {
-  records.value.push({ id: genId(), data: {} })
+  records.value.push({ id: genId(), data: {} } as RecordItem)
   scheduleSave()
 }
 

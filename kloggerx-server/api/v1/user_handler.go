@@ -97,3 +97,31 @@ func GetUserList(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, model.Success(model.PaginatedData{List: users, Total: total, Page: page, PageSize: pageSize}))
 }
+
+// SearchUsers handles user search for @mention feature
+// GET /api/v1/users/search?q=xxx
+func SearchUsers(c *gin.Context) {
+	query := c.Query("q")
+	if query == "" {
+		c.JSON(http.StatusOK, model.Success([]gin.H{}))
+		return
+	}
+
+	// Limit to 10 results for mention dropdown
+	users, err := service.SearchUsersByUsername(query, 10)
+	if err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg(err.Error()))
+		return
+	}
+
+	// Format response
+	result := make([]gin.H, 0, len(users))
+	for _, user := range users {
+		result = append(result, gin.H{
+			"id":       user.ID,
+			"username": user.Username,
+			"avatar":   user.Avatar,
+		})
+	}
+	c.JSON(http.StatusOK, model.Success(result))
+}

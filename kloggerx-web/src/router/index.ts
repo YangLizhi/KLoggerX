@@ -104,6 +104,12 @@ const router = createRouter({
               component: () => import('@/views/admin/StorageSettings.vue'),
               meta: { title: '云盘存储' },
             },
+            {
+              path: 'templates',
+              name: 'TemplateManagement',
+              component: () => import('@/views/admin/TemplateManagement.vue'),
+              meta: { title: '模板管理' },
+            },
           ],
         },
       ],

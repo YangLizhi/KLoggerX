@@ -115,6 +115,11 @@ export function disconnectRemoteStorage(id: number) {
   return post<ApiResponse<any>>(`/api/v1/admin/remote-storages/${id}/disconnect`)
 }
 
+// Directory listing for path selection
+export function listDirectories(path: string) {
+  return get<ApiResponse<{ name: string; path: string }[]>>('/api/v1/admin/directories', { path })
+}
+
 // User Storage Settings
 export function getUserStorageSettings() {
   return get<ApiResponse<{ syncDir: string; downloadDir: string; autoSync: boolean }>>('/api/v1/user/storage-settings')
@@ -135,4 +140,32 @@ export function fetchLdapUsers(data: { type: string; server: string; baseDN: str
 
 export function importLdapUsers(data: { type: string; server: string; baseDN: string; bindDN: string; bindPassword: string; users: string[] }) {
   return post<ApiResponse>('/api/v1/admin/ldap/import', data)
+}
+
+// Template Management
+export interface Template {
+  id: number
+  name: string
+  description: string
+  category: string
+  type: string
+  content: string
+  isBuiltin: boolean
+  createdAt: string
+}
+
+export function getAdminTemplates() {
+  return get<ApiResponse<{ list: Template[]; categories: string[] }>>('/api/v1/admin/templates')
+}
+
+export function createTemplate(data: { name: string; description?: string; category?: string; type: string; content?: string; isBuiltin?: boolean }) {
+  return post<ApiResponse<Template>>('/api/v1/admin/template/create', data)
+}
+
+export function updateTemplate(id: number, data: Partial<{ name: string; description: string; category: string; type: string; content: string; isBuiltin: boolean }>) {
+  return put<ApiResponse<{ id: number }>>(`/api/v1/admin/template/${id}`, data)
+}
+
+export function deleteTemplate(id: number) {
+  return del<ApiResponse<{ id: number }>>(`/api/v1/admin/template/${id}`)
 }
