@@ -1,7 +1,0 @@
-.specstory/
-kloggerx-server/logs/
-kloggerx-server/uploads/
-kloggerx-server/kloggerx-server
-kloggerx-web/node_modules/
-kloggerx-web/dist/
-kloggerx-web/.vite/
