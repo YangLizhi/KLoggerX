@@ -21,7 +21,7 @@
           >
             <span class="slide-num">{{ index + 1 }}</span>
             <div class="thumb-preview" :style="{ backgroundColor: slide.bgColor || '#fff' }">
-              {{ slide.title || '空白幻灯片' }}
+              {{ slide.title || $t('editor.slide.blankSlide') }}
             </div>
           </div>
         </div>
@@ -39,14 +39,14 @@
               <input
                 class="slide-title-input"
                 v-model="currentSlide.title"
-                placeholder="点击输入标题"
+                :placeholder="$t('editor.slide.clickInputTitle')"
                 @input="scheduleSave"
                 :style="titleStyle"
               />
               <textarea
                 class="slide-body-input"
                 v-model="currentSlide.body"
-                placeholder="点击输入内容"
+                :placeholder="$t('editor.slide.clickInputContent')"
                 @input="scheduleSave"
                 :style="bodyStyle"
               />
@@ -69,10 +69,10 @@
 
         <!-- Presentation controls -->
         <div v-if="isPresenting" class="presentation-controls">
-          <el-button @click="prevSlide" :disabled="currentIndex === 0"><el-icon><ArrowLeft /></el-icon>上一页</el-button>
+          <el-button @click="prevSlide" :disabled="currentIndex === 0"><el-icon><ArrowLeft /></el-icon>{{ $t('editor.slide.prevSlide') }}</el-button>
           <span class="slide-counter">{{ currentIndex + 1 }} / {{ slides.length }}</span>
-          <el-button @click="nextSlide" :disabled="currentIndex >= slides.length - 1">下一页<el-icon><ArrowRight /></el-icon></el-button>
-          <el-button type="danger" @click="exitPresentation">退出放映</el-button>
+          <el-button @click="nextSlide" :disabled="currentIndex >= slides.length - 1">{{ $t('editor.slide.nextSlide') }}<el-icon><ArrowRight /></el-icon></el-button>
+          <el-button type="danger" @click="exitPresentation">{{ $t('editor.slide.exitPresentation') }}</el-button>
         </div>
       </div>
     </div>
@@ -83,6 +83,9 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import SlideToolbar from './SlideToolbar.vue'
 import { ElMessageBox, ElMessage } from 'element-plus'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 interface SlideElement {
   type: 'image' | 'text' | 'shape' | 'table' | 'video' | 'audio'
@@ -125,7 +128,7 @@ const slides = ref<Slide[]>([])
 const currentIndex = ref(0)
 const isPresenting = ref(false)
 const selectedElement = ref(-1)
-const saveStatus = ref('已保存')
+const saveStatus = ref(t('editor.slide.saved'))
 
 let saveTimer: ReturnType<typeof setTimeout> | null = null
 let presentationTimer: ReturnType<typeof setInterval> | null = null
@@ -207,9 +210,9 @@ function handleToolbarAction(event: { action: string; params?: any }) {
     case 'moveDown': moveSlide(1); break
 
     // Clipboard
-    case 'cut': ElMessage.info('剪切功能开发中'); break
-    case 'copy': ElMessage.info('复制功能开发中'); break
-    case 'paste': ElMessage.info('粘贴功能开发中'); break
+    case 'cut': ElMessage.info(t('editor.slide.cutDev')); break
+    case 'copy': ElMessage.info(t('editor.slide.copyDev')); break
+    case 'paste': ElMessage.info(t('editor.slide.pasteDev')); break
 
     // Font
     case 'setFontFamily':
@@ -245,11 +248,11 @@ function handleToolbarAction(event: { action: string; params?: any }) {
     case 'alignLeft':
     case 'alignCenter':
     case 'alignRight':
-      ElMessage.info('对齐功能开发中')
+      ElMessage.info(t('editor.slide.alignDev'))
       break
     case 'bulletList':
     case 'numberList':
-      ElMessage.info('列表功能开发中')
+      ElMessage.info(t('editor.slide.listDev'))
       break
 
     // Insert
@@ -264,7 +267,7 @@ function handleToolbarAction(event: { action: string; params?: any }) {
 
     // Design
     case 'applyTheme': applyTheme(event.params); break
-    case 'setRatio': ElMessage.info('幻灯片比例调整功能开发中'); break
+    case 'setRatio': ElMessage.info(t('editor.slide.ratioDev')); break
     case 'applyGradientBg': applyGradientBg(); break
     case 'applyImageBg': applyImageBg(); break
 
@@ -299,9 +302,9 @@ function handleToolbarAction(event: { action: string; params?: any }) {
       break
 
     // UI actions (handled by parent)
-    case 'comment': ElMessage.info('评论功能需要父组件处理'); break
-    case 'permission': ElMessage.info('权限功能需要父组件处理'); break
-    case 'share': ElMessage.info('分享功能需要父组件处理'); break
+    case 'comment': ElMessage.info(t('editor.slide.commentHint')); break
+    case 'permission': ElMessage.info(t('editor.slide.permissionHint')); break
+    case 'share': ElMessage.info(t('editor.slide.commentHint')); break
 
     // Export
     case 'exportPPT': exportPPT(); break
@@ -370,10 +373,10 @@ async function insertImage() {
 
 async function insertOnlineImage() {
   try {
-    const { value } = await ElMessageBox.prompt('请输入图片URL', '插入在线图片', {
+    const { value } = await ElMessageBox.prompt(t('editor.slide.enterImageUrl'), t('editor.slide.insertOnlineImageTitle'), {
       inputPlaceholder: 'https://example.com/image.png',
-      confirmButtonText: '插入',
-      cancelButtonText: '取消',
+      confirmButtonText: t('editor.slide.insert'),
+      cancelButtonText: t('editor.slide.cancel'),
     })
     if (value) {
       addElement('image', {
@@ -386,21 +389,21 @@ async function insertOnlineImage() {
 
 function insertTextBox() {
   addElement('text', {
-    content: '双击编辑文本',
+    content: t('editor.slide.doubleClickEdit'),
     style: { top: '50%', left: '50%', width: '200px', padding: '8px', transform: 'translate(-50%, -50%)', border: '1px dashed #ccc' }
   })
 }
 
 async function insertLink() {
   try {
-    const { value } = await ElMessageBox.prompt('请输入链接URL', '插入链接', {
+    const { value } = await ElMessageBox.prompt(t('editor.slide.enterLinkUrl'), t('editor.slide.insertLinkTitle'), {
       inputPlaceholder: 'https://example.com',
-      confirmButtonText: '插入',
-      cancelButtonText: '取消',
+      confirmButtonText: t('editor.slide.insert'),
+      cancelButtonText: t('editor.slide.cancel'),
     })
     if (value) {
       if (currentSlide.value) {
-        currentSlide.value.body += `\n[链接](${value})`
+        currentSlide.value.body += `\n[${t('editor.slide.link')}](${value})`
         scheduleSave()
       }
     }
@@ -409,11 +412,11 @@ async function insertLink() {
 
 async function insertMedia(type: 'video' | 'audio') {
   try {
-    const title = type === 'video' ? '插入视频' : '插入音频'
-    const { value } = await ElMessageBox.prompt('请输入媒体文件URL', title, {
+    const title = type === 'video' ? t('editor.slide.insertVideoTitle') : t('editor.slide.insertAudioTitle')
+    const { value } = await ElMessageBox.prompt(t('editor.slide.enterMediaUrl'), title, {
       inputPlaceholder: type === 'video' ? 'https://example.com/video.mp4' : 'https://example.com/audio.mp3',
-      confirmButtonText: '插入',
-      cancelButtonText: '取消',
+      confirmButtonText: t('editor.slide.insert'),
+      cancelButtonText: t('editor.slide.cancel'),
     })
     if (value) {
       addElement(type, {
@@ -499,10 +502,10 @@ function applyGradientBg() {
 
 async function applyImageBg() {
   try {
-    const { value } = await ElMessageBox.prompt('请输入背景图片URL', '设置背景图片', {
+    const { value } = await ElMessageBox.prompt(t('editor.slide.enterBgImageUrl'), t('editor.slide.setBgImageTitle'), {
       inputPlaceholder: 'https://example.com/bg.jpg',
-      confirmButtonText: '设置',
-      cancelButtonText: '取消',
+      confirmButtonText: t('editor.slide.set'),
+      cancelButtonText: t('editor.slide.cancel'),
     })
     if (value && currentSlide.value) {
       currentSlide.value.bgColor = `url(${value}) center/cover`
@@ -563,7 +566,7 @@ function exportPPT() {
   a.download = `presentation-${Date.now()}.json`
   a.click()
   URL.revokeObjectURL(url)
-  ElMessage.success('导出成功')
+  ElMessage.success(t('editor.slide.exportSuccess'))
 }
 
 function printSlides() {
@@ -584,11 +587,11 @@ function handleKeydown(e: KeyboardEvent) {
 }
 
 function scheduleSave() {
-  saveStatus.value = '保存中...'
+  saveStatus.value = t('editor.slide.saving')
   if (saveTimer) clearTimeout(saveTimer)
   saveTimer = setTimeout(() => {
     emit('save', JSON.stringify(slides.value))
-    saveStatus.value = '已保存'
+    saveStatus.value = t('editor.slide.saved')
   }, 2000)
 }
 

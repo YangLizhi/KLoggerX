@@ -3,10 +3,10 @@
     <div class="chat-header">
       <div class="chat-title">
         <el-icon><ChatDotRound /></el-icon>
-        <span>AI 助手</span>
+        <span>{{ $t('knowledge.chat.aiAssistant') }}</span>
       </div>
       <div class="chat-actions">
-        <el-tooltip content="清空对话" placement="bottom">
+        <el-tooltip :content="$t('knowledge.clearChat')" placement="bottom">
           <el-icon class="action-btn" @click="clearChat"><Delete /></el-icon>
         </el-tooltip>
         <el-icon class="action-btn close-btn" @click="$emit('close')"><Close /></el-icon>
@@ -15,20 +15,20 @@
     <div class="chat-messages" ref="messagesRef">
       <div v-if="messages.length === 0" class="chat-welcome">
         <el-icon :size="48" color="#3370ff"><ChatDotRound /></el-icon>
-        <h3>知识库 AI 助手</h3>
-        <p>我可以帮您解答关于知识库内容的问题</p>
+        <h3>{{ $t('knowledge.chat.kbAssistant') }}</h3>
+        <p>{{ $t('knowledge.chat.kbAssistantDesc') }}</p>
         <div class="quick-actions">
-          <div class="quick-action" @click="sendQuickMessage('这个知识库包含哪些内容？')">
+          <div class="quick-action" @click="sendQuickMessage(t('knowledge.chat.quickQuestion1'))">
             <el-icon><QuestionFilled /></el-icon>
-            <span>这个知识库包含哪些内容？</span>
+            <span>{{ $t('knowledge.chat.quickQuestion1') }}</span>
           </div>
-          <div class="quick-action" @click="sendQuickMessage('帮我总结最近的文档')">
+          <div class="quick-action" @click="sendQuickMessage(t('knowledge.chat.quickQuestion2'))">
             <el-icon><Document /></el-icon>
-            <span>帮我总结最近的文档</span>
+            <span>{{ $t('knowledge.chat.quickQuestion2') }}</span>
           </div>
-          <div class="quick-action" @click="sendQuickMessage('查找相关的技术文档')">
+          <div class="quick-action" @click="sendQuickMessage(t('knowledge.chat.quickQuestion3'))">
             <el-icon><Search /></el-icon>
-            <span>查找相关的技术文档</span>
+            <span>{{ $t('knowledge.chat.quickQuestion3') }}</span>
           </div>
         </div>
       </div>
@@ -40,7 +40,7 @@
         <div class="message-content">
           <div class="message-text" v-html="formatMessage(msg.content)"></div>
           <div v-if="msg.role === 'assistant' && msg.sources?.length" class="message-sources">
-            <div class="sources-label">参考来源:</div>
+            <div class="sources-label">{{ $t('knowledge.chat.referencedSources') }}</div>
             <div v-for="src in msg.sources" :key="src.id" class="source-item" @click="$emit('open-doc', src.id)">
               <el-icon><Document /></el-icon>
               <span>{{ src.title }}</span>
@@ -64,7 +64,7 @@
         v-model="inputText"
         type="textarea"
         :rows="2"
-        placeholder="输入您的问题..."
+                :placeholder="$t('knowledge.askQuestion')"
         @keydown.enter.ctrl="sendMessage"
         :disabled="loading"
       />
@@ -77,8 +77,11 @@
 
 <script setup lang="ts">
 import { ref, computed, nextTick, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 // import { ElMessage } from 'element-plus'
 import { post } from '@/api/request'
+
+const { t } = useI18n()
 
 interface Message {
   role: 'user' | 'assistant'
@@ -142,7 +145,7 @@ async function sendMessage() {
     const data = res.data
     const sources = (data.sources || []).map((s: any) => ({
       id: s.documentId,
-      title: s.documentTitle || '文档',
+      title: s.documentTitle || t('document.document'),
       documentId: s.documentId,
     }))
     // Deduplicate sources by documentId
@@ -152,9 +155,9 @@ async function sendMessage() {
       seen.add(s.id)
       return true
     })
-    messages.value.push({ role: 'assistant', content: data.answer || '暂无回答', sources: uniqueSources })
+    messages.value.push({ role: 'assistant', content: data.answer || t('knowledge.chat.noAnswer'), sources: uniqueSources })
   } catch (e: any) {
-    const errMsg = e?.response?.data?.message || e?.message || 'AI 服务暂时不可用'
+    const errMsg = e?.response?.data?.message || e?.message || t('knowledge.chat.aiUnavailable')
     messages.value.push({ role: 'assistant', content: `⚠️ ${errMsg}` })
   } finally {
     loading.value = false

@@ -1,7 +1,7 @@
 <template>
   <div class="document-tree">
     <div class="tree-header" v-if="showHeader">
-      <span class="tree-title">文档库</span>
+      <span class="tree-title">{{ $t('docTree.title') }}</span>
       <el-icon class="tree-action" @click="refreshTree"><Refresh /></el-icon>
     </div>
     <el-tree
@@ -30,16 +30,16 @@
           <span class="node-title" :title="data.title">{{ data.title }}</span>
           <span v-if="data.isPinned" class="pin-badge">📌</span>
           <div class="node-actions" v-show="hoverNodeId === data.id">
-            <el-icon class="node-btn" @click.stop="handleAdd(data)" title="新建子页面"><Plus /></el-icon>
+            <el-icon class="node-btn" @click.stop="handleAdd(data)" :title="$t('docTree.newSubPage')"><Plus /></el-icon>
             <el-dropdown trigger="click" @command="(cmd: string) => handleCommand(cmd, data)">
               <el-icon class="node-btn" @click.stop><MoreFilled /></el-icon>
               <template #dropdown>
                 <el-dropdown-menu>
-                  <el-dropdown-item command="rename">重命名</el-dropdown-item>
-                  <el-dropdown-item command="pin">{{ data.isPinned ? '取消置顶' : '置顶' }}</el-dropdown-item>
-                  <el-dropdown-item command="favorite">{{ data.isFavorite ? '取消收藏' : '收藏' }}</el-dropdown-item>
-                  <el-dropdown-item command="copy">创建副本</el-dropdown-item>
-                  <el-dropdown-item command="delete" divided>删除</el-dropdown-item>
+                  <el-dropdown-item command="rename">{{ $t('common.rename') }}</el-dropdown-item>
+                  <el-dropdown-item command="pin">{{ data.isPinned ? $t('home.removeFromTop') : $t('home.addToTop') }}</el-dropdown-item>
+                  <el-dropdown-item command="favorite">{{ data.isFavorite ? $t('home.cancelFavorite') : $t('home.addFavorite') }}</el-dropdown-item>
+                  <el-dropdown-item command="copy">{{ $t('home.createCopy') }}</el-dropdown-item>
+                  <el-dropdown-item command="delete" divided>{{ $t('common.delete') }}</el-dropdown-item>
                 </el-dropdown-menu>
               </template>
             </el-dropdown>
@@ -49,20 +49,20 @@
     </el-tree>
 
     <div v-if="contextMenu.visible" class="context-menu" :style="{ left: contextMenu.x + 'px', top: contextMenu.y + 'px' }">
-      <div class="context-item" @click="handleContextCommand('openNew')"><el-icon :size="13"><TopRight /></el-icon>在新标签页打开</div>
+      <div class="context-item" @click="handleContextCommand('openNew')"><el-icon :size="13"><TopRight /></el-icon>{{ $t('docTree.openNewTab') }}</div>
       <div class="context-divider"></div>
-      <div class="context-item" @click="handleContextCommand('share')"><el-icon :size="13"><Share /></el-icon>分享</div>
-      <div class="context-item" @click="handleContextCommand('copyLink')"><el-icon :size="13"><Link /></el-icon>复制链接</div>
+      <div class="context-item" @click="handleContextCommand('share')"><el-icon :size="13"><Share /></el-icon>{{ $t('common.share') }}</div>
+      <div class="context-item" @click="handleContextCommand('copyLink')"><el-icon :size="13"><Link /></el-icon>{{ $t('home.copyLink') }}</div>
       <div class="context-divider"></div>
-      <div class="context-item" @click="handleContextCommand('copy')"><el-icon :size="13"><DocumentCopy /></el-icon>创建副本</div>
-      <div class="context-item" @click="handleContextCommand('move')"><el-icon :size="13"><Rank /></el-icon>移动到</div>
-      <div class="context-item" @click="handleContextCommand('shortcut')"><el-icon :size="13"><Position /></el-icon>添加快捷方式到</div>
-      <div class="context-item" @click="handleContextCommand('pin')"><el-icon :size="13"><Flag /></el-icon>{{ contextMenu.node?.isPinned ? '从"置顶"移除' : '添加到"置顶"' }}</div>
-      <div class="context-item" @click="handleContextCommand('favorite')"><el-icon :size="13"><Star /></el-icon>{{ contextMenu.node?.isFavorite ? '取消收藏' : '收藏' }}</div>
+      <div class="context-item" @click="handleContextCommand('copy')"><el-icon :size="13"><DocumentCopy /></el-icon>{{ $t('home.createCopy') }}</div>
+      <div class="context-item" @click="handleContextCommand('move')"><el-icon :size="13"><Rank /></el-icon>{{ $t('home.moveTo') }}</div>
+      <div class="context-item" @click="handleContextCommand('shortcut')"><el-icon :size="13"><Position /></el-icon>{{ $t('home.addShortcut') }}</div>
+      <div class="context-item" @click="handleContextCommand('pin')"><el-icon :size="13"><Flag /></el-icon>{{ contextMenu.node?.isPinned ? $t('home.removeFromTop') : $t('home.addToTop') }}</div>
+      <div class="context-item" @click="handleContextCommand('favorite')"><el-icon :size="13"><Star /></el-icon>{{ contextMenu.node?.isFavorite ? $t('home.cancelFavorite') : $t('home.addFavorite') }}</div>
       <div class="context-divider"></div>
-      <div class="context-item" @click="handleContextCommand('transfer')"><el-icon :size="13"><Switch /></el-icon>转移所有权</div>
-      <div class="context-item" @click="handleContextCommand('rename')"><el-icon :size="13"><EditPen /></el-icon>重命名</div>
-      <div class="context-item danger" @click="handleContextCommand('delete')"><el-icon :size="13"><Delete /></el-icon>删除</div>
+      <div class="context-item" @click="handleContextCommand('transfer')"><el-icon :size="13"><Switch /></el-icon>{{ $t('home.transferOwnership') }}</div>
+      <div class="context-item" @click="handleContextCommand('rename')"><el-icon :size="13"><EditPen /></el-icon>{{ $t('common.rename') }}</div>
+      <div class="context-item danger" @click="handleContextCommand('delete')"><el-icon :size="13"><Delete /></el-icon>{{ $t('common.delete') }}</div>
     </div>
   </div>
 </template>
@@ -70,9 +70,12 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { getDocumentTree, createDocument, pinDocument, favoriteDocument, copyDocument, deleteDocument, updateDocument, moveDocument } from '@/api/modules/document'
 import { ElMessage, ElMessageBox } from 'element-plus'
 // import type { Document } from '@/types'
+
+const { t } = useI18n()
 
 const props = withDefaults(defineProps<{
   showHeader?: boolean
@@ -145,7 +148,7 @@ function handleContextCommand(cmd: string) {
 async function handleAdd(parentData: any) {
   try {
     const res: any = await createDocument({
-      title: '无标题文档',
+      title: t('document.untitled'),
       type: 'doc',
       parentId: parentData.id,
     })
@@ -167,12 +170,12 @@ async function handleCommand(cmd: string, data: any) {
       router.push(`/doc/${data.id}`)
     } else if (cmd === 'copyLink') {
       navigator.clipboard.writeText(`${window.location.origin}/doc/${data.id}`)
-      ElMessage.success('链接已复制')
+      ElMessage.success(t('common.linkCopied'))
     } else if (cmd === 'rename') {
-      const { value } = await ElMessageBox.prompt('请输入新名称', '重命名', {
+      const { value } = await ElMessageBox.prompt(t('home.enterNewName'), t('common.rename'), {
         inputValue: data.title,
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+        confirmButtonText: t('common.confirm'),
+        cancelButtonText: t('common.cancel'),
       })
       if (value) {
         await updateDocument(data.id, { title: value })
@@ -188,26 +191,26 @@ async function handleCommand(cmd: string, data: any) {
     } else if (cmd === 'copy') {
       await copyDocument(data.id, false)
       refreshTree()
-      ElMessage.success('副本已创建')
+      ElMessage.success(t('home.copyCreated'))
     } else if (cmd === 'move') {
-      ElMessage.info('请使用拖拽方式移动文档')
+      ElMessage.info(t('docTree.dragToMove'))
     } else if (cmd === 'shortcut') {
-      ElMessage.success(`"${data.title}" 的快捷方式已添加到桌面`)
+      ElMessage.success(t('home.shortcutAdded'))
     } else if (cmd === 'transfer') {
-      const { value } = await ElMessageBox.prompt('请输入新所有者的邮箱或用户名', '转移所有权', {
-        confirmButtonText: '转移',
-        cancelButtonText: '取消',
-        inputPlaceholder: '输入用户邮箱',
+      const { value } = await ElMessageBox.prompt(t('home.selectTargetUser'), t('home.transferOwnership'), {
+        confirmButtonText: t('home.confirmTransfer'),
+        cancelButtonText: t('common.cancel'),
+        inputPlaceholder: t('home.searchUserOrEmail'),
       }).catch(() => ({ value: null }))
       if (value) {
-        ElMessage.success(`"${data.title}" 的所有权已转移给 ${value}`)
+        ElMessage.success(t('home.ownershipTransferred'))
       }
     } else if (cmd === 'delete') {
-      await ElMessageBox.confirm('确定要删除该文档吗？删除后将移入回收站，30天内可恢复。', '删除确认')
+      await ElMessageBox.confirm(t('docTree.deleteConfirm'), t('home.deleteConfirmTitle'))
       await deleteDocument(data.id)
       refreshTree()
       emit('refresh')
-      ElMessage.success('已移至回收站')
+      ElMessage.success(t('home.movedToTrash'))
     }
   } catch {
     // cancelled or error

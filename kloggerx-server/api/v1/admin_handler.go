@@ -1,18 +1,37 @@
 package v1
 
 import (
+	"context"
+	"fmt"
 	"net/http"
+	"os"
+	"path/filepath"
+	"runtime"
 	"strconv"
+	"time"
 
+	"kloggerx-server/config"
 	"kloggerx-server/internal/model"
 	"kloggerx-server/internal/pkg/utils"
 	"kloggerx-server/internal/repository/mysql"
+	redisRepo "kloggerx-server/internal/repository/redis"
+	"kloggerx-server/internal/service"
 
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 )
 
-// GetUserList returns list of users with pagination
+// AdminGetUserList godoc
+// @Summary 管理员获取用户列表
+// @Description 管理员分页获取用户列表
+// @Tags 系统管理
+// @Produce json
+// @Param page query int false "页码"
+// @Param pageSize query int false "每页数量"
+// @Param keyword query string false "搜索关键词"
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /admin/users [get]
 func AdminGetUserList(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "20"))
@@ -44,14 +63,22 @@ func AdminGetUserList(c *gin.Context) {
 	c.JSON(http.StatusOK, model.Success(model.PaginatedData{List: users, Total: total, Page: page, PageSize: pageSize}))
 }
 
-// CreateUser creates a new user
+// AdminCreateUser godoc
+// @Summary 管理员创建用户
+// @Description 管理员创建新用户
+// @Tags 系统管理
+// @Accept json
+// @Produce json
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /admin/users [post]
 func AdminCreateUser(c *gin.Context) {
 	var req struct {
-		Username     string `json:"username" binding:"required"`
-		Email        string `json:"email" binding:"required,email"`
-		Password     string `json:"password" binding:"required,min=6"`
-		Nickname     string `json:"nickname"`
-		Role         string `json:"role"`
+		Username     string `json:"username" binding:"required,max=50"`
+		Email        string `json:"email" binding:"required,email,max=200"`
+		Password     string `json:"password" binding:"required,min=6,max=128"`
+		Nickname     string `json:"nickname" binding:"max=100"`
+		Role         string `json:"role" binding:"max=50"`
 		DepartmentID uint   `json:"departmentId"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -95,14 +122,23 @@ func AdminCreateUser(c *gin.Context) {
 	c.JSON(http.StatusOK, model.Success(user))
 }
 
-// UpdateUser updates a user
+// AdminUpdateUser godoc
+// @Summary 管理员更新用户
+// @Description 管理员更新用户信息
+// @Tags 系统管理
+// @Accept json
+// @Produce json
+// @Param id path int true "用户ID"
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /admin/users/{id} [put]
 func AdminUpdateUser(c *gin.Context) {
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
 
 	var req struct {
-		Nickname     string `json:"nickname"`
-		Email        string `json:"email"`
-		Role         string `json:"role"`
+		Nickname     string `json:"nickname" binding:"max=100"`
+		Email        string `json:"email" binding:"max=200"`
+		Role         string `json:"role" binding:"max=50"`
 		DepartmentID uint   `json:"departmentId"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -125,7 +161,15 @@ func AdminUpdateUser(c *gin.Context) {
 	c.JSON(http.StatusOK, model.Success(nil))
 }
 
-// DeleteUser deletes a user
+// AdminDeleteUser godoc
+// @Summary 管理员删除用户
+// @Description 管理员删除用户
+// @Tags 系统管理
+// @Produce json
+// @Param id path int true "用户ID"
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /admin/users/{id} [delete]
 func AdminDeleteUser(c *gin.Context) {
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
 	uid := utils.GetUserID(c.MustGet("userId"))
@@ -143,12 +187,21 @@ func AdminDeleteUser(c *gin.Context) {
 	c.JSON(http.StatusOK, model.Success(nil))
 }
 
-// ResetUserPassword resets a user's password
+// AdminResetUserPassword godoc
+// @Summary 重置用户密码
+// @Description 管理员重置用户密码
+// @Tags 系统管理
+// @Accept json
+// @Produce json
+// @Param id path int true "用户ID"
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /admin/users/{id}/reset-password [post]
 func AdminResetUserPassword(c *gin.Context) {
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
 
 	var req struct {
-		Password string `json:"password" binding:"required,min=6"`
+		Password string `json:"password" binding:"required,min=6,max=128"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusOK, model.ErrorMsg("参数错误"))
@@ -169,7 +222,14 @@ func AdminResetUserPassword(c *gin.Context) {
 	c.JSON(http.StatusOK, model.Success(nil))
 }
 
-// GetDepartmentTree returns department tree
+// AdminGetDepartmentTree godoc
+// @Summary 获取部门树
+// @Description 获取部门树结构
+// @Tags 系统管理
+// @Produce json
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /admin/departments [get]
 func AdminGetDepartmentTree(c *gin.Context) {
 	var departments []model.Department
 	if err := mysql.DB.Find(&departments).Error; err != nil {
@@ -207,10 +267,18 @@ func AdminGetDepartmentTree(c *gin.Context) {
 	c.JSON(http.StatusOK, model.Success(roots))
 }
 
-// CreateDepartment creates a new department
+// AdminCreateDepartment godoc
+// @Summary 创建部门
+// @Description 管理员创建新部门
+// @Tags 系统管理
+// @Accept json
+// @Produce json
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /admin/departments [post]
 func AdminCreateDepartment(c *gin.Context) {
 	var req struct {
-		Name     string `json:"name" binding:"required"`
+		Name     string `json:"name" binding:"required,max=100"`
 		ParentID *uint  `json:"parentId"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -230,12 +298,21 @@ func AdminCreateDepartment(c *gin.Context) {
 	c.JSON(http.StatusOK, model.Success(dept))
 }
 
-// UpdateDepartment updates a department
+// AdminUpdateDepartment godoc
+// @Summary 更新部门
+// @Description 管理员更新部门信息
+// @Tags 系统管理
+// @Accept json
+// @Produce json
+// @Param id path int true "部门ID"
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /admin/departments/{id} [put]
 func AdminUpdateDepartment(c *gin.Context) {
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
 
 	var req struct {
-		Name     string `json:"name" binding:"required"`
+		Name     string `json:"name" binding:"required,max=100"`
 		ParentID *uint  `json:"parentId"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -256,7 +333,15 @@ func AdminUpdateDepartment(c *gin.Context) {
 	c.JSON(http.StatusOK, model.Success(nil))
 }
 
-// DeleteDepartment deletes a department
+// AdminDeleteDepartment godoc
+// @Summary 删除部门
+// @Description 管理员删除部门
+// @Tags 系统管理
+// @Produce json
+// @Param id path int true "部门ID"
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /admin/departments/{id} [delete]
 func AdminDeleteDepartment(c *gin.Context) {
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
 
@@ -284,7 +369,15 @@ func AdminDeleteDepartment(c *gin.Context) {
 	c.JSON(http.StatusOK, model.Success(nil))
 }
 
-// GetDepartmentMembers returns members of a department
+// AdminGetDepartmentMembers godoc
+// @Summary 获取部门成员
+// @Description 获取部门下的成员列表
+// @Tags 系统管理
+// @Produce json
+// @Param id path int true "部门ID"
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /admin/departments/{id}/members [get]
 func AdminGetDepartmentMembers(c *gin.Context) {
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
 
@@ -301,7 +394,221 @@ func AdminGetDepartmentMembers(c *gin.Context) {
 	c.JSON(http.StatusOK, model.Success(users))
 }
 
-// AdminListDirectories lists subdirectories for path selection
+// ─── Feedback Review ──────────────────────────────────────────────────────────
+
+// GetPendingReviewsHandler godoc
+// @Summary 获取待审核列表
+// @Description 获取待审核的反馈列表
+// @Tags 系统管理
+// @Produce json
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /admin/feedback/reviews [get]
+func GetPendingReviewsHandler(c *gin.Context) {
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "20"))
+
+	items, total, err := service.GetPendingReviews(page, pageSize)
+	if err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg("获取审核列表失败"))
+		return
+	}
+
+	c.JSON(http.StatusOK, model.Success(model.PaginatedData{List: items, Total: total, Page: page, PageSize: pageSize}))
+}
+
+// ApproveReviewHandler godoc
+// @Summary 通过审核
+// @Description 通过反馈审核
+// @Tags 系统管理
+// @Accept json
+// @Produce json
+// @Param id path int true "审核ID"
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /admin/feedback/reviews/{id}/approve [post]
+func ApproveReviewHandler(c *gin.Context) {
+	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+	reviewerID := utils.GetUserID(c.MustGet("userId"))
+
+	var req struct {
+		Comment string `json:"comment" binding:"max=2000"`
+	}
+	c.ShouldBindJSON(&req)
+
+	if err := service.ApproveReview(uint(id), reviewerID, req.Comment); err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg(err.Error()))
+		return
+	}
+
+	c.JSON(http.StatusOK, model.Success(nil))
+}
+
+// RejectReviewHandler godoc
+// @Summary 拒绝审核
+// @Description 拒绝反馈审核
+// @Tags 系统管理
+// @Accept json
+// @Produce json
+// @Param id path int true "审核ID"
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /admin/feedback/reviews/{id}/reject [post]
+func RejectReviewHandler(c *gin.Context) {
+	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+	reviewerID := utils.GetUserID(c.MustGet("userId"))
+
+	var req struct {
+		Comment string `json:"comment"`
+	}
+	c.ShouldBindJSON(&req)
+
+	if err := service.RejectReview(uint(id), reviewerID, req.Comment); err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg(err.Error()))
+		return
+	}
+
+	c.JSON(http.StatusOK, model.Success(nil))
+}
+
+// GetReviewStatsHandler godoc
+// @Summary 审核统计
+// @Description 获取审核统计信息
+// @Tags 系统管理
+// @Produce json
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /admin/feedback/reviews/stats [get]
+func GetReviewStatsHandler(c *gin.Context) {
+	stats, err := service.GetReviewStats()
+	if err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg("获取统计失败"))
+		return
+	}
+
+	c.JSON(http.StatusOK, model.Success(stats))
+}
+
+// ─── Dashboard ──────────────────────────────────────────────────────────────
+
+var serverStartTime = time.Now()
+
+// GetDashboardStats 获取仪表盘统计
+func GetDashboardStats(c *gin.Context) {
+	var totalUsers int64
+	var totalDocuments int64
+	var totalKnowledgeBases int64
+
+	mysql.DB.Model(&model.User{}).Count(&totalUsers)
+	mysql.DB.Model(&model.Document{}).Where("is_deleted = ?", false).Count(&totalDocuments)
+	mysql.DB.Model(&model.KnowledgeBase{}).Count(&totalKnowledgeBases)
+
+	// Total storage: sum of file sizes from file_records
+	var totalStorageUsed int64
+	mysql.DB.Model(&model.FileRecord{}).Select("COALESCE(SUM(size), 0)").Scan(&totalStorageUsed)
+
+	// Today active users (users who logged in today)
+	today := time.Now().Format("2006-01-02")
+	var todayActiveUsers int64
+	mysql.DB.Model(&model.User{}).Where("DATE(updated_at) = ?", today).Count(&todayActiveUsers)
+
+	// New documents today
+	var newDocumentsToday int64
+	mysql.DB.Model(&model.Document{}).Where("DATE(created_at) = ? AND is_deleted = ?", today, false).Count(&newDocumentsToday)
+
+	// Weekly trend: last 7 days
+	type DayTrend struct {
+		Date        string `json:"date"`
+		Documents   int64  `json:"documents"`
+		ActiveUsers int64  `json:"activeUsers"`
+	}
+	var weeklyTrend []DayTrend
+	for i := 6; i >= 0; i-- {
+		day := time.Now().AddDate(0, 0, -i).Format("2006-01-02")
+		var docs int64
+		var users int64
+		mysql.DB.Model(&model.Document{}).Where("DATE(created_at) = ? AND is_deleted = ?", day, false).Count(&docs)
+		mysql.DB.Model(&model.User{}).Where("DATE(updated_at) = ?", day).Count(&users)
+		weeklyTrend = append(weeklyTrend, DayTrend{Date: day, Documents: docs, ActiveUsers: users})
+	}
+
+	c.JSON(http.StatusOK, model.Success(gin.H{
+		"total_users":           totalUsers,
+		"total_documents":       totalDocuments,
+		"total_knowledge_bases": totalKnowledgeBases,
+		"total_storage_used":    totalStorageUsed,
+		"today_active_users":    todayActiveUsers,
+		"new_documents_today":   newDocumentsToday,
+		"weekly_trend":          weeklyTrend,
+	}))
+}
+
+// GetSystemInfo 获取系统信息
+func GetSystemInfo(c *gin.Context) {
+	// Go version & OS info
+	goVersion := runtime.Version()
+	osInfo := fmt.Sprintf("%s/%s", runtime.GOOS, runtime.GOARCH)
+	cpuCores := runtime.NumCPU()
+
+	// Memory usage
+	var memStats runtime.MemStats
+	runtime.ReadMemStats(&memStats)
+
+	// MySQL status
+	mysqlStatus := "connected"
+	sqlDB, err := mysql.DB.DB()
+	if err != nil || sqlDB.Ping() != nil {
+		mysqlStatus = "disconnected"
+	}
+
+	// Redis status
+	redisStatus := "connected"
+	if redisRepo.RDB == nil || redisRepo.RDB.Ping(context.Background()).Err() != nil {
+		redisStatus = "disconnected"
+	}
+
+	// MinIO status
+	minioStatus := "configured"
+	if config.Cfg.MinIO.Endpoint == "" {
+		minioStatus = "not_configured"
+	}
+
+	// Uptime
+	uptime := time.Since(serverStartTime).String()
+
+	// Disk usage (uploads directory)
+	var diskUsage int64
+	uploadsDir := filepath.Join(".", "uploads")
+	filepath.Walk(uploadsDir, func(_ string, info os.FileInfo, err error) error {
+		if err == nil && !info.IsDir() {
+			diskUsage += info.Size()
+		}
+		return nil
+	})
+
+	c.JSON(http.StatusOK, model.Success(gin.H{
+		"go_version":   goVersion,
+		"os":           osInfo,
+		"cpu_cores":    cpuCores,
+		"memory_usage": memStats.Alloc,
+		"memory_sys":   memStats.Sys,
+		"mysql_status": mysqlStatus,
+		"redis_status": redisStatus,
+		"minio_status": minioStatus,
+		"uptime":       uptime,
+		"disk_usage":   diskUsage,
+	}))
+}
+
+// AdminListDirectories godoc
+// @Summary 列出目录
+// @Description 列出服务器目录结构
+// @Tags 系统管理
+// @Produce json
+// @Param path query string false "目录路径"
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /admin/directories [get]
 func AdminListDirectories(c *gin.Context) {
 	path := c.Query("path")
 	if path == "" {

@@ -1,6 +1,12 @@
 package model
 
-import "time"
+import (
+	"time"
+
+	"kloggerx-server/internal/pkg/crypto"
+
+	"gorm.io/gorm"
+)
 
 type User struct {
 	ID           uint      `gorm:"primaryKey" json:"id"`
@@ -10,6 +16,7 @@ type User struct {
 	Nickname     string    `gorm:"size:50" json:"nickname"`
 	Avatar       string    `gorm:"size:500" json:"avatar"`
 	Role         string    `gorm:"size:20;default:member" json:"role"`
+	AuthSource   string    `gorm:"size:20;default:local" json:"authSource"` // local, ldap
 	DepartmentID uint      `gorm:"default:0" json:"departmentId"`
 	CreatedAt    time.Time `json:"createdAt"`
 	UpdatedAt    time.Time `json:"updatedAt"`
@@ -116,16 +123,17 @@ type KnowledgeDocument struct {
 }
 
 type Comment struct {
-	ID         uint      `gorm:"primaryKey" json:"id"`
-	DocumentID uint      `gorm:"index;not null" json:"documentId"`
-	UserID     uint      `gorm:"not null" json:"userId"`
-	UserName   string    `gorm:"-" json:"userName"`
-	Content    string    `gorm:"type:text;not null" json:"content"`
-	Selection  string    `gorm:"type:text" json:"selection"`
-	ParentID   *uint     `json:"parentId"`
-	Resolved   bool      `gorm:"default:false" json:"resolved"`
-	CreatedAt  time.Time `json:"createdAt"`
-	UpdatedAt  time.Time `json:"updatedAt"`
+	ID         uint      `json:"id" gorm:"primaryKey"`
+	DocumentID uint      `json:"document_id" gorm:"index;not null"`
+	UserID     uint      `json:"user_id" gorm:"index;not null"`
+	User       User      `json:"user" gorm:"foreignKey:UserID"`
+	Content    string    `json:"content" gorm:"type:text;not null" binding:"required,max=5000"`
+	ParentID   *uint     `json:"parent_id" gorm:"index"`
+	QuotedText string    `json:"quoted_text" gorm:"type:text"`
+	Resolved   bool      `json:"resolved" gorm:"default:false"`
+	CreatedAt  time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
+	Replies    []Comment `json:"replies" gorm:"foreignKey:ParentID"`
 }
 
 type Notification struct {
@@ -162,13 +170,17 @@ type OperationLog struct {
 	ID            uint      `gorm:"primaryKey" json:"id"`
 	UserID        uint      `gorm:"index;not null" json:"userId"`
 	UserName      string    `gorm:"size:50" json:"userName"`
-	Action        string    `gorm:"size:30;not null;index" json:"action"`
-	ResourceType  string    `gorm:"size:30;not null;index" json:"resourceType"`
-	ResourceID    uint      `gorm:"index;not null" json:"resourceId"`
+	Action        string    `gorm:"size:50;not null;index" json:"action"`
+	Resource      string    `gorm:"size:500" json:"resource"`
+	ResourceType  string    `gorm:"size:30;index" json:"resourceType"`
+	ResourceID    uint      `gorm:"index" json:"resourceId"`
 	ResourceTitle string    `gorm:"size:500" json:"resourceTitle"`
 	Detail        string    `gorm:"type:text" json:"detail"`
-	IP            string    `gorm:"size:50" json:"ip"`
-	CreatedAt     time.Time `json:"createdAt"`
+	IP            string    `gorm:"size:45" json:"ip"`
+	UserAgent     string    `gorm:"size:500" json:"userAgent"`
+	Status        int       `json:"status"`
+	Duration      int64     `json:"duration"`
+	CreatedAt     time.Time `gorm:"index" json:"createdAt"`
 }
 
 type SystemSetting struct {
@@ -187,6 +199,14 @@ type Template struct {
 	Preview     string    `gorm:"type:text" json:"preview"` // Text preview extracted from content
 	IsBuiltin   bool      `gorm:"default:false" json:"isBuiltin"`
 	CreatedAt   time.Time `json:"createdAt"`
+}
+
+// TemplateFavorite stores user's favorite templates.
+type TemplateFavorite struct {
+	ID         uint      `gorm:"primaryKey" json:"id"`
+	UserID     uint      `gorm:"uniqueIndex:idx_user_template;not null" json:"userId"`
+	TemplateID uint      `gorm:"uniqueIndex:idx_user_template;not null" json:"templateId"`
+	CreatedAt  time.Time `json:"createdAt"`
 }
 
 // KnowledgeSource links a KnowledgeBase to a cloud-drive folder or a document.
@@ -211,6 +231,7 @@ type KnowledgeChunk struct {
 	DocumentTitle   string    `gorm:"size:500" json:"documentTitle"`
 	Content         string    `gorm:"type:text;not null" json:"content"`
 	ChunkIndex      int       `gorm:"not null" json:"chunkIndex"`
+	SourceType      string    `gorm:"size:30;default:'document'" json:"sourceType"` // document, user_contribution
 	QdrantPointID   string    `gorm:"size:64" json:"qdrantPointId"`           // Qdrant vector point ID
 	EmbeddingStatus string    `gorm:"size:20;default:pending" json:"embeddingStatus"` // pending, embedded, failed
 	CreatedAt       time.Time `json:"createdAt"`
@@ -279,6 +300,79 @@ type RemoteStorage struct {
 	UpdatedAt    time.Time `json:"updatedAt"`
 }
 
+// BeforeSave encrypts sensitive fields before saving to database.
+func (r *RemoteStorage) BeforeSave(tx *gorm.DB) error {
+	if r.Password != "" {
+		encrypted, err := crypto.Encrypt(r.Password)
+		if err != nil {
+			return err
+		}
+		r.Password = encrypted
+	}
+	if r.AccessToken != "" {
+		encrypted, err := crypto.Encrypt(r.AccessToken)
+		if err != nil {
+			return err
+		}
+		r.AccessToken = encrypted
+	}
+	if r.RefreshToken != "" {
+		encrypted, err := crypto.Encrypt(r.RefreshToken)
+		if err != nil {
+			return err
+		}
+		r.RefreshToken = encrypted
+	}
+	if r.APIKey != "" {
+		encrypted, err := crypto.Encrypt(r.APIKey)
+		if err != nil {
+			return err
+		}
+		r.APIKey = encrypted
+	}
+	return nil
+}
+
+// AfterFind decrypts sensitive fields after reading from database.
+// Silently ignores decryption errors to remain compatible with legacy plaintext data.
+func (r *RemoteStorage) AfterFind(tx *gorm.DB) error {
+	if r.Password != "" {
+		if decrypted, err := crypto.Decrypt(r.Password); err == nil {
+			r.Password = decrypted
+		}
+	}
+	if r.AccessToken != "" {
+		if decrypted, err := crypto.Decrypt(r.AccessToken); err == nil {
+			r.AccessToken = decrypted
+		}
+	}
+	if r.RefreshToken != "" {
+		if decrypted, err := crypto.Decrypt(r.RefreshToken); err == nil {
+			r.RefreshToken = decrypted
+		}
+	}
+	if r.APIKey != "" {
+		if decrypted, err := crypto.Decrypt(r.APIKey); err == nil {
+			r.APIKey = decrypted
+		}
+	}
+	return nil
+}
+
+// KnowledgeGraph 知识图谱
+type KnowledgeGraph struct {
+	ID              uint      `gorm:"primaryKey" json:"id"`
+	KnowledgeBaseID uint      `gorm:"uniqueIndex;not null" json:"knowledgeBaseId"`
+	GraphData       string    `gorm:"type:longtext" json:"-"`
+	NodeCount       int       `json:"nodeCount"`
+	EdgeCount       int       `json:"edgeCount"`
+	CommunityCount  int       `json:"communityCount"`
+	Status          string    `gorm:"size:20;default:'idle'" json:"status"`
+	ErrorMessage    string    `gorm:"type:text" json:"errorMessage,omitempty"`
+	CreatedAt       time.Time `json:"createdAt"`
+	UpdatedAt       time.Time `json:"updatedAt"`
+}
+
 // StorageUsage tracks storage usage statistics per user by file type.
 type StorageUsage struct {
 	ID         uint      `gorm:"primaryKey" json:"id"`
@@ -287,4 +381,59 @@ type StorageUsage struct {
 	TotalSize  int64     `json:"totalSize"`  // Total size in bytes
 	FileCount  int       `json:"fileCount"`  // Number of files
 	UpdatedAt  time.Time `json:"updatedAt"`
+}
+
+// KbConversation stores AI assistant conversation sessions.
+type KbConversation struct {
+	ID              uint           `gorm:"primaryKey" json:"id"`
+	UserID          uint           `gorm:"not null;index:idx_user_kb;index:idx_user_updated" json:"userId"`
+	KnowledgeBaseID *uint          `gorm:"index:idx_user_kb" json:"knowledgeBaseId"` // NULL表示全库对话
+	Title           string         `gorm:"size:255;not null;default:'新对话'" json:"title"`
+	Model           string         `gorm:"size:100;default:''" json:"model"`
+	MessageCount    uint           `gorm:"default:0" json:"messageCount"`
+	IsPinned        bool           `gorm:"default:false" json:"isPinned"`
+	CreatedAt       time.Time      `json:"createdAt"`
+	UpdatedAt       time.Time      `json:"updatedAt"`
+	DeletedAt       gorm.DeletedAt `gorm:"index" json:"-"`
+}
+
+// KbMessage stores individual messages within a conversation.
+type KbMessage struct {
+	ID             uint      `gorm:"primaryKey" json:"id"`
+	ConversationID uint      `gorm:"not null;index:idx_conversation" json:"conversationId"`
+	Role           string    `gorm:"type:enum('user','assistant','system');not null" json:"role"`
+	Content        string    `gorm:"type:longtext;not null" json:"content"`
+	Sources        *string   `gorm:"type:json" json:"sources"` // JSON: [{docId, title, chunkContent}]
+	TokensUsed     uint      `gorm:"default:0" json:"tokensUsed"`
+	DurationMs     uint      `gorm:"default:0" json:"durationMs"`
+	CreatedAt      time.Time `json:"createdAt"`
+}
+
+// KbFeedback stores user feedback on AI assistant responses.
+type KbFeedback struct {
+	ID             uint       `gorm:"primaryKey" json:"id"`
+	MessageID      uint       `gorm:"not null;uniqueIndex:idx_message_user" json:"messageId"`
+	ConversationID uint       `gorm:"not null;index:idx_conversation" json:"conversationId"`
+	UserID         uint       `gorm:"not null;uniqueIndex:idx_message_user" json:"userId"`
+	Rating         int8       `gorm:"not null" json:"rating"` // 1=赞, -1=踩
+	FeedbackType   string     `gorm:"size:50;default:''" json:"feedbackType"` // inaccurate/incomplete/irrelevant/outdated
+	Comment        *string    `gorm:"type:text" json:"comment"`
+	CorrectAnswer  *string    `gorm:"type:text" json:"correctAnswer"`
+	ReviewStatus   string     `gorm:"size:20;default:'pending'" json:"reviewStatus"` // pending/approved/rejected
+	ReviewerID     *uint      `json:"reviewerId"`
+	ReviewComment  string     `gorm:"size:500;default:''" json:"reviewComment"`
+	ReviewedAt     *time.Time `json:"reviewedAt"`
+	CreatedAt      time.Time  `json:"createdAt"`
+}
+
+// KbShareLink stores share links for AI conversations.
+type KbShareLink struct {
+	ID             uint       `gorm:"primaryKey" json:"id"`
+	ConversationID uint       `gorm:"not null;index" json:"conversationId"`
+	UserID         uint       `gorm:"not null" json:"userId"`
+	ShareToken     string     `gorm:"size:64;uniqueIndex" json:"shareToken"`
+	ExpiresAt      *time.Time `json:"expiresAt"`
+	IsActive       bool       `gorm:"default:true" json:"isActive"`
+	ViewCount      uint       `gorm:"default:0" json:"viewCount"`
+	CreatedAt      time.Time  `json:"createdAt"`
 }

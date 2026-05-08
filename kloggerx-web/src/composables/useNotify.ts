@@ -1,6 +1,7 @@
 import { ElMessage, ElMessageBox, ElNotification } from 'element-plus'
 import type { MessageParams, MessageBoxData, NotificationParams } from 'element-plus'
 import { createNotification } from '@/api/modules/collaborate'
+import i18n from '@/locales'
 
 export type NotifyType = 'success' | 'warning' | 'info' | 'error' | 'system'
 
@@ -100,8 +101,8 @@ export function useNotify() {
   /**
    * 显示弹窗确认框
    */
-  const confirm = (message: string, title: string = '确认'): Promise<MessageBoxData> => {
-    return ElMessageBox.confirm(message, title)
+  const confirm = (message: string, title?: string): Promise<MessageBoxData> => {
+    return ElMessageBox.confirm(message, title || i18n.global.t('notify.confirm'))
   }
 
   /**
@@ -126,12 +127,13 @@ export function useNotify() {
 
 // 获取默认标题
 function getDefaultTitle(type: NotifyType): string {
+  const t = i18n.global.t
   const titles: Record<NotifyType, string> = {
-    success: '操作成功',
-    warning: '警告',
-    info: '提示',
-    error: '错误',
-    system: '系统通知',
+    success: t('notify.defaultTitle.success'),
+    warning: t('notify.defaultTitle.warning'),
+    info: t('notify.defaultTitle.info'),
+    error: t('notify.defaultTitle.error'),
+    system: t('notify.defaultTitle.system'),
   }
   return titles[type]
 }
@@ -165,8 +167,8 @@ export const $notify = {
   toast: (options: MessageParams | string) => {
     return ElMessage(options)
   },
-  confirm: (message: string, title: string = '确认') => {
-    return ElMessageBox.confirm(message, title)
+  confirm: (message: string, title?: string) => {
+    return ElMessageBox.confirm(message, title || i18n.global.t('notify.confirm'))
   },
   notification: (options: NotificationParams) => {
     return ElNotification(options)

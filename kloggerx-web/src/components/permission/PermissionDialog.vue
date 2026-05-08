@@ -1,24 +1,24 @@
 <template>
-  <el-dialog :model-value="true" title="权限管理" width="520px" @close="$emit('close')">
+  <el-dialog :model-value="true" :title="$t('permission.title')" width="520px" @close="$emit('close')">
     <div class="perm-add">
-      <el-input v-model="searchUser" placeholder="搜索用户..." size="small" style="flex:1" />
+      <el-input v-model="searchUser" :placeholder="$t('permission.searchUser')" size="small" style="flex:1" />
       <el-select v-model="addLevel" size="small" style="width:100px">
-        <el-option label="可编辑" value="edit" />
-        <el-option label="可查看" value="view" />
-        <el-option label="可管理" value="manage" />
+        <el-option :label="$t('permission.canEdit')" value="edit" />
+        <el-option :label="$t('permission.canView')" value="view" />
+        <el-option :label="$t('permission.canManage')" value="manage" />
       </el-select>
-      <el-button type="primary" size="small" @click="handleAdd">添加</el-button>
+      <el-button type="primary" size="small" @click="handleAdd">{{ $t('permission.add') }}</el-button>
     </div>
     <div class="perm-list">
       <div v-for="p in permissions" :key="p.id" class="perm-item">
         <el-avatar :size="28" :src="p.userAvatar">{{ p.userName[0] }}</el-avatar>
         <span class="perm-name">{{ p.userName }}</span>
-        <el-tag v-if="p.inherited" size="small" type="info">继承</el-tag>
+        <el-tag v-if="p.inherited" size="small" type="info">{{ $t('permission.inherited') }}</el-tag>
         <el-select v-model="p.level" size="small" style="width:90px" :disabled="p.level === 'owner'" @change="handleChange(p)">
-          <el-option label="所有者" value="owner" disabled />
-          <el-option label="可管理" value="manage" />
-          <el-option label="可编辑" value="edit" />
-          <el-option label="可查看" value="view" />
+          <el-option :label="$t('permission.owner')" value="owner" disabled />
+          <el-option :label="$t('permission.canManage')" value="manage" />
+          <el-option :label="$t('permission.canEdit')" value="edit" />
+          <el-option :label="$t('permission.canView')" value="view" />
         </el-select>
         <el-button v-if="p.level !== 'owner'" link type="danger" @click="handleRemove(p)"><el-icon><Delete /></el-icon></el-button>
       </div>
@@ -28,12 +28,14 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { getDocumentPermissions, setPermission, removePermission } from '@/api/modules/auth'
 import type { Permission, PermissionLevel } from '@/types'
 import { ElMessage } from 'element-plus'
 
 const props = defineProps<{ documentId: number }>()
 defineEmits(['close'])
+const { t } = useI18n()
 const permissions = ref<Permission[]>([])
 const searchUser = ref('')
 const addLevel = ref<PermissionLevel>('edit')
@@ -45,17 +47,17 @@ async function fetchPerms() {
 
 async function handleAdd() {
   if (!searchUser.value.trim()) return
-  ElMessage.info('请通过后端用户搜索接口选择用户后添加')
+  ElMessage.info(t('permission.addHint'))
 }
 
 async function handleChange(p: Permission) {
   await setPermission({ documentId: props.documentId, userId: p.userId, level: p.level })
-  ElMessage.success('权限已更新')
+  ElMessage.success(t('permission.updated'))
 }
 
 async function handleRemove(p: Permission) {
   await removePermission({ documentId: props.documentId, userId: p.userId })
-  ElMessage.success('已移除')
+  ElMessage.success(t('permission.removed'))
   fetchPerms()
 }
 

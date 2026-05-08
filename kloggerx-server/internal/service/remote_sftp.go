@@ -124,6 +124,11 @@ func (c *SFTPClient) List(path string) ([]RemoteFileInfo, error) {
 		return nil, err
 	}
 
+	// Validate path security
+	if _, err := ValidatePath(path); err != nil {
+		return nil, err
+	}
+
 	// Normalize path
 	path = normalizePath(path)
 
@@ -166,6 +171,11 @@ func (c *SFTPClient) Download(path string) (io.ReadCloser, error) {
 		return nil, err
 	}
 
+	// Validate path security
+	if _, err := ValidatePath(path); err != nil {
+		return nil, err
+	}
+
 	path = normalizePath(path)
 
 	// Prepend base path if SharePath is set
@@ -184,6 +194,11 @@ func (c *SFTPClient) Download(path string) (io.ReadCloser, error) {
 // Upload uploads a file to remote storage
 func (c *SFTPClient) Upload(path string, reader io.Reader, size int64) error {
 	if err := c.ensureConnected(); err != nil {
+		return err
+	}
+
+	// Validate path security
+	if _, err := ValidatePath(path); err != nil {
 		return err
 	}
 
@@ -211,6 +226,11 @@ func (c *SFTPClient) Delete(path string) error {
 		return err
 	}
 
+	// Validate path security
+	if _, err := ValidatePath(path); err != nil {
+		return err
+	}
+
 	path = normalizePath(path)
 
 	// Check if it's a directory
@@ -228,6 +248,10 @@ func (c *SFTPClient) Delete(path string) error {
 // Mkdir creates a directory
 func (c *SFTPClient) Mkdir(path string) error {
 	if err := c.ensureConnected(); err != nil {
+		return err
+	}
+	// Validate path security
+	if _, err := ValidatePath(path); err != nil {
 		return err
 	}
 	path = normalizePath(path)

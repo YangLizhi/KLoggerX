@@ -16,7 +16,7 @@
             @click="selectedIndex = idx"
           >
             <span class="q-num">{{ idx + 1 }}.</span>
-            <span class="q-title">{{ q.title || '未命名题目' }}</span>
+            <span class="q-title">{{ q.title || $t('editor.survey.untitledQuestion') }}</span>
             <span class="q-type">{{ getTypeLabel(q.type) }}</span>
           </div>
         </div>
@@ -26,7 +26,8 @@
           <input
             class="question-title"
             v-model="currentQuestion.title"
-            placeholder="请输入题目"
+            placeholder=""
+            :placeholder="$t('editor.survey.enterQuestion')"
             @input="scheduleSave"
           />
         </div>
@@ -54,24 +55,24 @@
               </el-button>
             </div>
             <el-button size="small" text @click="addOption">
-              <el-icon><Plus /></el-icon>添加选项
+              <el-icon><Plus /></el-icon>{{ $t('editor.survey.addOption') }}
             </el-button>
           </template>
           <template v-else-if="currentQuestion.type === 'text'">
             <el-input
               type="textarea"
               :rows="3"
-              placeholder="填空题作答区域"
+              :placeholder="$t('editor.survey.textAreaPlaceholder')"
               disabled
             />
           </template>
           <template v-else-if="currentQuestion.type === 'rating'">
             <div class="rating-preview">
               <el-rate v-model="currentQuestion.ratingMax" :max="currentQuestion.ratingMax || 5" disabled />
-              <span class="rating-label">最高 {{ currentQuestion.ratingMax || 5 }} 分</span>
+              <span class="rating-label">{{ $t('editor.survey.maxScore', { max: currentQuestion.ratingMax || 5 }) }}</span>
             </div>
             <div class="rating-setting">
-              <span>最高分值：</span>
+              <span>{{ $t('editor.survey.maxScoreLabel') }}</span>
               <el-input-number v-model="currentQuestion.ratingMax" :min="3" :max="10" @change="scheduleSave" />
             </div>
           </template>
@@ -97,16 +98,16 @@
           </template>
         </div>
         <div class="question-settings">
-          <el-checkbox v-model="currentQuestion.required" @change="scheduleSave">必填</el-checkbox>
+          <el-checkbox v-model="currentQuestion.required" @change="scheduleSave">{{ $t('editor.survey.required') }}</el-checkbox>
         </div>
       </div>
       <div class="survey-empty" v-else>
-        <p>点击左侧题目列表或添加新题目</p>
+        <p>{{ $t('editor.survey.emptyHint') }}</p>
       </div>
     </div>
 
     <!-- Preview Dialog -->
-    <el-dialog v-model="showPreview" title="问卷预览" width="600px">
+    <el-dialog v-model="showPreview" :title="$t('editor.survey.previewTitle')" width="600px">
       <div class="survey-preview">
         <h2>{{ surveyTitle }}</h2>
         <div v-for="(q, idx) in questions" :key="q.id" class="preview-question">
@@ -132,15 +133,15 @@
     </el-dialog>
 
     <!-- Settings Dialog -->
-    <el-dialog v-model="showSettingsDialog" title="问卷设置" width="400px">
+    <el-dialog v-model="showSettingsDialog" :title="$t('editor.survey.settingsTitle')" width="400px">
       <el-form label-width="80px">
-        <el-form-item label="问卷标题">
+        <el-form-item :label="$t('editor.survey.surveyTitleLabel')">
           <el-input v-model="surveyTitle" @input="scheduleSave" />
         </el-form-item>
-        <el-form-item label="问卷说明">
+        <el-form-item :label="$t('editor.survey.surveyDescLabel')">
           <el-input type="textarea" :rows="3" v-model="surveyDescription" @input="scheduleSave" />
         </el-form-item>
-        <el-form-item label="匿名填写">
+        <el-form-item :label="$t('editor.survey.anonymousLabel')">
           <el-switch v-model="anonymousMode" @change="scheduleSave" />
         </el-form-item>
       </el-form>
@@ -151,7 +152,10 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import SurveyToolbar from './SurveyToolbar.vue'
+import { useI18n } from 'vue-i18n'
 // import { ElMessage } from 'element-plus'
+
+const { t } = useI18n()
 
 interface Question {
   id: string
@@ -182,7 +186,7 @@ const emit = defineEmits<{
 
 const questions = ref<Question[]>([])
 const selectedIndex = ref(-1)
-const surveyTitle = ref('未命名问卷')
+const surveyTitle = ref(t('editor.survey.untitledSurvey'))
 const surveyDescription = ref('')
 const anonymousMode = ref(false)
 const showPreview = ref(false)
@@ -208,7 +212,7 @@ function initData() {
       const parsed: SurveyData = JSON.parse(props.content)
       if (parsed.questions && Array.isArray(parsed.questions)) {
         questions.value = parsed.questions
-        surveyTitle.value = parsed.title || '未命名问卷'
+        surveyTitle.value = parsed.title || t('editor.survey.untitledSurvey')
         surveyDescription.value = parsed.description || ''
         anonymousMode.value = parsed.anonymous || false
         if (questions.value.length > 0) {
@@ -225,11 +229,11 @@ function initData() {
 
 function getTypeLabel(type: string): string {
   const labels: Record<string, string> = {
-    single: '单选',
-    multiple: '多选',
-    text: '填空',
-    rating: '评分',
-    matrix: '矩阵',
+    single: t('editor.survey.single'),
+    multiple: t('editor.survey.multiple'),
+    text: t('editor.survey.text'),
+    rating: t('editor.survey.rating'),
+    matrix: t('editor.survey.matrix'),
   }
   return labels[type] || type
 }
@@ -266,11 +270,11 @@ function addQuestion(type: string) {
     id: genId(),
     type: type as any,
     title: '',
-    options: type === 'single' || type === 'multiple' ? ['选项1', '选项2'] : [],
+    options: type === 'single' || type === 'multiple' ? [`${t('editor.survey.optionPrefix')}1`, `${t('editor.survey.optionPrefix')}2`] : [],
     required: false,
     ratingMax: type === 'rating' ? 5 : undefined,
-    matrixRows: type === 'matrix' ? ['行1', '行2'] : undefined,
-    matrixCols: type === 'matrix' ? ['列1', '列2', '列3'] : undefined,
+    matrixRows: type === 'matrix' ? [`${t('editor.survey.row')}1`, `${t('editor.survey.row')}2`] : undefined,
+    matrixCols: type === 'matrix' ? [`${t('editor.survey.col')}1`, `${t('editor.survey.col')}2`, `${t('editor.survey.col')}3`] : undefined,
   }
   questions.value.push(newQ)
   selectedIndex.value = questions.value.length - 1
@@ -309,7 +313,7 @@ function deleteQuestion() {
 
 function addOption() {
   if (!currentQuestion.value || !currentQuestion.value.options) return
-  currentQuestion.value.options.push(`选项${currentQuestion.value.options.length + 1}`)
+  currentQuestion.value.options.push(`${t('editor.survey.optionPrefix')}${currentQuestion.value.options.length + 1}`)
   scheduleSave()
 }
 

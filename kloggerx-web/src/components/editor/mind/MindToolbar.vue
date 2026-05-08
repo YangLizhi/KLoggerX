@@ -1,31 +1,31 @@
 <template>
   <div class="mind-toolbar">
     <div class="toolbar-group">
-      <el-button size="small" @click="addChild" :disabled="!hasSelection"><el-icon><Plus /></el-icon>添加子节点</el-button>
-      <el-button size="small" @click="addSibling" :disabled="!canAddSibling"><el-icon><Right /></el-icon>添加同级</el-button>
-      <el-button size="small" @click="removeNode" :disabled="!canDelete"><el-icon><Delete /></el-icon>删除节点</el-button>
+      <el-button size="small" @click="addChild" :disabled="!hasSelection"><el-icon><Plus /></el-icon>{{ $t('editor.mind.addChild') }}</el-button>
+      <el-button size="small" @click="addSibling" :disabled="!canAddSibling"><el-icon><Right /></el-icon>{{ $t('editor.mind.addSibling') }}</el-button>
+      <el-button size="small" @click="removeNode" :disabled="!canDelete"><el-icon><Delete /></el-icon>{{ $t('editor.mind.deleteNode') }}</el-button>
     </div>
     <span class="toolbar-divider" />
     <div class="toolbar-group">
-      <el-button size="small" @click="editNode" :disabled="!hasSelection"><el-icon><Edit /></el-icon>编辑</el-button>
-      <el-color-picker v-model="nodeColor" size="small" title="节点颜色" @change="onColorChange" />
+      <el-button size="small" @click="editNode" :disabled="!hasSelection"><el-icon><Edit /></el-icon>{{ $t('editor.mind.edit') }}</el-button>
+      <el-color-picker v-model="nodeColor" size="small" :title="$t('editor.mind.nodeColor')" @change="onColorChange" />
     </div>
     <span class="toolbar-divider" />
     <div class="toolbar-group">
-      <el-select v-model="layoutType" size="small" placeholder="布局" style="width: 100px" @change="onLayoutChange">
-        <el-option label="向右展开" value="right" />
-        <el-option label="向左展开" value="left" />
-        <el-option label="两侧展开" value="both" />
+      <el-select v-model="layoutType" size="small" :placeholder="$t('editor.mind.layout')" style="width: 100px" @change="onLayoutChange">
+        <el-option :label="$t('editor.mind.expandRight')" value="right" />
+        <el-option :label="$t('editor.mind.expandLeft')" value="left" />
+        <el-option :label="$t('editor.mind.expandBoth')" value="both" />
       </el-select>
     </div>
     <span class="toolbar-divider" />
     <div class="toolbar-group">
-      <el-button size="small" @click="expandAll"><el-icon><FullScreen /></el-icon>全部展开</el-button>
-      <el-button size="small" @click="collapseAll"><el-icon><Minus /></el-icon>全部收起</el-button>
+      <el-button size="small" @click="expandAll"><el-icon><FullScreen /></el-icon>{{ $t('editor.mind.expandAll') }}</el-button>
+      <el-button size="small" @click="collapseAll"><el-icon><Minus /></el-icon>{{ $t('editor.mind.collapseAll') }}</el-button>
     </div>
     <span class="toolbar-divider" />
     <div class="toolbar-group">
-      <el-button size="small" @click="exportImage"><el-icon><Download /></el-icon>导出图片</el-button>
+      <el-button size="small" @click="exportImage"><el-icon><Download /></el-icon>{{ $t('editor.mind.exportImage') }}</el-button>
     </div>
   </div>
 </template>

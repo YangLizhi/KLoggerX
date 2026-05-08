@@ -2,7 +2,7 @@
   <div class="code-editor">
     <div class="code-toolbar">
       <el-select v-model="language" size="small" style="width: 120px" @change="onLanguageChange">
-        <el-option-group label="常用">
+        <el-option-group :label="$t('editor.code.groupCommon')">
           <el-option label="JavaScript" value="javascript" />
           <el-option label="TypeScript" value="typescript" />
           <el-option label="Python" value="python" />
@@ -10,13 +10,13 @@
           <el-option label="Go" value="go" />
           <el-option label="Rust" value="rust" />
         </el-option-group>
-        <el-option-group label="前端">
+        <el-option-group :label="$t('editor.code.groupFrontend')">
           <el-option label="HTML" value="html" />
           <el-option label="CSS" value="css" />
           <el-option label="Vue" value="vue" />
           <el-option label="React JSX" value="jsx" />
         </el-option-group>
-        <el-option-group label="其他">
+        <el-option-group :label="$t('editor.code.groupOther')">
           <el-option label="C/C++" value="cpp" />
           <el-option label="C#" value="csharp" />
           <el-option label="PHP" value="php" />
@@ -32,18 +32,18 @@
         </el-option-group>
       </el-select>
       <div class="toolbar-actions">
-        <el-button size="small" text @click="formatCode" title="格式化代码">
-          <el-icon><MagicStick /></el-icon>格式化
+        <el-button size="small" text @click="formatCode" :title="$t('editor.code.formatTitle')">
+          <el-icon><MagicStick /></el-icon>{{ $t('editor.code.format') }}
         </el-button>
-        <el-button size="small" text @click="copyCode" title="复制代码">
-          <el-icon><DocumentCopy /></el-icon>复制
+        <el-button size="small" text @click="copyCode" :title="$t('editor.code.copyTitle')">
+          <el-icon><DocumentCopy /></el-icon>{{ $t('editor.code.copy') }}
         </el-button>
-        <el-button size="small" text @click="downloadCode" title="下载代码">
-          <el-icon><Download /></el-icon>下载
+        <el-button size="small" text @click="downloadCode" :title="$t('editor.code.downloadTitle')">
+          <el-icon><Download /></el-icon>{{ $t('editor.code.download') }}
         </el-button>
       </div>
       <div class="toolbar-info">
-        <span class="line-info">行 {{ currentLine }}, 列 {{ currentColumn }}</span>
+        <span class="line-info">{{ $t('editor.code.lineCol', { line: currentLine, col: currentColumn }) }}</span>
         <span class="lang-info">{{ language }}</span>
       </div>
     </div>
@@ -62,15 +62,15 @@
         @keydown="onKeyDown"
         @click="updateCursorPosition"
         @keyup="updateCursorPosition"
-        :placeholder="`在此输入 ${language} 代码...`"
+        :placeholder="t('editor.code.placeholder', { lang: language })"
         spellcheck="false"
       ></textarea>
     </div>
     <div class="code-statusbar">
       <span>UTF-8</span>
       <span>LF</span>
-      <span>{{ lineCount }} 行</span>
-      <span>{{ code.length }} 字符</span>
+      <span>{{ $t('editor.code.lines', { count: lineCount }) }}</span>
+      <span>{{ $t('editor.code.chars', { count: code.length }) }}</span>
     </div>
   </div>
 </template>
@@ -78,6 +78,9 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import { ElMessage } from 'element-plus'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   documentId: number
@@ -176,7 +179,7 @@ function onKeyDown(e: KeyboardEvent) {
   if (e.key === 's' && (e.ctrlKey || e.metaKey)) {
     e.preventDefault()
     emit('save', JSON.stringify({ language: language.value, code: code.value }))
-    ElMessage.success('已保存')
+    ElMessage.success(t('editor.code.saved'))
   }
 
   // Handle auto-close brackets
@@ -217,19 +220,19 @@ function formatCode() {
   try {
     if (language.value === 'json') {
       code.value = JSON.stringify(JSON.parse(code.value), null, 2)
-      ElMessage.success('格式化成功')
+      ElMessage.success(t('editor.code.formatSuccess'))
       scheduleSave()
     } else {
-      ElMessage.info('当前语言暂不支持自动格式化')
+      ElMessage.info(t('editor.code.formatNotSupported'))
     }
   } catch {
-    ElMessage.error('格式化失败，请检查代码语法')
+    ElMessage.error(t('editor.code.formatFailed'))
   }
 }
 
 function copyCode() {
   navigator.clipboard.writeText(code.value)
-  ElMessage.success('代码已复制到剪贴板')
+  ElMessage.success(t('editor.code.copiedToClipboard'))
 }
 
 function downloadCode() {
@@ -247,7 +250,7 @@ function downloadCode() {
   a.download = `code.${ext}`
   a.click()
   URL.revokeObjectURL(url)
-  ElMessage.success('下载成功')
+  ElMessage.success(t('editor.code.downloadSuccess'))
 }
 
 onMounted(() => initData())

@@ -27,12 +27,12 @@ func GenerateToken(userID uint, username, role string) (string, error) {
 		},
 	}
 	token := jwtv5.NewWithClaims(jwtv5.SigningMethodHS256, claims)
-	return token.SignedString([]byte(config.Cfg.JWT.Secret))
+	return token.SignedString([]byte(config.GetJWTSecret()))
 }
 
 func ParseToken(tokenString string) (*Claims, error) {
 	token, err := jwtv5.ParseWithClaims(tokenString, &Claims{}, func(t *jwtv5.Token) (interface{}, error) {
-		return []byte(config.Cfg.JWT.Secret), nil
+		return []byte(config.GetJWTSecret()), nil
 	})
 	if err != nil {
 		return nil, err

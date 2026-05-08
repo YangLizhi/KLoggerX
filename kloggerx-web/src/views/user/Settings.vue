@@ -1,11 +1,11 @@
 <template>
   <div class="settings-page">
-    <h2 class="settings-title">个人设置</h2>
+    <h2 class="settings-title">{{ $t('settings.title') }}</h2>
     <el-tabs v-model="activeTab">
       <!-- Profile Tab -->
-      <el-tab-pane label="基本资料" name="profile">
+      <el-tab-pane :label="$t('settings.profile')" name="profile">
         <el-form ref="profileFormRef" :model="profileForm" label-width="80px" style="max-width: 480px">
-          <el-form-item label="头像">
+          <el-form-item :label="$t('settings.avatar')">
             <div class="avatar-section">
               <el-avatar :size="64" :src="profileForm.avatar">{{ profileForm.nickname?.[0] || 'U' }}</el-avatar>
               <el-upload
@@ -13,119 +13,119 @@
                 :before-upload="handleAvatarUpload"
                 accept="image/*"
               >
-                <el-button size="small">更换头像</el-button>
+                <el-button size="small">{{ $t('settings.changeAvatar') }}</el-button>
               </el-upload>
             </div>
           </el-form-item>
-          <el-form-item label="昵称" prop="nickname">
+          <el-form-item :label="$t('settings.nickname')" prop="nickname">
             <el-input v-model="profileForm.nickname" maxlength="20" show-word-limit />
           </el-form-item>
-          <el-form-item label="邮箱">
+          <el-form-item :label="$t('auth.email')">
             <el-input :model-value="profileForm.email" disabled />
           </el-form-item>
-          <el-form-item label="部门">
-            <el-input :model-value="profileForm.department || '未设置'" disabled />
+          <el-form-item :label="$t('settings.department')">
+            <el-input :model-value="profileForm.department || $t('settings.notSet')" disabled />
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" :loading="saving" @click="handleSaveProfile">保存</el-button>
+            <el-button type="primary" :loading="saving" @click="handleSaveProfile">{{ $t('common.save') }}</el-button>
           </el-form-item>
         </el-form>
       </el-tab-pane>
 
       <!-- Password Tab -->
-      <el-tab-pane label="修改密码" name="password">
+      <el-tab-pane :label="$t('settings.changePassword')" name="password">
         <el-form ref="pwdFormRef" :model="pwdForm" :rules="pwdRules" label-width="100px" style="max-width: 480px">
-          <el-form-item label="当前密码" prop="oldPassword">
+          <el-form-item :label="$t('settings.currentPassword')" prop="oldPassword">
             <el-input v-model="pwdForm.oldPassword" type="password" show-password />
           </el-form-item>
-          <el-form-item label="新密码" prop="newPassword">
+          <el-form-item :label="$t('settings.newPassword')" prop="newPassword">
             <el-input v-model="pwdForm.newPassword" type="password" show-password />
           </el-form-item>
-          <el-form-item label="确认新密码" prop="confirmPassword">
+          <el-form-item :label="$t('settings.confirmNewPassword')" prop="confirmPassword">
             <el-input v-model="pwdForm.confirmPassword" type="password" show-password />
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" :loading="changingPwd" @click="handleChangePassword">修改密码</el-button>
+            <el-button type="primary" :loading="changingPwd" @click="handleChangePassword">{{ $t('settings.changePassword') }}</el-button>
           </el-form-item>
         </el-form>
       </el-tab-pane>
 
       <!-- Notification Tab -->
-      <el-tab-pane label="通知设置" name="notifications">
+      <el-tab-pane :label="$t('settings.notifications')" name="notifications">
         <div class="settings-section">
-          <h3 class="section-title">消息通知</h3>
+          <h3 class="section-title">{{ $t('settings.messageNotification') }}</h3>
           <div class="setting-row">
             <div class="setting-info">
-              <div class="setting-name">文档评论通知</div>
-              <div class="setting-desc">当有人在您的文档中发表评论时通知您</div>
+              <div class="setting-name">{{ $t('settings.commentNotify') }}</div>
+              <div class="setting-desc">{{ $t('settings.commentNotifyDesc') }}</div>
             </div>
             <el-switch v-model="notifSettings.commentNotify" />
           </div>
           <div class="setting-row">
             <div class="setting-info">
-              <div class="setting-name">@提及通知</div>
-              <div class="setting-desc">当有人在文档或评论中@您时通知您</div>
+              <div class="setting-name">{{ $t('settings.mentionNotify') }}</div>
+              <div class="setting-desc">{{ $t('settings.mentionNotifyDesc') }}</div>
             </div>
             <el-switch v-model="notifSettings.mentionNotify" />
           </div>
           <div class="setting-row">
             <div class="setting-info">
-              <div class="setting-name">权限变更通知</div>
-              <div class="setting-desc">当文档权限发生变化时通知您</div>
+              <div class="setting-name">{{ $t('settings.permissionNotify') }}</div>
+              <div class="setting-desc">{{ $t('settings.permissionNotifyDesc') }}</div>
             </div>
             <el-switch v-model="notifSettings.permissionNotify" />
           </div>
           <div class="setting-row">
             <div class="setting-info">
-              <div class="setting-name">分享通知</div>
-              <div class="setting-desc">当有人与您分享文档或知识库时通知您</div>
+              <div class="setting-name">{{ $t('settings.shareNotify') }}</div>
+              <div class="setting-desc">{{ $t('settings.shareNotifyDesc') }}</div>
             </div>
             <el-switch v-model="notifSettings.shareNotify" />
           </div>
           <div class="setting-row">
             <div class="setting-info">
-              <div class="setting-name">审核通知</div>
-              <div class="setting-desc">知识库文档审核相关的通知</div>
+              <div class="setting-name">{{ $t('settings.approvalNotify') }}</div>
+              <div class="setting-desc">{{ $t('settings.approvalNotifyDesc') }}</div>
             </div>
             <el-switch v-model="notifSettings.approvalNotify" />
           </div>
         </div>
         <div class="settings-section">
-          <h3 class="section-title">通知方式</h3>
+          <h3 class="section-title">{{ $t('settings.notifyMethod') }}</h3>
           <div class="setting-row">
             <div class="setting-info">
-              <div class="setting-name">站内通知</div>
-              <div class="setting-desc">在平台内显示通知消息</div>
+              <div class="setting-name">{{ $t('settings.inAppNotify') }}</div>
+              <div class="setting-desc">{{ $t('settings.inAppNotifyDesc') }}</div>
             </div>
             <el-switch v-model="notifSettings.inAppNotify" />
           </div>
           <div class="setting-row">
             <div class="setting-info">
-              <div class="setting-name">邮件通知</div>
-              <div class="setting-desc">通过邮件发送重要通知</div>
+              <div class="setting-name">{{ $t('settings.emailNotify') }}</div>
+              <div class="setting-desc">{{ $t('settings.emailNotifyDesc') }}</div>
             </div>
             <el-switch v-model="notifSettings.emailNotify" />
           </div>
           <div class="setting-row">
             <div class="setting-info">
-              <div class="setting-name">免打扰时段</div>
-              <div class="setting-desc">在指定时间段内不发送通知</div>
+              <div class="setting-name">{{ $t('settings.dndMode') }}</div>
+              <div class="setting-desc">{{ $t('settings.dndModeDesc') }}</div>
             </div>
             <el-switch v-model="notifSettings.dndEnabled" />
           </div>
           <div v-if="notifSettings.dndEnabled" class="setting-sub-row">
-            <el-time-select v-model="notifSettings.dndStart" :max-time="notifSettings.dndEnd" placeholder="开始时间" start="00:00" step="00:30" end="23:30" />
-            <span class="dnd-separator">至</span>
-            <el-time-select v-model="notifSettings.dndEnd" :min-time="notifSettings.dndStart" placeholder="结束时间" start="00:00" step="00:30" end="23:30" />
+            <el-time-select v-model="notifSettings.dndStart" :max-time="notifSettings.dndEnd" :placeholder="$t('settings.startTime')" start="00:00" step="00:30" end="23:30" />
+            <span class="dnd-separator">{{ $t('common.to') }}</span>
+            <el-time-select v-model="notifSettings.dndEnd" :min-time="notifSettings.dndStart" :placeholder="$t('settings.endTime')" start="00:00" step="00:30" end="23:30" />
           </div>
         </div>
-        <el-button type="primary" style="margin-top:16px" @click="handleSaveNotifSettings">保存通知设置</el-button>
+        <el-button type="primary" style="margin-top:16px" @click="handleSaveNotifSettings">{{ $t('settings.saveNotifSettings') }}</el-button>
       </el-tab-pane>
 
       <!-- Storage Tab -->
-      <el-tab-pane label="存储空间" name="storage">
+      <el-tab-pane :label="$t('settings.storage')" name="storage">
         <div class="settings-section">
-          <h3 class="section-title">存储概览</h3>
+          <h3 class="section-title">{{ $t('settings.storageOverview') }}</h3>
           <div class="storage-overview">
             <div class="storage-chart">
               <el-progress type="dashboard" :percentage="storagePercent" :width="140" :color="storagePercent > 90 ? '#f54a45' : '#3370ff'">
@@ -140,132 +140,132 @@
             <div class="storage-breakdown">
               <div class="breakdown-item">
                 <div class="breakdown-color" style="background:#3370ff" />
-                <span class="breakdown-label">文档</span>
+                <span class="breakdown-label">{{ $t('settings.docStorage') }}</span>
                 <span class="breakdown-size">{{ formatSize(storageByType.doc) }}</span>
               </div>
               <div class="breakdown-item">
                 <div class="breakdown-color" style="background:#36b37e" />
-                <span class="breakdown-label">表格</span>
+                <span class="breakdown-label">{{ $t('settings.sheetStorage') }}</span>
                 <span class="breakdown-size">{{ formatSize(storageByType.sheet) }}</span>
               </div>
               <div class="breakdown-item">
                 <div class="breakdown-color" style="background:#ff7d00" />
-                <span class="breakdown-label">幻灯片</span>
+                <span class="breakdown-label">{{ $t('settings.slideStorage') }}</span>
                 <span class="breakdown-size">{{ formatSize(storageByType.slide) }}</span>
               </div>
               <div class="breakdown-item">
                 <div class="breakdown-color" style="background:#9254de" />
-                <span class="breakdown-label">其他文件</span>
+                <span class="breakdown-label">{{ $t('settings.otherStorage') }}</span>
                 <span class="breakdown-size">{{ formatSize(storageByType.other) }}</span>
               </div>
             </div>
           </div>
         </div>
         <div class="settings-section">
-          <h3 class="section-title">存储路径设置</h3>
+          <h3 class="section-title">{{ $t('settings.storagePathSettings') }}</h3>
           <div class="setting-row">
             <div class="setting-info">
-              <div class="setting-name">同步目录</div>
-              <div class="setting-desc">从云盘同步到本地的目录路径</div>
+              <div class="setting-name">{{ $t('settings.syncDir') }}</div>
+              <div class="setting-desc">{{ $t('settings.syncDirDesc') }}</div>
             </div>
-            <el-input v-model="userStoragePaths.syncDir" placeholder="请输入同步目录路径" style="width:300px" />
+            <el-input v-model="userStoragePaths.syncDir" :placeholder="$t('settings.syncDirPlaceholder')" style="width:300px" />
           </div>
           <div class="setting-row">
             <div class="setting-info">
-              <div class="setting-name">下载目录</div>
-              <div class="setting-desc">从云盘下载文件的默认保存位置</div>
+              <div class="setting-name">{{ $t('settings.downloadDir') }}</div>
+              <div class="setting-desc">{{ $t('settings.downloadDirDesc') }}</div>
             </div>
-            <el-input v-model="userStoragePaths.downloadDir" placeholder="请输入下载目录路径" style="width:300px" />
+            <el-input v-model="userStoragePaths.downloadDir" :placeholder="$t('settings.downloadDirPlaceholder')" style="width:300px" />
           </div>
           <div class="setting-row">
             <div class="setting-info">
-              <div class="setting-name">自动同步</div>
-              <div class="setting-desc">开启后文件变更将自动同步到本地</div>
+              <div class="setting-name">{{ $t('settings.autoSync') }}</div>
+              <div class="setting-desc">{{ $t('settings.autoSyncDesc') }}</div>
             </div>
             <el-switch v-model="userStoragePaths.autoSync" />
           </div>
-          <el-button type="primary" style="margin-top:16px" @click="handleSaveStoragePaths" :loading="savingStoragePaths">保存路径设置</el-button>
+          <el-button type="primary" style="margin-top:16px" @click="handleSaveStoragePaths" :loading="savingStoragePaths">{{ $t('settings.savePathSettings') }}</el-button>
         </div>
         <div class="settings-section">
-          <h3 class="section-title">存储管理</h3>
+          <h3 class="section-title">{{ $t('settings.storageManagement') }}</h3>
           <div class="setting-row">
             <div class="setting-info">
-              <div class="setting-name">自动清理回收站</div>
-              <div class="setting-desc">回收站中超过30天的文档将自动清除</div>
+              <div class="setting-name">{{ $t('settings.autoCleanRecycle') }}</div>
+              <div class="setting-desc">{{ $t('settings.autoCleanRecycleDesc') }}</div>
             </div>
             <el-switch v-model="storageSettings.autoCleanRecycle" />
           </div>
           <div class="setting-row">
             <div class="setting-info">
-              <div class="setting-name">版本保留策略</div>
-              <div class="setting-desc">自动保留的历史版本数量</div>
+              <div class="setting-name">{{ $t('settings.versionRetention') }}</div>
+              <div class="setting-desc">{{ $t('settings.versionRetentionDesc') }}</div>
             </div>
             <el-select v-model="storageSettings.versionRetention" style="width:120px">
-              <el-option :value="10" label="最近10个" />
-              <el-option :value="20" label="最近20个" />
-              <el-option :value="50" label="最近50个" />
-              <el-option :value="100" label="最近100个" />
+              <el-option :value="10" :label="$t('settings.last10')" />
+              <el-option :value="20" :label="$t('settings.last20')" />
+              <el-option :value="50" :label="$t('settings.last50')" />
+              <el-option :value="100" :label="$t('settings.last100')" />
             </el-select>
           </div>
-          <el-button type="primary" style="margin-top:16px" @click="showUpgradeDialog = true">升级存储空间</el-button>
+          <el-button type="primary" style="margin-top:16px" @click="showUpgradeDialog = true">{{ $t('settings.upgradeStorage') }}</el-button>
         </div>
       </el-tab-pane>
 
       <!-- Appearance Tab -->
-      <el-tab-pane label="外观设置" name="appearance">
+      <el-tab-pane :label="$t('settings.appearance')" name="appearance">
         <div class="settings-section">
-          <h3 class="section-title">主题</h3>
+          <h3 class="section-title">{{ $t('settings.theme') }}</h3>
           <div class="theme-grid">
             <div class="theme-card" :class="{ active: appearance.theme === 'light' }" @click="appearance.theme = 'light'">
               <div class="theme-preview light-preview">
                 <div class="tp-sidebar" /><div class="tp-content"><div class="tp-bar" /><div class="tp-line" /><div class="tp-line short" /></div>
               </div>
-              <span>浅色模式</span>
+              <span>{{ $t('settings.lightMode') }}</span>
             </div>
             <div class="theme-card" :class="{ active: appearance.theme === 'dark' }" @click="appearance.theme = 'dark'">
               <div class="theme-preview dark-preview">
                 <div class="tp-sidebar" /><div class="tp-content"><div class="tp-bar" /><div class="tp-line" /><div class="tp-line short" /></div>
               </div>
-              <span>深色模式</span>
+              <span>{{ $t('settings.darkMode') }}</span>
             </div>
             <div class="theme-card" :class="{ active: appearance.theme === 'auto' }" @click="appearance.theme = 'auto'">
               <div class="theme-preview auto-preview">
                 <div class="tp-sidebar" /><div class="tp-content"><div class="tp-bar" /><div class="tp-line" /><div class="tp-line short" /></div>
               </div>
-              <span>跟随系统</span>
+              <span>{{ $t('settings.followSystem') }}</span>
             </div>
           </div>
         </div>
         <div class="settings-section">
-          <h3 class="section-title">编辑器</h3>
+          <h3 class="section-title">{{ $t('settings.editor') }}</h3>
           <div class="setting-row">
             <div class="setting-info">
-              <div class="setting-name">字体大小</div>
-              <div class="setting-desc">调整编辑器的默认字体大小</div>
+              <div class="setting-name">{{ $t('settings.fontSize') }}</div>
+              <div class="setting-desc">{{ $t('settings.fontSizeDesc') }}</div>
             </div>
             <el-select v-model="appearance.fontSize" style="width:100px">
-              <el-option :value="13" label="小" />
-              <el-option :value="15" label="中" />
-              <el-option :value="17" label="大" />
-              <el-option :value="19" label="特大" />
+              <el-option :value="13" :label="$t('settings.fontSmall')" />
+              <el-option :value="15" :label="$t('settings.fontMedium')" />
+              <el-option :value="17" :label="$t('settings.fontLarge')" />
+              <el-option :value="19" :label="$t('settings.fontXLarge')" />
             </el-select>
           </div>
           <div class="setting-row">
             <div class="setting-info">
-              <div class="setting-name">编辑器宽度</div>
-              <div class="setting-desc">设置编辑区域的最大宽度</div>
+              <div class="setting-name">{{ $t('settings.editorWidth') }}</div>
+              <div class="setting-desc">{{ $t('settings.editorWidthDesc') }}</div>
             </div>
             <el-select v-model="appearance.editorWidth" style="width:120px">
-              <el-option value="narrow" label="窄 (680px)" />
-              <el-option value="medium" label="中 (800px)" />
-              <el-option value="wide" label="宽 (960px)" />
-              <el-option value="full" label="全宽" />
+              <el-option value="narrow" :label="$t('settings.widthNarrow')" />
+              <el-option value="medium" :label="$t('settings.widthMedium')" />
+              <el-option value="wide" :label="$t('settings.widthWide')" />
+              <el-option value="full" :label="$t('settings.widthFull')" />
             </el-select>
           </div>
           <div class="setting-row">
             <div class="setting-info">
-              <div class="setting-name">代码高亮主题</div>
-              <div class="setting-desc">代码块的语法高亮主题</div>
+              <div class="setting-name">{{ $t('settings.codeHighlight') }}</div>
+              <div class="setting-desc">{{ $t('settings.codeHighlightDesc') }}</div>
             </div>
             <el-select v-model="appearance.codeTheme" style="width:120px">
               <el-option value="github" label="GitHub" />
@@ -276,46 +276,46 @@
           </div>
         </div>
         <div class="settings-section">
-          <h3 class="section-title">侧边栏</h3>
+          <h3 class="section-title">{{ $t('settings.sidebar') }}</h3>
           <div class="setting-row">
             <div class="setting-info">
-              <div class="setting-name">默认折叠侧边栏</div>
-              <div class="setting-desc">启动时自动折叠左侧导航栏</div>
+              <div class="setting-name">{{ $t('settings.collapseSidebar') }}</div>
+              <div class="setting-desc">{{ $t('settings.collapseSidebarDesc') }}</div>
             </div>
             <el-switch v-model="appearance.sidebarCollapsed" />
           </div>
           <div class="setting-row">
             <div class="setting-info">
-              <div class="setting-name">显示文档图标</div>
-              <div class="setting-desc">在文档列表中显示类型图标</div>
+              <div class="setting-name">{{ $t('settings.showDocIcons') }}</div>
+              <div class="setting-desc">{{ $t('settings.showDocIconsDesc') }}</div>
             </div>
             <el-switch v-model="appearance.showDocIcons" />
           </div>
         </div>
-        <el-button type="primary" style="margin-top:16px" @click="handleSaveAppearance">保存外观设置</el-button>
+        <el-button type="primary" style="margin-top:16px" @click="handleSaveAppearance">{{ $t('settings.saveAppearance') }}</el-button>
       </el-tab-pane>
 
       <!-- About Tab -->
-      <el-tab-pane label="关于" name="about">
+      <el-tab-pane :label="$t('settings.about')" name="about">
         <div class="settings-section">
-          <h3 class="section-title">关于 KloggerX</h3>
+          <h3 class="section-title">{{ $t('settings.aboutTitle') }}</h3>
           <div class="about-info">
-            <div class="about-row"><span class="about-label">版本</span><span>v1.0.0</span></div>
-            <div class="about-row"><span class="about-label">前端框架</span><span>Vue 3 + Element Plus</span></div>
-            <div class="about-row"><span class="about-label">编辑器</span><span>TipTap + ProseMirror</span></div>
-            <div class="about-row"><span class="about-label">协作引擎</span><span>Yjs + WebSocket</span></div>
+            <div class="about-row"><span class="about-label">{{ $t('settings.version') }}</span><span>v1.0.0</span></div>
+            <div class="about-row"><span class="about-label">{{ $t('settings.frontend') }}</span><span>Vue 3 + Element Plus</span></div>
+            <div class="about-row"><span class="about-label">{{ $t('settings.editorEngine') }}</span><span>TipTap + ProseMirror</span></div>
+            <div class="about-row"><span class="about-label">{{ $t('settings.collabEngine') }}</span><span>Yjs + WebSocket</span></div>
           </div>
         </div>
         <div class="settings-section">
-          <h3 class="section-title">快捷键</h3>
+          <h3 class="section-title">{{ $t('settings.shortcuts') }}</h3>
           <div class="shortcut-list">
-            <div class="shortcut-row"><span>新建文档</span><kbd>Ctrl</kbd>+<kbd>N</kbd></div>
-            <div class="shortcut-row"><span>搜索</span><kbd>Ctrl</kbd>+<kbd>K</kbd></div>
-            <div class="shortcut-row"><span>保存</span><kbd>Ctrl</kbd>+<kbd>S</kbd></div>
-            <div class="shortcut-row"><span>撤销</span><kbd>Ctrl</kbd>+<kbd>Z</kbd></div>
-            <div class="shortcut-row"><span>重做</span><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd></div>
-            <div class="shortcut-row"><span>加粗</span><kbd>Ctrl</kbd>+<kbd>B</kbd></div>
-            <div class="shortcut-row"><span>斜体</span><kbd>Ctrl</kbd>+<kbd>I</kbd></div>
+            <div class="shortcut-row"><span>{{ $t('settings.shortcutNewDoc') }}</span><kbd>Ctrl</kbd>+<kbd>N</kbd></div>
+            <div class="shortcut-row"><span>{{ $t('settings.shortcutSearch') }}</span><kbd>Ctrl</kbd>+<kbd>K</kbd></div>
+            <div class="shortcut-row"><span>{{ $t('settings.shortcutSave') }}</span><kbd>Ctrl</kbd>+<kbd>S</kbd></div>
+            <div class="shortcut-row"><span>{{ $t('settings.shortcutUndo') }}</span><kbd>Ctrl</kbd>+<kbd>Z</kbd></div>
+            <div class="shortcut-row"><span>{{ $t('settings.shortcutRedo') }}</span><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Z</kbd></div>
+            <div class="shortcut-row"><span>{{ $t('settings.shortcutBold') }}</span><kbd>Ctrl</kbd>+<kbd>B</kbd></div>
+            <div class="shortcut-row"><span>{{ $t('settings.shortcutItalic') }}</span><kbd>Ctrl</kbd>+<kbd>I</kbd></div>
           </div>
         </div>
       </el-tab-pane>
@@ -325,11 +325,13 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useUserStore } from '@/store/modules/user'
 import { updateUserInfo, changePassword } from '@/api/modules/user'
 import { getStorageUsage, getUserStorageSettings, saveUserStorageSettings } from '@/api/modules/admin'
 import { ElMessage, type FormInstance } from 'element-plus'
 
+const { t } = useI18n()
 const userStore = useUserStore()
 const activeTab = ref('profile')
 const saving = ref(false)
@@ -346,7 +348,7 @@ function handleAvatarUpload(file: File) {
   const reader = new FileReader()
   reader.onload = (e) => {
     profileForm.avatar = e.target?.result as string
-    ElMessage.success('头像已更新')
+    ElMessage.success(t('settings.avatarUpdated'))
   }
   reader.readAsDataURL(file)
   return false // Prevent default upload
@@ -406,16 +408,16 @@ function formatSize(bytes: number): string {
 }
 
 const pwdRules = {
-  oldPassword: [{ required: true, message: '请输入当前密码', trigger: 'blur' }],
+  oldPassword: [{ required: true, message: t('settings.currentPasswordRequired'), trigger: 'blur' }],
   newPassword: [
-    { required: true, message: '请输入新密码', trigger: 'blur' },
-    { min: 6, message: '密码至少6位', trigger: 'blur' },
+    { required: true, message: t('settings.newPasswordRequired'), trigger: 'blur' },
+    { min: 6, message: t('auth.passwordMin'), trigger: 'blur' },
   ],
   confirmPassword: [
-    { required: true, message: '请确认新密码', trigger: 'blur' },
+    { required: true, message: t('settings.confirmNewPasswordRequired'), trigger: 'blur' },
     {
       validator: (_r: any, v: string, cb: (e?: Error) => void) => {
-        if (v !== pwdForm.newPassword) cb(new Error('两次密码不一致'))
+        if (v !== pwdForm.newPassword) cb(new Error(t('auth.passwordMismatch')))
         else cb()
       },
       trigger: 'blur',
@@ -427,7 +429,7 @@ async function handleSaveProfile() {
   saving.value = true
   try {
     await updateUserInfo({ nickname: profileForm.nickname })
-    ElMessage.success('保存成功')
+    ElMessage.success(t('settings.saveSuccess'))
     userStore.fetchUserInfo()
   } finally {
     saving.value = false
@@ -440,7 +442,7 @@ async function handleChangePassword() {
   changingPwd.value = true
   try {
     await changePassword({ oldPassword: pwdForm.oldPassword, newPassword: pwdForm.newPassword })
-    ElMessage.success('密码修改成功')
+    ElMessage.success(t('settings.passwordChanged'))
     pwdForm.oldPassword = ''
     pwdForm.newPassword = ''
     pwdForm.confirmPassword = ''
@@ -450,11 +452,11 @@ async function handleChangePassword() {
 }
 
 function handleSaveNotifSettings() {
-  ElMessage.success('通知设置已保存')
+  ElMessage.success(t('settings.notifSettingsSaved'))
 }
 
 function handleSaveAppearance() {
-  ElMessage.success('外观设置已保存')
+  ElMessage.success(t('settings.appearanceSaved'))
 }
 
 // Fetch storage usage
@@ -495,9 +497,9 @@ async function handleSaveStoragePaths() {
       downloadDir: userStoragePaths.downloadDir,
       autoSync: userStoragePaths.autoSync,
     })
-    ElMessage.success('存储路径设置已保存')
+    ElMessage.success(t('settings.pathSettingsSaved'))
   } catch (err: any) {
-    ElMessage.error(err.message || '保存失败')
+    ElMessage.error(err.message || t('common.saveFailed'))
   } finally {
     savingStoragePaths.value = false
   }

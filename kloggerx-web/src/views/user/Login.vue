@@ -6,26 +6,26 @@
           <span class="brand-icon">K</span>
           <h1>KLoggerX</h1>
         </div>
-        <p class="brand-desc">企业级知识管理与协作平台</p>
-        <p class="brand-sub">高效文档协作，安全知识沉淀</p>
+        <p class="brand-desc">{{ $t('auth.brandDesc') }}</p>
+        <p class="brand-sub">{{ $t('auth.brandSub') }}</p>
       </div>
       <div class="login-right">
         <div class="login-form-wrap">
-          <h2>登录</h2>
+          <h2>{{ $t('auth.login') }}</h2>
           <el-form ref="formRef" :model="form" :rules="rules" label-position="top" @submit.prevent="handleLogin">
-            <el-form-item label="邮箱" prop="email">
-              <el-input v-model="form.email" placeholder="请输入邮箱" prefix-icon="Message" size="large" />
+            <el-form-item :label="$t('auth.email')" prop="email">
+              <el-input v-model="form.email" :placeholder="$t('auth.emailPlaceholder')" prefix-icon="Message" size="large" />
             </el-form-item>
-            <el-form-item label="密码" prop="password">
-              <el-input v-model="form.password" type="password" placeholder="请输入密码" prefix-icon="Lock" show-password size="large" />
+            <el-form-item :label="$t('auth.password')" prop="password">
+              <el-input v-model="form.password" type="password" :placeholder="$t('auth.passwordPlaceholder')" prefix-icon="Lock" show-password size="large" />
             </el-form-item>
             <el-form-item>
-              <el-button type="primary" size="large" class="login-btn" :loading="loading" @click="handleLogin">登 录</el-button>
+              <el-button type="primary" size="large" class="login-btn" :loading="loading" @click="handleLogin">{{ $t('auth.loginBtn') }}</el-button>
             </el-form-item>
           </el-form>
           <div class="login-footer">
-            <span>还没有账号？</span>
-            <router-link to="/register">立即注册</router-link>
+            <span>{{ $t('auth.noAccount') }}</span>
+            <router-link to="/register">{{ $t('auth.registerNow') }}</router-link>
           </div>
         </div>
       </div>
@@ -38,6 +38,9 @@ import { ref, reactive } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/store/modules/user'
 import type { FormInstance } from 'element-plus'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const router = useRouter()
 const route = useRoute()
@@ -48,12 +51,12 @@ const loading = ref(false)
 const form = reactive({ email: '', password: '' })
 const rules = {
   email: [
-    { required: true, message: '请输入邮箱', trigger: 'blur' },
-    { type: 'email' as const, message: '邮箱格式不正确', trigger: 'blur' },
+    { required: true, message: t('auth.emailRequired'), trigger: 'blur' },
+    { type: 'email' as const, message: t('auth.emailInvalid'), trigger: 'blur' },
   ],
   password: [
-    { required: true, message: '请输入密码', trigger: 'blur' },
-    { min: 6, message: '密码至少6位', trigger: 'blur' },
+    { required: true, message: t('auth.passwordRequired'), trigger: 'blur' },
+    { min: 6, message: t('auth.passwordMin'), trigger: 'blur' },
   ],
 }
 

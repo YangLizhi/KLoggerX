@@ -13,6 +13,63 @@
   --kx-success: #34c724;
   --kx-warning: #ff7d00;
   --kx-danger: #f54a45;
+
+  /* 亮色主题（默认） */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f5f7fa;
+  --bg-card: #ffffff;
+  --bg-hover: #f0f2f5;
+  --bg-sidebar: #f8f9fb;
+  --text-primary: #303133;
+  --text-secondary: #606266;
+  --text-placeholder: #a8abb2;
+  --border-color: #dcdfe6;
+  --border-light: #e4e7ed;
+  --shadow-color: rgba(0, 0, 0, 0.08);
+  --accent-color: #409eff;
+  --success-color: #67c23a;
+  --warning-color: #e6a23c;
+  --danger-color: #f56c6c;
+}
+
+html.dark {
+  /* 暗色主题 */
+  --kx-primary: #60a5fa;
+  --kx-primary-hover: #93c5fd;
+  --kx-primary-active: #3b82f6;
+  --kx-bg: #1a1a2e;
+  --kx-sidebar-bg: #0f1626;
+  --kx-text-primary: #e4e6eb;
+  --kx-text-secondary: #b0b3b8;
+  --kx-text-placeholder: #6b7280;
+  --kx-border: #2d3748;
+  --kx-success: #34d399;
+  --kx-warning: #fbbf24;
+  --kx-danger: #f87171;
+
+  --bg-primary: #1a1a2e;
+  --bg-secondary: #16213e;
+  --bg-card: #1f2940;
+  --bg-hover: #233554;
+  --bg-sidebar: #0f1626;
+  --text-primary: #e4e6eb;
+  --text-secondary: #b0b3b8;
+  --text-placeholder: #6b7280;
+  --border-color: #2d3748;
+  --border-light: #374151;
+  --shadow-color: rgba(0, 0, 0, 0.3);
+  --accent-color: #60a5fa;
+  --success-color: #34d399;
+  --warning-color: #fbbf24;
+  --danger-color: #f87171;
+}
+
+/* 主题过渡动画 */
+html.theme-transition,
+html.theme-transition *,
+html.theme-transition *::before,
+html.theme-transition *::after {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease !important;
 }
 
 * {
@@ -41,7 +98,7 @@ a {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
+  background: var(--kx-text-placeholder);
   border-radius: 3px;
 }
 

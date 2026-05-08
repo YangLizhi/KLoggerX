@@ -1,236 +1,363 @@
 <template>
   <div class="knowledge-home">
-    <div class="kb-home-center">
-      <!-- Welcome Area -->
-      <div class="kb-welcome">
-        <div class="kb-logo">
-          <span class="kb-logo-icon">
-            <el-icon :size="32" color="#3370ff"><ChatDotRound /></el-icon>
-          </span>
-          <div class="kb-logo-text">
-            <span class="kb-title">知识库助手</span>
-            <span class="kb-subtitle">基于您的知识库内容智能问答</span>
-          </div>
-        </div>
+    <!-- Sidebar Toggle (mobile) -->
+    <div v-if="!sidebarVisible" class="sidebar-toggle-btn" @click="sidebarVisible = true">
+      <el-icon><Expand /></el-icon>
+    </div>
+
+    <!-- Left Sidebar: Conversation List -->
+    <aside class="kb-sidebar" :class="{ collapsed: !sidebarVisible }">
+      <div class="sidebar-header">
+        <span class="sidebar-title">{{ $t('knowledge.conversationHistory') }}</span>
+        <el-icon class="sidebar-collapse-btn" @click="sidebarVisible = false"><Fold /></el-icon>
       </div>
-
-      <!-- Chat Input Area -->
-      <div class="kb-chat-input-area">
-        <div class="kb-chat-options">
-          <el-dropdown trigger="click" @command="handleModelChange">
-            <span class="kb-option-btn">
-              <el-icon><Cpu /></el-icon>
-              {{ selectedModelName || '选择模型' }}
-              <el-icon class="el-icon--right"><ArrowDown /></el-icon>
-            </span>
-            <template #dropdown>
-              <el-dropdown-menu>
-                <el-dropdown-item v-if="!availableModels.length" disabled>暂无可用模型，请在系统管理中配置</el-dropdown-item>
-                <el-option-group v-for="p in activeProviders" :key="p.id" :label="p.name">
-                  <el-dropdown-item
-                    v-for="m in getChatModels(p.id)"
-                    :key="`${p.id}_${m.id}`"
-                    :command="`${p.id}_${m.id}`"
-                  >
-                    {{ m.name }}
-                    <el-tag v-if="m.isDefault" size="small" type="success" style="margin-left: 8px">默认</el-tag>
-                  </el-dropdown-item>
-                </el-option-group>
-              </el-dropdown-menu>
-            </template>
-          </el-dropdown>
-
-          <el-dropdown trigger="click" @command="handleKbChange">
-            <span class="kb-option-btn">
-              <el-icon><Collection /></el-icon>
-              {{ selectedKbName || '选择知识库' }}
-              <el-icon class="el-icon--right"><ArrowDown /></el-icon>
-            </span>
-            <template #dropdown>
-              <el-dropdown-menu>
-                <el-dropdown-item command="__all__">
-                  <el-icon><FolderOpened /></el-icon>
-                  全部知识库
-                </el-dropdown-item>
-                <el-dropdown-item
-                  v-for="kb in kbList"
-                  :key="kb.id"
-                  :command="String(kb.id)"
-                >
-                  <el-icon><Collection /></el-icon>
-                  {{ kb.name }}
-                </el-dropdown-item>
-              </el-dropdown-menu>
-            </template>
-          </el-dropdown>
-
-          <el-dropdown trigger="click" @command="handleModeChange">
-            <span class="kb-option-btn">
-              <el-icon><Operation /></el-icon>
-              {{ chatModeLabel }}
-              <el-icon class="el-icon--right"><ArrowDown /></el-icon>
-            </span>
-            <template #dropdown>
-              <el-dropdown-menu>
-                <el-dropdown-item command="fast">
-                  <el-icon><Promotion /></el-icon>快速回答
-                </el-dropdown-item>
-                <el-dropdown-item command="deep">
-                  <el-icon><MagicStick /></el-icon>深度思考
-                </el-dropdown-item>
-              </el-dropdown-menu>
-            </template>
-          </el-dropdown>
-        </div>
-
-        <div class="kb-chat-bar">
-          <el-input
-            v-model="chatInput"
-            type="textarea"
-            :autosize="{ minRows: 1, maxRows: 6 }"
-            placeholder="输入你的问题，按 Enter 发送..."
-            class="kb-chat-textarea"
-            @keydown.enter.exact.prevent="handleSend"
-          />
-          <div class="kb-chat-bar-actions">
-            <el-tooltip content="清空对话" placement="top">
-              <el-button circle size="small" @click="clearMessages" :disabled="!messages.length">
-                <el-icon><Delete /></el-icon>
-              </el-button>
-            </el-tooltip>
-            <el-button
-              type="primary"
-              circle
-              :icon="Promotion"
-              :disabled="!chatInput.trim()"
-              :loading="sending"
-              @click="handleSend"
-            />
-          </div>
-        </div>
-      </div>
-
-      <!-- Chat Messages -->
-      <div v-if="messages.length" class="kb-chat-messages" ref="messagesContainer">
-        <div v-for="(msg, i) in messages" :key="i" class="kb-chat-msg" :class="msg.role">
-          <div class="msg-avatar">
-            <el-avatar v-if="msg.role === 'user'" :size="36" style="background: var(--kx-primary);">
-              <el-icon><User /></el-icon>
-            </el-avatar>
-            <el-avatar v-else :size="36" style="background: linear-gradient(135deg, #36b37e 0%, #00b8d9 100%);">
-              <el-icon><ChatDotRound /></el-icon>
-            </el-avatar>
-          </div>
-          <div class="msg-body">
-            <div class="msg-header">
-              <span class="msg-role">{{ msg.role === 'user' ? '我' : 'AI 助手' }}</span>
-              <span v-if="msg.model" class="msg-model">{{ msg.model }}</span>
-            </div>
-            <div class="msg-content" v-html="formatMarkdown(msg.content)" />
-            <div v-if="msg.sources?.length" class="msg-sources">
-              <div class="sources-header" @click="toggleSources(msg)">
-                <el-icon><FolderOpened /></el-icon>
-                <span>参考来源 ({{ msg.sources.length }})</span>
-                <el-icon class="sources-toggle" :class="{ expanded: msg.showSources }"><ArrowDown /></el-icon>
+      <!-- Sidebar Skeleton -->
+      <div v-if="pageLoading" class="sidebar-skeleton">
+        <el-skeleton v-for="i in 6" :key="i" animated :loading="true" style="padding: 8px 14px">
+          <template #template>
+            <div style="display: flex; align-items: center; gap: 10px">
+              <el-skeleton-item variant="circle" style="width: 28px; height: 28px; flex-shrink: 0" />
+              <div style="flex: 1">
+                <el-skeleton-item variant="text" style="width: 80%; height: 14px" />
+                <el-skeleton-item variant="text" style="width: 50%; height: 12px; margin-top: 6px" />
               </div>
-              <transition name="slide">
-                <div v-show="msg.showSources" class="sources-detail">
-                  <div
-                    v-for="(s, si) in msg.sources"
-                    :key="si"
-                    class="source-item"
-                    @click="openSource(s)"
-                  >
-                    <span class="source-index">[{{ si + 1 }}]</span>
-                    <span class="source-title">{{ s.documentTitle || '未知文档' }}</span>
-                    <span v-if="s.chunkIndex !== undefined" class="source-chunk">第 {{ s.chunkIndex + 1 }} 段</span>
-                    <el-icon class="source-arrow"><ArrowRight /></el-icon>
-                  </div>
-                </div>
-              </transition>
-              <div v-if="!msg.showSources" class="sources-preview">
-                <el-tag
-                  v-for="(s, si) in msg.sources.slice(0, 3)"
-                  :key="si"
-                  size="small"
-                  type="info"
-                  class="source-tag"
-                  @click="openSource(s)"
-                >
-                  [{{ si + 1 }}] {{ s.documentTitle || '文档' }}
-                </el-tag>
-                <span v-if="msg.sources.length > 3" class="source-more" @click="msg.showSources = true">
-                  +{{ msg.sources.length - 3 }} 更多
+            </div>
+          </template>
+        </el-skeleton>
+      </div>
+      <ConversationList
+        v-else
+        ref="convListRef"
+        :current-id="currentConversationId"
+        :knowledge-base-id="selectedKbId"
+        @select="handleConvSelect"
+        @create="handleNewConversation"
+      />
+    </aside>
+
+    <!-- Right Main Area -->
+    <div class="kb-main" :class="{ 'sidebar-hidden': !sidebarVisible }">
+      <div class="kb-home-center" :class="{ 'welcome-mode': isWelcomeMode }">
+
+        <!-- Mode A: Welcome/Empty State - All centered -->
+        <div v-if="isWelcomeMode" class="kb-welcome-centered">
+          <div class="kb-welcome-content">
+            <div class="kb-welcome">
+              <div class="kb-logo">
+                <span class="kb-logo-icon">
+                  <el-icon :size="32" color="#3370ff"><ChatDotRound /></el-icon>
                 </span>
+                <div class="kb-logo-text">
+                  <span class="kb-title">{{ $t('knowledge.assistant') }}</span>
+                  <span class="kb-subtitle">{{ $t('knowledge.assistantDesc') }}</span>
+                </div>
               </div>
             </div>
-            <div v-if="msg.role === 'assistant'" class="msg-actions">
-              <el-button link size="small" @click="copyMessage(msg.content)">
-                <el-icon><DocumentCopy /></el-icon> 复制
-              </el-button>
-              <el-button link size="small" @click="regenerate(msg)">
-                <el-icon><Refresh /></el-icon> 重新生成
-              </el-button>
-            </div>
-          </div>
-        </div>
-        <div v-if="sending" class="kb-chat-msg assistant">
-          <div class="msg-avatar">
-            <el-avatar :size="36" style="background: linear-gradient(135deg, #36b37e 0%, #00b8d9 100%);">
-              <el-icon><ChatDotRound /></el-icon>
-            </el-avatar>
-          </div>
-          <div class="msg-body">
-            <div class="msg-header">
-              <span class="msg-role">AI 助手</span>
-            </div>
-            <div class="msg-content typing-indicator">
-              <span></span><span></span><span></span>
-            </div>
-          </div>
-        </div>
-      </div>
 
-      <!-- Quick Actions -->
-      <div v-if="!messages.length" class="kb-quick-section">
-        <div class="quick-title">快速开始</div>
-        <div class="kb-quick-actions">
-          <div class="kb-quick-card" @click="$router.push('/knowledge/list')">
-            <el-icon :size="28" color="#3370ff"><Collection /></el-icon>
-            <span>知识库广场</span>
-            <span class="quick-desc">浏览和管理知识库</span>
-          </div>
-          <div class="kb-quick-card" @click="askQuestion('这个知识库包含哪些内容？')">
-            <el-icon :size="28" color="#36b37e"><Document /></el-icon>
-            <span>内容概览</span>
-            <span class="quick-desc">了解知识库内容</span>
-          </div>
-          <div class="kb-quick-card" @click="askQuestion('帮我总结最近的更新内容')">
-            <el-icon :size="28" color="#ff7d00"><Clock /></el-icon>
-            <span>最近更新</span>
-            <span class="quick-desc">查看最新变更</span>
+            <!-- Quick Actions -->
+            <div class="kb-quick-section">
+              <div class="quick-title">{{ $t('knowledge.quickStart') }}</div>
+              <div class="kb-quick-actions">
+                <div class="kb-quick-card" @click="$router.push('/knowledge/list')">
+                  <el-icon :size="28" color="#3370ff"><Collection /></el-icon>
+                  <span>{{ $t('knowledge.kbSquare') }}</span>
+                  <span class="quick-desc">{{ $t('knowledge.kbSquareDesc') }}</span>
+                </div>
+                <div class="kb-quick-card" @click="askQuestion(t('knowledge.contentQuestion'))">
+                  <el-icon :size="28" color="#36b37e"><Document /></el-icon>
+                  <span>{{ $t('knowledge.contentOverview') }}</span>
+                  <span class="quick-desc">{{ $t('knowledge.contentOverviewDesc') }}</span>
+                </div>
+                <div class="kb-quick-card" @click="askQuestion(t('knowledge.summaryQuestion'))">
+                  <el-icon :size="28" color="#ff7d00"><Clock /></el-icon>
+                  <span>{{ $t('knowledge.recentUpdates') }}</span>
+                  <span class="quick-desc">{{ $t('knowledge.recentUpdatesDesc') }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Input area inside welcome (centered) -->
+            <div class="kb-chat-input-area kb-chat-input-welcome">
+              <div class="kb-chat-options">
+                <el-dropdown trigger="click" @command="handleModelChange">
+                  <span class="kb-option-btn">
+                    <el-icon><Cpu /></el-icon>
+                    {{ selectedModelName || $t('knowledge.selectModel') }}
+                    <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+                  </span>
+                  <template #dropdown>
+                    <el-dropdown-menu>
+                      <el-dropdown-item v-if="!availableModels.length" disabled>{{ $t('knowledge.noModelAvailable') }}</el-dropdown-item>
+                      <el-option-group v-for="p in activeProviders" :key="p.id" :label="p.name">
+                        <el-dropdown-item
+                          v-for="m in getChatModels(p.id)"
+                          :key="`${p.id}_${m.id}`"
+                          :command="`${p.id}_${m.id}`"
+                        >
+                          {{ m.name }}
+                          <el-tag v-if="m.isDefault" size="small" type="success" style="margin-left: 8px">{{ $t('knowledge.default') }}</el-tag>
+                        </el-dropdown-item>
+                      </el-option-group>
+                    </el-dropdown-menu>
+                  </template>
+                </el-dropdown>
+
+                <el-dropdown trigger="click" @command="handleKbChange">
+                  <span class="kb-option-btn">
+                    <el-icon><Collection /></el-icon>
+                    {{ selectedKbName || $t('knowledge.selectKb') }}
+                    <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+                  </span>
+                  <template #dropdown>
+                    <el-dropdown-menu>
+                      <el-dropdown-item command="__all__">
+                        <el-icon><FolderOpened /></el-icon>
+                        {{ $t('knowledge.allKb') }}
+                      </el-dropdown-item>
+                      <el-dropdown-item
+                        v-for="kb in kbList"
+                        :key="kb.id"
+                        :command="String(kb.id)"
+                      >
+                        <el-icon><Collection /></el-icon>
+                        {{ kb.name }}
+                      </el-dropdown-item>
+                    </el-dropdown-menu>
+                  </template>
+                </el-dropdown>
+
+                <el-dropdown trigger="click" @command="handleModeChange">
+                  <span class="kb-option-btn">
+                    <el-icon><Operation /></el-icon>
+                    {{ chatModeLabel }}
+                    <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+                  </span>
+                  <template #dropdown>
+                    <el-dropdown-menu>
+                      <el-dropdown-item command="fast">
+                        <el-icon><Promotion /></el-icon>{{ $t('knowledge.fastAnswer') }}
+                      </el-dropdown-item>
+                      <el-dropdown-item command="deep">
+                        <el-icon><MagicStick /></el-icon>{{ $t('knowledge.deepThinking') }}
+                      </el-dropdown-item>
+                    </el-dropdown-menu>
+                  </template>
+                </el-dropdown>
+              </div>
+
+              <div class="kb-chat-bar">
+                <el-input
+                  v-model="chatInput"
+                  type="textarea"
+                  :autosize="{ minRows: 1, maxRows: 6 }"
+                  :placeholder="$t('knowledge.inputPlaceholder')"
+                  class="kb-chat-textarea"
+                  @keydown.enter.exact.prevent="handleSend"
+                />
+                <div class="kb-chat-bar-actions">
+                  <el-tooltip :content="$t('knowledge.clearChat')" placement="top">
+                    <el-button circle size="small" @click="clearMessages" :disabled="!messages.length">
+                      <el-icon><Delete /></el-icon>
+                    </el-button>
+                  </el-tooltip>
+                  <el-button
+                    type="primary"
+                    circle
+                    :icon="Promotion"
+                    :disabled="!chatInput.trim() || isStreaming"
+                    :loading="sending"
+                    @click="handleSend"
+                  />
+                </div>
+              </div>
+            </div>
           </div>
         </div>
+
+        <!-- Mode B: Conversation State -->
+        <template v-else>
+          <!-- Conversation Toolbar (top) -->
+          <div v-if="currentConversationId && messages.length" class="kb-conv-toolbar">
+            <el-dropdown trigger="click" @command="handleExport">
+              <el-button size="small" text>
+                <el-icon><Download /></el-icon> {{ $t('knowledge.exportChat') }}
+              </el-button>
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item command="markdown">
+                    <el-icon><Document /></el-icon> Markdown
+                  </el-dropdown-item>
+                  <el-dropdown-item command="pdf" disabled>
+                    <el-icon><Document /></el-icon> PDF
+                    <el-tag size="small" type="info" style="margin-left:8px">{{ $t('knowledge.comingSoon') }}</el-tag>
+                  </el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
+            <el-button size="small" text @click="shareDialogVisible = true">
+              <el-icon><Share /></el-icon> {{ $t('common.share') }}
+            </el-button>
+          </div>
+
+          <!-- Messages Area (middle, scrollable) -->
+          <div class="kb-messages-area" ref="messagesContainer">
+            <!-- Loading conversation messages -->
+            <div v-if="loadingConversation" class="conv-detail-loading">
+              <el-icon class="is-loading" :size="24"><Loading /></el-icon>
+              <span>{{ $t('knowledge.loadingConversation') }}</span>
+            </div>
+
+            <!-- Chat Messages -->
+            <template v-if="messages.length">
+              <ChatMessage
+                v-for="(msg, i) in messages"
+                :key="i"
+                :message="msg"
+                @regenerate="handleRegenerate(i)"
+                @feedback="(rating) => handleFeedback(msg, rating)"
+                @suggestion-click="handleSuggestionClick"
+                @copy="() => {}"
+              />
+            </template>
+
+            <!-- Stop generating button -->
+            <div v-if="isStreaming" class="stop-generate-bar">
+              <el-button type="danger" plain size="small" @click="stopGenerate">
+                <el-icon><VideoPause /></el-icon> {{ $t('knowledge.stopGenerate') }}
+              </el-button>
+            </div>
+          </div>
+
+          <!-- Chat Input Area (bottom, fixed) -->
+          <div class="kb-chat-input-area">
+            <div class="kb-chat-options">
+              <el-dropdown trigger="click" @command="handleModelChange">
+                <span class="kb-option-btn">
+                  <el-icon><Cpu /></el-icon>
+                  {{ selectedModelName || $t('knowledge.selectModel') }}
+                  <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+                </span>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item v-if="!availableModels.length" disabled>{{ $t('knowledge.noModelAvailable') }}</el-dropdown-item>
+                    <el-option-group v-for="p in activeProviders" :key="p.id" :label="p.name">
+                      <el-dropdown-item
+                        v-for="m in getChatModels(p.id)"
+                        :key="`${p.id}_${m.id}`"
+                        :command="`${p.id}_${m.id}`"
+                      >
+                        {{ m.name }}
+                        <el-tag v-if="m.isDefault" size="small" type="success" style="margin-left: 8px">{{ $t('knowledge.default') }}</el-tag>
+                      </el-dropdown-item>
+                    </el-option-group>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+
+              <el-dropdown trigger="click" @command="handleKbChange">
+                <span class="kb-option-btn">
+                  <el-icon><Collection /></el-icon>
+                  {{ selectedKbName || $t('knowledge.selectKb') }}
+                  <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+                </span>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item command="__all__">
+                      <el-icon><FolderOpened /></el-icon>
+                      {{ $t('knowledge.allKb') }}
+                    </el-dropdown-item>
+                    <el-dropdown-item
+                      v-for="kb in kbList"
+                      :key="kb.id"
+                      :command="String(kb.id)"
+                    >
+                      <el-icon><Collection /></el-icon>
+                      {{ kb.name }}
+                    </el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+
+              <el-dropdown trigger="click" @command="handleModeChange">
+                <span class="kb-option-btn">
+                  <el-icon><Operation /></el-icon>
+                  {{ chatModeLabel }}
+                  <el-icon class="el-icon--right"><ArrowDown /></el-icon>
+                </span>
+                <template #dropdown>
+                  <el-dropdown-menu>
+                    <el-dropdown-item command="fast">
+                      <el-icon><Promotion /></el-icon>{{ $t('knowledge.fastAnswer') }}
+                    </el-dropdown-item>
+                    <el-dropdown-item command="deep">
+                      <el-icon><MagicStick /></el-icon>{{ $t('knowledge.deepThinking') }}
+                    </el-dropdown-item>
+                  </el-dropdown-menu>
+                </template>
+              </el-dropdown>
+            </div>
+
+            <div class="kb-chat-bar">
+              <el-input
+                v-model="chatInput"
+                type="textarea"
+                :autosize="{ minRows: 1, maxRows: 6 }"
+                :placeholder="$t('knowledge.inputPlaceholder')"
+                class="kb-chat-textarea"
+                @keydown.enter.exact.prevent="handleSend"
+              />
+              <div class="kb-chat-bar-actions">
+                <el-tooltip :content="$t('knowledge.clearChat')" placement="top">
+                  <el-button circle size="small" @click="clearMessages" :disabled="!messages.length">
+                    <el-icon><Delete /></el-icon>
+                  </el-button>
+                </el-tooltip>
+                <el-button
+                  type="primary"
+                  circle
+                  :icon="Promotion"
+                  :disabled="!chatInput.trim() || isStreaming"
+                  :loading="sending"
+                  @click="handleSend"
+                />
+              </div>
+            </div>
+          </div>
+        </template>
       </div>
     </div>
+
+    <!-- Feedback Dialog -->
+    <FeedbackDialog
+      v-model:visible="feedbackDialogVisible"
+      :message-id="feedbackTargetMsgId"
+      @submit="handleFeedbackSubmit"
+    />
+
+    <!-- Share Dialog -->
+    <ShareDialog
+      v-model:visible="shareDialogVisible"
+      :conversation-id="currentConversationId"
+      :conversation-title="currentConversationTitle"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, nextTick, computed } from 'vue'
-import { Promotion, Delete, DocumentCopy, Refresh, ArrowDown, ArrowRight, FolderOpened, ChatDotRound, User, Clock, Document, Collection } from '@element-plus/icons-vue'
-import { getKnowledgeBaseList, chatWithKnowledge, chatWithKnowledgeGlobal } from '@/api/modules/knowledge'
+import { ref, onMounted, nextTick, computed, reactive } from 'vue'
+import { Promotion, Delete, ArrowDown, FolderOpened, ChatDotRound, User, Clock, Document, Collection, Expand, Fold, Loading, Cpu, Operation, MagicStick, VideoPause, Download, Share } from '@element-plus/icons-vue'
+import { getKnowledgeBaseList, streamChat, createConversation, getConversationDetail, submitFeedback, exportConversation } from '@/api/modules/knowledge'
+import type { Conversation } from '@/api/modules/knowledge'
 import { getAIModelSettings } from '@/api/modules/admin'
 import { ElMessage } from 'element-plus'
-import { marked } from 'marked'
+import ConversationList from '@/components/knowledge/ConversationList.vue'
+import ChatMessage from '@/components/knowledge/ChatMessage.vue'
+import type { ChatMessageData } from '@/components/knowledge/ChatMessage.vue'
+import FeedbackDialog from '@/components/knowledge/FeedbackDialog.vue'
+import ShareDialog from '@/components/knowledge/ShareDialog.vue'
+import { useI18n } from 'vue-i18n'
 
-interface ChatMessage {
-  role: 'user' | 'assistant'
-  content: string
-  sources?: any[]
-  model?: string
-  showSources?: boolean
-}
+const { t } = useI18n()
 
 interface Model {
   id: string
@@ -251,20 +378,49 @@ interface Provider {
   models: Model[]
 }
 
-const CHAT_HISTORY_KEY = 'kb_chat_history'
-
 const chatInput = ref('')
 const chatMode = ref<'fast' | 'deep'>('fast')
 const selectedModel = ref('')
 const selectedKb = ref('__all__')
-const messages = ref<ChatMessage[]>([])
+const messages = ref<ChatMessageData[]>([])
 const sending = ref(false)
+const isStreaming = ref(false)
 const messagesContainer = ref<HTMLElement>()
+const sidebarVisible = ref(true)
+const convListRef = ref<InstanceType<typeof ConversationList>>()
+const pageLoading = ref(true)
+
+// Conversation state
+const currentConversationId = ref<number | null>(null)
+const loadingConversation = ref(false)
+
+// Feedback dialog
+const feedbackDialogVisible = ref(false)
+const feedbackTargetMsgId = ref(0)
+let feedbackTargetMsg: ChatMessageData | null = null
+
+// Share dialog
+const shareDialogVisible = ref(false)
+const currentConversationTitle = computed(() => {
+  // Use conversation title from messages or fallback
+  return messages.value[0]?.content?.slice(0, 30) || t('knowledge.chat')
+})
+
+// Abort controller for streaming
+let abortController: AbortController | null = null
 
 const kbList = ref<{ id: number; name: string }[]>([])
 const providers = ref<Provider[]>([])
 
-const chatModeLabel = computed(() => chatMode.value === 'fast' ? '快速回答' : '深度思考')
+const selectedKbId = computed<number | null>(() => {
+  if (selectedKb.value === '__all__') return null
+  return parseInt(selectedKb.value) || null
+})
+
+// Welcome mode: no messages and no conversation selected and not loading
+const isWelcomeMode = computed(() => messages.value.length === 0 && !currentConversationId.value && !loadingConversation.value)
+
+const chatModeLabel = computed(() => chatMode.value === 'fast' ? t('knowledge.fastAnswer') : t('knowledge.deepThinking'))
 const activeProviders = computed(() => providers.value.filter(p => p.isActive && p.models?.length))
 
 const availableModels = computed(() => {
@@ -283,16 +439,15 @@ const availableModels = computed(() => {
 
 const selectedModelName = computed(() => {
   const m = availableModels.value.find(x => x.id === selectedModel.value)
-  return m?.name || (availableModels.value[0]?.name || '选择模型')
+  return m?.name || (availableModels.value[0]?.name || t('knowledge.selectModel'))
 })
 
 const selectedKbName = computed(() => {
-  if (selectedKb.value === '__all__') return '全部知识库'
+  if (selectedKb.value === '__all__') return t('knowledge.allKb')
   const kb = kbList.value.find(x => String(x.id) === selectedKb.value)
-  return kb?.name || '选择知识库'
+  return kb?.name || t('knowledge.selectKb')
 })
 
-// Get the actual model ID from the composite key
 function getModelId(): string {
   if (!selectedModel.value) return ''
   const parts = selectedModel.value.split('_')
@@ -310,13 +465,11 @@ function handleModeChange(cmd: string) {
 
 function handleModelChange(cmd: string) {
   selectedModel.value = cmd
-  saveChatHistory()
 }
 
 function handleKbChange(cmd: string) {
   selectedKb.value = cmd
-  // Load chat history for this KB
-  loadChatHistory()
+  convListRef.value?.refresh()
 }
 
 function askQuestion(question: string) {
@@ -324,7 +477,6 @@ function askQuestion(question: string) {
   handleSend()
 }
 
-// Build history for API request (last 10 messages)
 function buildHistory(): { role: string; content: string }[] {
   const history: { role: string; content: string }[] = []
   const recentMessages = messages.value.slice(-10)
@@ -334,146 +486,256 @@ function buildHistory(): { role: string; content: string }[] {
   return history
 }
 
+// Handle conversation selection
+async function handleConvSelect(conv: Conversation | null) {
+  if (!conv) {
+    currentConversationId.value = null
+    messages.value = []
+    return
+  }
+  if (conv.id === currentConversationId.value) return
+  currentConversationId.value = conv.id
+  loadingConversation.value = true
+  messages.value = []
+  try {
+    const res: any = await getConversationDetail(conv.id, { msgPage: 1, msgPageSize: 50 })
+    const detail = res.data
+    if (detail?.messages?.length) {
+      messages.value = detail.messages.map((m: any) => ({
+        id: m.id,
+        role: m.role,
+        content: m.content,
+        sources: m.sources || [],
+        isStreaming: false,
+        suggestions: [],
+        feedback: null,
+      }))
+    }
+    if (conv.model) {
+      const found = availableModels.value.find(am => am.id.includes(conv.model))
+      if (found) selectedModel.value = found.id
+    }
+    await nextTick()
+    scrollToBottom()
+  } catch (e) {
+    ElMessage.error(t('knowledge.loadConvFailed'))
+  } finally {
+    loadingConversation.value = false
+  }
+}
+
+function handleNewConversation() {
+  currentConversationId.value = null
+  messages.value = []
+}
+
+async function handleExport(format: string) {
+  if (!currentConversationId.value) return
+  try {
+    const res = await exportConversation(currentConversationId.value, format as 'markdown' | 'pdf')
+    const blob = new Blob([res.data])
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${currentConversationTitle.value}.md`
+    a.click()
+    URL.revokeObjectURL(url)
+    ElMessage.success(t('knowledge.exportSuccess'))
+  } catch {
+    ElMessage.error(t('knowledge.exportFailed'))
+  }
+}
+
 async function handleSend() {
   const text = chatInput.value.trim()
-  if (!text || sending.value) return
+  if (!text || sending.value || isStreaming.value) return
 
+  // If no current conversation, create one first
+  if (!currentConversationId.value) {
+    try {
+      const kbId = selectedKbId.value || undefined
+      const modelId = getModelId() || undefined
+      const res: any = await createConversation({ knowledgeBaseId: kbId, model: modelId })
+      if (res.data) {
+        currentConversationId.value = res.data.id
+        convListRef.value?.addConversation(res.data)
+      }
+    } catch (e) {
+      ElMessage.error(t('knowledge.createConvFailed'))
+      return
+    }
+  }
+
+  // Add user message
   messages.value.push({ role: 'user', content: text })
   chatInput.value = ''
   sending.value = true
   await nextTick()
   scrollToBottom()
-  saveChatHistory()
+
+  // Add empty AI message for streaming
+  const aiMessage: ChatMessageData = reactive({
+    role: 'assistant',
+    content: '',
+    isStreaming: true,
+    sources: [],
+    suggestions: [],
+    feedback: null
+  })
+  messages.value.push(aiMessage)
+  isStreaming.value = true
+  sending.value = false
+
+  // Create abort controller
+  abortController = new AbortController()
 
   try {
-    let res: any
-    const modelId = getModelId()
-    const history = buildHistory()
+    const history = buildHistory().slice(0, -1) // Exclude the empty AI message
+    const response = await streamChat({
+      conversationId: currentConversationId.value!,
+      knowledgeBaseId: selectedKbId.value || undefined,
+      question: text,
+      history,
+      model: getModelId() || undefined
+    }, abortController.signal)
 
-    if (selectedKb.value === '__all__') {
-      res = await chatWithKnowledgeGlobal({ question: text, history, model: modelId })
-    } else {
-      const kbId = parseInt(selectedKb.value)
-      res = await chatWithKnowledge(kbId, { question: text, history, model: modelId })
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
     }
 
-    if (res.data?.answer) {
-      const response: ChatMessage = {
-        role: 'assistant',
-        content: res.data.answer,
-        sources: res.data.sources || [],
-        model: selectedModelName.value,
-        showSources: false,
+    const reader = response.body!.getReader()
+    const decoder = new TextDecoder()
+    let buffer = ''
+
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+
+      buffer += decoder.decode(value, { stream: true })
+      const lines = buffer.split('\n')
+      buffer = lines.pop() || ''
+
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          try {
+            const data = JSON.parse(line.slice(6))
+            switch (data.type) {
+              case 'chunk':
+                aiMessage.content += data.content
+                await nextTick()
+                scrollToBottom()
+                break
+              case 'sources':
+                aiMessage.sources = data.data
+                break
+              case 'done':
+                aiMessage.isStreaming = false
+                aiMessage.id = data.data.messageId
+                if (data.data.conversationId) {
+                  currentConversationId.value = data.data.conversationId
+                }
+                break
+              case 'suggestions':
+                aiMessage.suggestions = data.data
+                break
+            }
+          } catch {
+            // Ignore malformed JSON lines
+          }
+        }
       }
-      messages.value.push(response)
-    } else {
-      messages.value.push({
-        role: 'assistant',
-        content: '抱歉，AI未能返回有效回答，请稍后重试。',
-      })
     }
   } catch (e: any) {
-    messages.value.push({
-      role: 'assistant',
-      content: `错误: ${e.response?.data?.message || e.message || '请求失败，请检查AI模型配置'}`,
-    })
+    if (e.name === 'AbortError') {
+      // User stopped generation
+      if (!aiMessage.content) {
+        aiMessage.content = t('knowledge.stoppedGenerate')
+      }
+    } else {
+      aiMessage.content = `${t('knowledge.requestError', { msg: e.message || t('knowledge.requestFailedHint') })}`
+    }
   } finally {
-    sending.value = false
-    nextTick(() => scrollToBottom())
-    saveChatHistory()
+    aiMessage.isStreaming = false
+    isStreaming.value = false
+    abortController = null
+    await nextTick()
+    scrollToBottom()
+  }
+}
+
+function stopGenerate() {
+  if (abortController) {
+    abortController.abort()
   }
 }
 
 function clearMessages() {
   messages.value = []
-  saveChatHistory()
+  currentConversationId.value = null
 }
 
-function copyMessage(content: string) {
-  navigator.clipboard.writeText(content)
-  ElMessage.success('已复制到剪贴板')
+function handleRegenerate(index: number) {
+  // Find the user message before this assistant message
+  if (index > 0 && messages.value[index - 1]?.role === 'user') {
+    const question = messages.value[index - 1].content
+    // Remove the AI message
+    messages.value.splice(index, 1)
+    // Re-send
+    chatInput.value = question
+    handleSend()
+  }
 }
 
-async function regenerate(msg: ChatMessage) {
-  // Find the previous user message
-  const idx = messages.value.indexOf(msg)
-  if (idx > 0) {
-    const userMsg = messages.value[idx - 1]
-    if (userMsg.role === 'user') {
-      // Remove the assistant message and resend
-      messages.value = messages.value.slice(0, idx)
-      chatInput.value = userMsg.content
-      await handleSend()
+function handleSuggestionClick(question: string) {
+  chatInput.value = question
+  handleSend()
+}
+
+async function handleFeedback(msg: ChatMessageData, rating: number) {
+  if (rating === 1) {
+    // Direct thumbs up
+    if (msg.id) {
+      try {
+        await submitFeedback(msg.id, { rating: 1 })
+        msg.feedback = { rating: 1 }
+        ElMessage.success(t('knowledge.thanksFeedback'))
+      } catch {
+        ElMessage.error(t('knowledge.feedbackFailed'))
+      }
     }
+  } else {
+    // Open feedback dialog for thumbs down
+    feedbackTargetMsg = msg
+    feedbackTargetMsgId.value = msg.id || 0
+    feedbackDialogVisible.value = true
   }
 }
 
-function openSource(source: any) {
-  if (source.documentId) {
-    // Open document with chunk index as hash for scroll position
-    const chunkParam = source.chunkIndex !== undefined ? `?chunk=${source.chunkIndex}` : ''
-    window.open(`/doc/${source.documentId}${chunkParam}`, '_blank')
-  }
-}
-
-function toggleSources(msg: ChatMessage) {
-  msg.showSources = !msg.showSources
-}
-
-// Configure marked options
-marked.setOptions({
-  breaks: true,
-  gfm: true
-})
-
-function formatMarkdown(content: string): string {
+async function handleFeedbackSubmit(data: { feedbackType: string; comment: string; correctAnswer: string }) {
+  if (!feedbackTargetMsg?.id) return
   try {
-    return marked.parse(content) as string
+    await submitFeedback(feedbackTargetMsg.id, {
+      rating: -1,
+      feedbackType: data.feedbackType,
+      comment: data.comment,
+      correctAnswer: data.correctAnswer
+    })
+    feedbackTargetMsg.feedback = { rating: -1 }
+    ElMessage.success(t('knowledge.feedbackSubmitted'))
   } catch {
-    // Fallback to basic formatting if marked fails
-    return content
-      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\*(.*?)\*/g, '<em>$1</em>')
-      .replace(/`(.*?)`/g, '<code>$1</code>')
-      .replace(/\n/g, '<br>')
+    ElMessage.error(t('knowledge.feedbackFailed'))
+  } finally {
+    feedbackDialogVisible.value = false
+    feedbackTargetMsg = null
   }
 }
 
 function scrollToBottom() {
   if (messagesContainer.value) {
-    messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
-  }
-}
-
-// Save chat history to localStorage
-function saveChatHistory() {
-  const data = {
-    kbId: selectedKb.value,
-    model: selectedModel.value,
-    messages: messages.value,
-  }
-  localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(data))
-}
-
-// Load chat history from localStorage
-function loadChatHistory() {
-  try {
-    const saved = localStorage.getItem(CHAT_HISTORY_KEY)
-    if (saved) {
-      const data = JSON.parse(saved)
-      // Only restore if KB matches
-      if (data.kbId === selectedKb.value) {
-        messages.value = data.messages || []
-        if (data.model && availableModels.value.find(m => m.id === data.model)) {
-          selectedModel.value = data.model
-        }
-      } else {
-        // Clear messages if KB changed
-        messages.value = []
-      }
-    }
-  } catch (e) {
-    console.error('Failed to load chat history:', e)
+    messagesContainer.value.scrollTo({
+      top: messagesContainer.value.scrollHeight,
+      behavior: 'smooth'
+    })
   }
 }
 
@@ -483,10 +745,8 @@ async function loadProviders() {
     if (res.data?.providers) {
       providers.value = res.data.providers
     }
-    // Set default model from kbSettings or first available
     if (res.data?.kbSettings?.chatModel) {
       const defaultModelId = res.data.kbSettings.chatModel
-      // Find the model in providers
       for (const p of providers.value) {
         if (p.isActive) {
           for (const m of p.models) {
@@ -498,7 +758,6 @@ async function loadProviders() {
         }
       }
     }
-    // Fallback to first default or first available
     if (availableModels.value.length) {
       const defaultModel = availableModels.value.find(m => m.isDefault)
       selectedModel.value = defaultModel?.id || availableModels.value[0].id
@@ -520,33 +779,147 @@ async function loadKbList() {
 onMounted(async () => {
   await loadProviders()
   await loadKbList()
-  loadChatHistory()
+  pageLoading.value = false
 })
 </script>
 
 <style scoped>
 .knowledge-home {
   display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  min-height: 100%;
-  padding: 20px;
+  height: 100%;
   background: linear-gradient(180deg, #f0f5ff 0%, #fafbfc 100%);
+  position: relative;
+}
+
+/* Sidebar */
+.kb-sidebar {
+  width: 260px;
+  min-width: 260px;
+  border-right: 1px solid var(--kx-border);
+  display: flex;
+  flex-direction: column;
+  background: #f7f8fa;
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.kb-sidebar.collapsed {
+  width: 0;
+  min-width: 0;
+  border-right: none;
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 14px 8px;
+}
+
+.sidebar-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--kx-text-primary);
+}
+
+.sidebar-collapse-btn {
+  font-size: 18px;
+  color: #909399;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: all 0.15s;
+}
+
+.sidebar-collapse-btn:hover {
+  color: #3370ff;
+  background: #e1ecff;
+}
+
+.sidebar-toggle-btn {
+  position: absolute;
+  left: 12px;
+  top: 16px;
+  z-index: 10;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  background: #fff;
+  border: 1px solid var(--kx-border);
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  transition: all 0.15s;
+}
+
+.sidebar-toggle-btn:hover {
+  border-color: #3370ff;
+  color: #3370ff;
+}
+
+/* Main Content */
+.kb-main {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  min-width: 0;
+  height: 100%;
+  overflow: hidden;
 }
 
 .kb-home-center {
   width: 100%;
   max-width: 800px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 0 20px;
+}
+
+/* Welcome mode: center everything */
+.kb-home-center.welcome-mode {
+  justify-content: center;
+  align-items: center;
+}
+
+.kb-welcome-centered {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  width: 100%;
+  margin-bottom: 10vh;
+}
+
+.kb-welcome-content {
   display: flex;
   flex-direction: column;
   align-items: center;
+  width: 100%;
+  max-width: 680px;
+}
+
+.kb-chat-input-welcome {
+  margin-top: 36px;
+  margin-bottom: 0;
+  padding-bottom: 16px;
+}
+
+/* Messages area (middle, scrollable) */
+.kb-messages-area {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 0;
+  scroll-behavior: smooth;
 }
 
 /* Welcome */
 .kb-welcome {
   text-align: center;
-  margin-bottom: 24px;
-  padding: 20px 0;
+  margin-bottom: 0;
+  padding: 0;
 }
 
 .kb-logo {
@@ -586,15 +959,16 @@ onMounted(async () => {
   margin-top: 2px;
 }
 
-/* Chat input */
+/* Chat input (fixed at bottom) */
 .kb-chat-input-area {
   width: 100%;
+  flex-shrink: 0;
   background: #fff;
   border: 1px solid var(--kx-border);
   border-radius: 16px;
-  padding: 16px;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
-  margin-bottom: 20px;
+  padding: 16px 16px 20px;
+  box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.06);
+  margin: 12px 0 60px;
 }
 
 .kb-chat-options {
@@ -650,361 +1024,39 @@ onMounted(async () => {
   padding-bottom: 4px;
 }
 
-/* Chat messages */
-.kb-chat-messages {
-  width: 100%;
-  max-height: calc(100vh - 380px);
-  overflow-y: auto;
-  margin-bottom: 20px;
-  padding-right: 8px;
-}
-
-.kb-chat-msg {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 20px;
-  animation: fadeIn 0.3s ease;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.kb-chat-msg.user {
-  flex-direction: row-reverse;
-}
-
-.kb-chat-msg.user .msg-body {
-  align-items: flex-end;
-}
-
-.msg-avatar {
-  flex-shrink: 0;
-}
-
-.msg-body {
-  display: flex;
-  flex-direction: column;
-  max-width: 80%;
-}
-
-.msg-header {
+/* Loading conversation */
+.conv-detail-loading {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  margin-bottom: 6px;
-}
-
-.msg-role {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--kx-text-primary);
-}
-
-.msg-model {
-  font-size: 11px;
-  color: var(--kx-text-placeholder);
-  background: var(--kx-bg-gray);
-  padding: 2px 8px;
-  border-radius: 10px;
-}
-
-.msg-content {
-  padding: 12px 16px;
-  border-radius: 12px;
+  padding: 40px;
+  color: #909399;
   font-size: 14px;
-  line-height: 1.7;
 }
 
-.kb-chat-msg.user .msg-content {
-  background: linear-gradient(135deg, var(--kx-primary) 0%, #5080ff 100%);
-  color: #fff;
-  border-top-right-radius: 4px;
-}
-
-.kb-chat-msg.assistant .msg-content {
-  background: #fff;
-  border: 1px solid var(--kx-border);
-  border-top-left-radius: 4px;
-}
-
-/* Markdown content styles */
-.msg-content :deep(h1),
-.msg-content :deep(h2),
-.msg-content :deep(h3),
-.msg-content :deep(h4) {
-  margin: 16px 0 8px 0;
-  font-weight: 600;
-  color: var(--kx-text-primary);
-}
-
-.msg-content :deep(h1) { font-size: 20px; }
-.msg-content :deep(h2) { font-size: 18px; }
-.msg-content :deep(h3) { font-size: 16px; }
-.msg-content :deep(h4) { font-size: 15px; }
-
-.msg-content :deep(p) {
-  margin: 8px 0;
-  line-height: 1.7;
-}
-
-.msg-content :deep(ul),
-.msg-content :deep(ol) {
-  margin: 8px 0;
-  padding-left: 24px;
-}
-
-.msg-content :deep(li) {
-  margin: 4px 0;
-  line-height: 1.6;
-}
-
-.msg-content :deep(table) {
+/* Conversation toolbar */
+.kb-conv-toolbar {
   width: 100%;
-  border-collapse: collapse;
-  margin: 12px 0;
-  font-size: 13px;
-}
-
-.msg-content :deep(th),
-.msg-content :deep(td) {
-  border: 1px solid var(--kx-border);
-  padding: 8px 12px;
-  text-align: left;
-}
-
-.msg-content :deep(th) {
-  background: #f5f7fa;
-  font-weight: 600;
-  color: var(--kx-text-primary);
-}
-
-.msg-content :deep(tr:nth-child(even)) {
-  background: #fafbfc;
-}
-
-.msg-content :deep(code) {
-  background: #f5f7fa;
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-family: 'SF Mono', Monaco, Consolas, monospace;
-  font-size: 13px;
-  color: #e83e8c;
-}
-
-.msg-content :deep(pre) {
-  background: #1e1e1e;
-  border-radius: 8px;
-  padding: 12px 16px;
-  margin: 12px 0;
-  overflow-x: auto;
-}
-
-.msg-content :deep(pre code) {
-  background: transparent;
-  padding: 0;
-  color: #d4d4d4;
-  font-size: 13px;
-  line-height: 1.5;
-}
-
-.msg-content :deep(blockquote) {
-  border-left: 4px solid var(--kx-primary);
-  margin: 12px 0;
-  padding: 8px 16px;
-  background: #f5f8ff;
-  color: var(--kx-text-secondary);
-}
-
-.msg-content :deep(img) {
-  max-width: 100%;
-  border-radius: 8px;
-  margin: 8px 0;
-  cursor: pointer;
-}
-
-.msg-content :deep(a) {
-  color: var(--kx-primary);
-  text-decoration: none;
-}
-
-.msg-content :deep(a:hover) {
-  text-decoration: underline;
-}
-
-.msg-content :deep(hr) {
-  border: none;
-  border-top: 1px solid var(--kx-border);
-  margin: 16px 0;
-}
-
-.msg-sources {
-  margin-top: 10px;
-  padding: 10px 12px;
-  background: #f7f8fa;
-  border-radius: 8px;
-}
-
-.sources-header {
+  flex-shrink: 0;
   display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  color: var(--kx-text-secondary);
-  cursor: pointer;
-  user-select: none;
-  padding: 4px 0;
-}
-
-.sources-header:hover {
-  color: var(--kx-primary);
-}
-
-.sources-toggle {
-  margin-left: auto;
-  transition: transform 0.2s;
-}
-
-.sources-toggle.expanded {
-  transform: rotate(180deg);
-}
-
-.sources-preview {
-  display: flex;
-  flex-wrap: wrap;
+  justify-content: flex-end;
   gap: 8px;
-  margin-top: 8px;
-  align-items: center;
+  padding: 12px 4px 0;
 }
 
-.source-tag {
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.source-tag:hover {
-  background: var(--kx-primary);
-  color: #fff;
-  border-color: var(--kx-primary);
-}
-
-.source-more {
-  font-size: 12px;
-  color: var(--kx-primary);
-  cursor: pointer;
-  margin-left: 4px;
-}
-
-.source-more:hover {
-  text-decoration: underline;
-}
-
-.sources-detail {
-  margin-top: 8px;
-  border-radius: 6px;
-  overflow: hidden;
-  background: #fff;
-  border: 1px solid var(--kx-border);
-}
-
-.source-item {
+.stop-generate-bar {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 12px;
-  cursor: pointer;
-  transition: background 0.15s;
-  border-bottom: 1px solid var(--kx-border);
+  justify-content: center;
+  margin-bottom: 16px;
 }
 
-.source-item:last-child {
-  border-bottom: none;
-}
 
-.source-item:hover {
-  background: #f5f8ff;
-}
-
-.source-index {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--kx-primary);
-  min-width: 24px;
-}
-
-.source-title {
-  flex: 1;
-  font-size: 13px;
-  color: var(--kx-text-primary);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.source-chunk {
-  font-size: 11px;
-  color: var(--kx-text-secondary);
-  background: #f0f2f5;
-  padding: 2px 6px;
-  border-radius: 4px;
-}
-
-.source-arrow {
-  color: var(--kx-text-placeholder);
-  font-size: 12px;
-}
-
-.slide-enter-active,
-.slide-leave-active {
-  transition: all 0.2s ease;
-}
-
-.slide-enter-from,
-.slide-leave-to {
-  opacity: 0;
-  max-height: 0;
-}
-
-.slide-enter-to,
-.slide-leave-from {
-  opacity: 1;
-  max-height: 500px;
-}
-
-.msg-actions {
-  display: flex;
-  gap: 12px;
-  margin-top: 8px;
-  padding-left: 4px;
-}
-
-.typing-indicator {
-  display: flex;
-  gap: 4px;
-  padding: 14px 20px;
-}
-
-.typing-indicator span {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--kx-text-placeholder);
-  animation: typing 1.2s infinite ease-in-out;
-}
-
-.typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
-.typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
-
-@keyframes typing {
-  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
-  30% { transform: translateY(-6px); opacity: 1; }
-}
 
 /* Quick Actions */
 .kb-quick-section {
   width: 100%;
-  margin-top: 20px;
+  margin-top: 36px;
 }
 
 .quick-title {
@@ -1048,5 +1100,73 @@ onMounted(async () => {
 .quick-desc {
   font-size: 12px;
   color: var(--kx-text-placeholder);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .kb-sidebar {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 100;
+    box-shadow: 4px 0 16px rgba(0, 0, 0, 0.1);
+  }
+
+  .kb-sidebar.collapsed {
+    width: 0;
+  }
+
+  .kb-grid {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  }
+}
+
+/* 640px - Large Phone */
+@media (max-width: 640px) {
+  .kb-sidebar {
+    width: 0;
+    min-width: 0;
+  }
+
+  .kb-grid {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 12px;
+  }
+
+  .kb-main-header {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .quick-actions {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+}
+
+/* 480px - Small Phone */
+@media (max-width: 480px) {
+  .kb-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .kb-main-header {
+    padding: 8px 12px;
+  }
+
+  .quick-actions {
+    gap: 6px;
+  }
+
+  .quick-action-card {
+    padding: 10px;
+    min-width: 0;
+  }
+
+  .quick-desc {
+    display: none;
+  }
 }
 </style>

@@ -1,7 +1,7 @@
 <template>
   <div class="storage-settings">
     <div class="page-header">
-      <h2>云盘存储设置</h2>
+      <h2>{{ $t('admin.storage.title') }}</h2>
     </div>
 
     <!-- Storage Overview -->
@@ -11,7 +11,7 @@
           <el-icon :size="24" color="#3370ff"><Coin /></el-icon>
         </div>
         <div class="overview-info">
-          <span class="overview-label">已用空间</span>
+          <span class="overview-label">{{ $t('admin.storage.usedSpace') }}</span>
           <span class="overview-value">{{ formatSize(storageUsed) }}</span>
         </div>
       </div>
@@ -20,7 +20,7 @@
           <el-icon :size="24" color="#36b37e"><Database /></el-icon>
         </div>
         <div class="overview-info">
-          <span class="overview-label">总容量</span>
+          <span class="overview-label">{{ $t('admin.storage.totalCapacity') }}</span>
           <span class="overview-value">{{ formatSize(storageTotal) }}</span>
         </div>
       </div>
@@ -29,7 +29,7 @@
           <el-icon :size="24" color="#f5a623"><Document /></el-icon>
         </div>
         <div class="overview-info">
-          <span class="overview-label">文件数量</span>
+          <span class="overview-label">{{ $t('admin.storage.fileCount') }}</span>
           <span class="overview-value">{{ fileCount }}</span>
         </div>
       </div>
@@ -38,24 +38,24 @@
     <!-- Storage Progress -->
     <div class="storage-progress-section">
       <div class="progress-header">
-        <span>存储使用情况</span>
+        <span>{{ $t('admin.storage.usageStatus') }}</span>
         <span class="progress-text">{{ storagePercent }}%</span>
       </div>
       <el-progress :percentage="storagePercent" :stroke-width="12" :color="storagePercent > 90 ? '#f54a45' : '#3370ff'" />
       <div class="storage-breakdown">
         <div class="breakdown-item">
           <span class="breakdown-color" style="background: #3370ff"></span>
-          <span>文档</span>
+          <span>{{ $t('admin.storage.documents') }}</span>
           <span class="breakdown-size">{{ formatSize(docSize) }}</span>
         </div>
         <div class="breakdown-item">
           <span class="breakdown-color" style="background: #36b37e"></span>
-          <span>表格</span>
+          <span>{{ $t('admin.storage.sheets') }}</span>
           <span class="breakdown-size">{{ formatSize(sheetSize) }}</span>
         </div>
         <div class="breakdown-item">
           <span class="breakdown-color" style="background: #ff7d00"></span>
-          <span>其他</span>
+          <span>{{ $t('admin.storage.others') }}</span>
           <span class="breakdown-size">{{ formatSize(otherSize) }}</span>
         </div>
       </div>
@@ -64,36 +64,36 @@
     <!-- System Default Storage Path -->
     <div class="settings-section">
       <div class="section-header">
-        <span>系统默认存储路径</span>
+        <span>{{ $t('admin.storage.systemDefaultPath') }}</span>
       </div>
       <el-form :model="systemStoragePaths" label-width="120px">
-        <el-form-item label="云盘存储路径">
+        <el-form-item :label="$t('admin.storage.uploadPath')">
           <el-input v-model="systemStoragePaths.uploadPath" style="width: 400px">
             <template #append>
-              <el-button @click="openDirSelector('upload')">浏览</el-button>
+              <el-button @click="openDirSelector('upload')">{{ $t('admin.storage.browse') }}</el-button>
             </template>
           </el-input>
-          <div class="form-tip">云盘文件的默认存储位置（系统级设置）</div>
+          <div class="form-tip">{{ $t('admin.storage.uploadPathTip') }}</div>
         </el-form-item>
-        <el-form-item label="远程文件路径">
+        <el-form-item :label="$t('admin.storage.remotePath')">
           <el-input v-model="systemStoragePaths.remotePath" style="width: 400px">
             <template #append>
-              <el-button @click="openDirSelector('remote')">浏览</el-button>
+              <el-button @click="openDirSelector('remote')">{{ $t('admin.storage.browse') }}</el-button>
             </template>
           </el-input>
-          <div class="form-tip">远程存储接入的文件更新存放位置</div>
+          <div class="form-tip">{{ $t('admin.storage.remotePathTip') }}</div>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="saveSystemStoragePaths" :loading="savingSystemPaths">保存路径设置</el-button>
+          <el-button type="primary" @click="saveSystemStoragePaths" :loading="savingSystemPaths">{{ $t('admin.storage.savePathSettings') }}</el-button>
         </el-form-item>
       </el-form>
     </div>
 
     <!-- Directory Selector Dialog -->
-    <el-dialog v-model="showDirSelector" title="选择目录" width="500px">
+    <el-dialog v-model="showDirSelector" :title="$t('admin.storage.selectDir')" width="500px">
       <div class="dir-selector">
         <div class="dir-path">
-          <el-input v-model="currentDirPath" placeholder="输入或选择目录路径">
+          <el-input v-model="currentDirPath" :placeholder="$t('admin.storage.inputOrSelectDir')">
             <template #prepend>
               <el-button @click="goToParentDir" :disabled="!currentDirPath || currentDirPath === '/'">
                 <el-icon><ArrowUp /></el-icon>
@@ -114,47 +114,47 @@
             <span>{{ dir.name }}</span>
           </div>
           <div v-if="availableDirs.length === 0 && !loadingDirs" class="no-dirs">
-            暂无子目录
+            {{ $t('admin.storage.noSubDirs') }}
           </div>
         </div>
       </div>
       <template #footer>
-        <el-button @click="showDirSelector = false">取消</el-button>
-        <el-button type="primary" @click="confirmDirSelection">确定</el-button>
+        <el-button @click="showDirSelector = false">{{ $t('common.cancel') }}</el-button>
+        <el-button type="primary" @click="confirmDirSelection">{{ $t('common.confirm') }}</el-button>
       </template>
     </el-dialog>
 
     <!-- Remote Storage -->
     <div class="settings-section">
       <div class="section-header">
-        <span>远程存储接入</span>
+        <span>{{ $t('admin.storage.remoteStorage') }}</span>
         <el-button type="primary" @click="showAddStorageDialog = true">
-          <el-icon><Plus /></el-icon>添加存储
+          <el-icon><Plus /></el-icon>{{ $t('admin.storage.addStorage') }}
         </el-button>
       </div>
       <el-table :data="remoteStorages" stripe>
-        <el-table-column prop="name" label="名称" min-width="100" show-overflow-tooltip align="center"/>
-        <el-table-column prop="type" label="类型" width="120" align="center">
+        <el-table-column prop="name" :label="$t('common.name')" min-width="100" show-overflow-tooltip align="center"/>
+        <el-table-column prop="type" :label="$t('admin.storage.type')" width="120" align="center">
           <template #default="{ row }">
             <el-tag size="small">{{ row.type.toUpperCase() }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="server" label="服务器地址" min-width="130" show-overflow-tooltip align="center"/>
-        <el-table-column prop="status" label="状态" width="120" align="center">
+        <el-table-column prop="server" :label="$t('admin.storage.serverAddress')" min-width="130" show-overflow-tooltip align="center"/>
+        <el-table-column prop="status" :label="$t('admin.storage.status')" width="120" align="center">
           <template #default="{ row }">
             <span :class="['status-badge', row.status]">
-              {{ row.status === 'connected' ? '已连接' : row.status === 'error' ? '连接失败' : '未连接' }}
+              {{ row.status === 'connected' ? $t('admin.storage.connected') : row.status === 'error' ? $t('admin.storage.connectFailed') : $t('admin.storage.disconnected') }}
             </span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" min-width="80" align="center">
+        <el-table-column :label="$t('admin.storage.actions')" min-width="80" align="center">
           <template #default="{ row }">
             <div class="action-buttons">
-              <el-button link size="small" type="primary" @click="testStorageConnection(row)" :loading="row.testing">测试</el-button>
-              <el-button link size="small" type="primary" @click="reconnectStorage(row)" :loading="row.reconnecting">重连</el-button>
-              <el-button link size="small" type="warning" @click="disconnectStorage(row)" :loading="row.disconnecting">断开</el-button>
-              <el-button link size="small" type="primary" @click="editStorage(row)">编辑</el-button>
-              <el-button link size="small" type="danger" @click="deleteStorage(row)">删除</el-button>
+              <el-button link size="small" type="primary" @click="testStorageConnection(row)" :loading="row.testing">{{ $t('admin.storage.test') }}</el-button>
+              <el-button link size="small" type="primary" @click="reconnectStorage(row)" :loading="row.reconnecting">{{ $t('admin.storage.reconnect') }}</el-button>
+              <el-button link size="small" type="warning" @click="disconnectStorage(row)" :loading="row.disconnecting">{{ $t('admin.storage.disconnect') }}</el-button>
+              <el-button link size="small" type="primary" @click="editStorage(row)">{{ $t('common.edit') }}</el-button>
+              <el-button link size="small" type="danger" @click="deleteStorage(row)">{{ $t('common.delete') }}</el-button>
             </div>
           </template>
         </el-table-column>
@@ -164,105 +164,105 @@
     <!-- Storage Policy -->
     <div class="settings-section">
       <div class="section-header">
-        <span>存储策略</span>
+        <span>{{ $t('admin.storage.storagePolicy') }}</span>
       </div>
       <el-form :model="storagePolicy" label-width="140px">
-        <el-form-item label="文件版本保留">
+        <el-form-item :label="$t('admin.storage.versionRetention')">
           <el-select v-model="storagePolicy.versionRetention" style="width: 200px">
-            <el-option label="保留最近10个版本" :value="10" />
-            <el-option label="保留最近20个版本" :value="20" />
-            <el-option label="保留最近50个版本" :value="50" />
-            <el-option label="保留全部版本" :value="0" />
+            <el-option :label="$t('admin.storage.keepRecent', { count: 10 })" :value="10" />
+            <el-option :label="$t('admin.storage.keepRecent', { count: 20 })" :value="20" />
+            <el-option :label="$t('admin.storage.keepRecent', { count: 50 })" :value="50" />
+            <el-option :label="$t('admin.storage.keepAll')" :value="0" />
           </el-select>
         </el-form-item>
-        <el-form-item label="回收站保留时间">
+        <el-form-item :label="$t('admin.storage.recycleRetention')">
           <el-select v-model="storagePolicy.recycleRetention" style="width: 200px">
-            <el-option label="7天" :value="7" />
-            <el-option label="30天" :value="30" />
-            <el-option label="90天" :value="90" />
-            <el-option label="永久保留" :value="0" />
+            <el-option :label="$t('admin.storage.days', { count: 7 })" :value="7" />
+            <el-option :label="$t('admin.storage.days', { count: 30 })" :value="30" />
+            <el-option :label="$t('admin.storage.days', { count: 90 })" :value="90" />
+            <el-option :label="$t('admin.storage.keepForever')" :value="0" />
           </el-select>
         </el-form-item>
-        <el-form-item label="大文件阈值">
+        <el-form-item :label="$t('admin.storage.largeFileThreshold')">
           <el-input-number v-model="storagePolicy.largeFileThreshold" :min="10" :max="1000" />
           <span style="margin-left: 8px">MB</span>
-          <div class="form-tip">超过此大小的文件将采用分块上传</div>
+          <div class="form-tip">{{ $t('admin.storage.largeFileTip') }}</div>
         </el-form-item>
-        <el-form-item label="自动清理缓存">
+        <el-form-item :label="$t('admin.storage.autoCleanCache')">
           <el-switch v-model="storagePolicy.autoCleanCache" />
-          <div class="form-tip">定期清理临时文件和缓存</div>
+          <div class="form-tip">{{ $t('admin.storage.autoCleanTip') }}</div>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="saveStoragePolicy" :loading="savingPolicy">保存策略</el-button>
+          <el-button type="primary" @click="saveStoragePolicy" :loading="savingPolicy">{{ $t('admin.storage.savePolicy') }}</el-button>
         </el-form-item>
       </el-form>
     </div>
 
     <!-- Add/Edit Storage Dialog -->
-    <el-dialog v-model="showAddStorageDialog" :title="editingStorage ? '编辑存储' : '添加远程存储'" width="550px" destroy-on-close>
+    <el-dialog v-model="showAddStorageDialog" :title="editingStorage ? $t('admin.storage.editStorage') : $t('admin.storage.addRemoteStorage')" width="550px" destroy-on-close>
       <el-form :model="storageForm" :rules="storageRules" ref="storageFormRef" label-width="100px">
-        <el-form-item label="存储名称" prop="name">
-          <el-input v-model="storageForm.name" placeholder="请输入存储名称" />
+        <el-form-item :label="$t('admin.storage.storageName')" prop="name">
+          <el-input v-model="storageForm.name" :placeholder="$t('admin.storage.inputStorageName')" />
         </el-form-item>
-        <el-form-item label="存储类型" prop="type">
+        <el-form-item :label="$t('admin.storage.storageType')" prop="type">
           <el-select v-model="storageForm.type" style="width: 100%" @change="onStorageTypeChange">
-            <el-option-group label="网络协议">
+            <el-option-group :label="$t('admin.storage.networkProtocol')">
               <el-option label="FTP" value="ftp" />
               <el-option label="SFTP" value="sftp" />
               <el-option label="SMB/CIFS" value="smb" />
               <el-option label="NFS" value="nfs" />
               <el-option label="WebDAV" value="webdav" />
             </el-option-group>
-            <el-option-group label="云盘服务">
-              <el-option label="百度网盘" value="baidu" />
-              <el-option label="阿里云盘" value="aliyun" />
-              <el-option label="腾讯微盘" value="tencent" />
+            <el-option-group :label="$t('admin.storage.cloudDrive')">
+              <el-option :label="$t('admin.storage.baiduDrive')" value="baidu" />
+              <el-option :label="$t('admin.storage.aliyunDrive')" value="aliyun" />
+              <el-option :label="$t('admin.storage.tencentDrive')" value="tencent" />
             </el-option-group>
           </el-select>
         </el-form-item>
-        <el-form-item label="服务器地址" prop="server" v-if="!['baidu', 'aliyun', 'tencent'].includes(storageForm.type)">
-          <el-input v-model="storageForm.server" placeholder="如: 192.168.1.100 或 fileserver.local" />
+        <el-form-item :label="$t('admin.storage.serverAddress')" prop="server" v-if="!['baidu', 'aliyun', 'tencent'].includes(storageForm.type)">
+          <el-input v-model="storageForm.server" :placeholder="$t('admin.storage.serverPlaceholder')" />
         </el-form-item>
-        <el-form-item label="端口" v-if="!['baidu', 'aliyun', 'tencent'].includes(storageForm.type)">
+        <el-form-item :label="$t('admin.storage.port')" v-if="!['baidu', 'aliyun', 'tencent'].includes(storageForm.type)">
           <el-input-number v-model="storageForm.port" :min="1" :max="65535" style="width: 150px" />
           <span class="port-hint">{{ getDefaultPort(storageForm.type) }}</span>
         </el-form-item>
-        <el-form-item label="共享路径" v-if="['smb', 'nfs', 'ftp', 'sftp'].includes(storageForm.type)">
-          <el-input v-model="storageForm.sharePath" :placeholder="storageForm.type === 'ftp' || storageForm.type === 'sftp' ? '可选：如 /home/user/documents' : '如: /shared/documents'" />
-          <div class="form-tip" v-if="storageForm.type === 'ftp' || storageForm.type === 'sftp'">初始目录路径（可选），留空则进入根目录</div>
+        <el-form-item :label="$t('admin.storage.sharePath')" v-if="['smb', 'nfs', 'ftp', 'sftp'].includes(storageForm.type)">
+          <el-input v-model="storageForm.sharePath" :placeholder="storageForm.type === 'ftp' || storageForm.type === 'sftp' ? $t('admin.storage.sharePathPlaceholderFtp') : $t('admin.storage.sharePathPlaceholderSmb')" />
+          <div class="form-tip" v-if="storageForm.type === 'ftp' || storageForm.type === 'sftp'">{{ $t('admin.storage.sharePathTipFtp') }}</div>
         </el-form-item>
-        <el-form-item label="用户名" v-if="['ftp', 'sftp', 'smb', 'webdav'].includes(storageForm.type)">
-          <el-input v-model="storageForm.username" :placeholder="['ftp', 'webdav'].includes(storageForm.type) ? '留空则匿名访问' : '请输入用户名'" />
-          <div class="form-tip" v-if="storageForm.type === 'ftp'">留空或填 anonymous 进行匿名访问</div>
-          <div class="form-tip" v-if="storageForm.type === 'webdav'">留空进行匿名访问</div>
-          <div class="form-tip" v-if="storageForm.type === 'smb'">留空使用来宾(Guest)模式访问</div>
+        <el-form-item :label="$t('admin.storage.username')" v-if="['ftp', 'sftp', 'smb', 'webdav'].includes(storageForm.type)">
+          <el-input v-model="storageForm.username" :placeholder="['ftp', 'webdav'].includes(storageForm.type) ? $t('admin.storage.usernamePlaceholderAnon') : $t('admin.storage.usernamePlaceholder')" />
+          <div class="form-tip" v-if="storageForm.type === 'ftp'">{{ $t('admin.storage.usernameTipFtp') }}</div>
+          <div class="form-tip" v-if="storageForm.type === 'webdav'">{{ $t('admin.storage.usernameTipWebdav') }}</div>
+          <div class="form-tip" v-if="storageForm.type === 'smb'">{{ $t('admin.storage.usernameTipSmb') }}</div>
         </el-form-item>
-        <el-form-item label="密码" v-if="['ftp', 'sftp', 'smb', 'webdav'].includes(storageForm.type) && storageForm.username !== '' && storageForm.username !== 'anonymous'">
-          <el-input v-model="storageForm.password" type="password" placeholder="请输入密码" show-password />
+        <el-form-item :label="$t('admin.storage.password')" v-if="['ftp', 'sftp', 'smb', 'webdav'].includes(storageForm.type) && storageForm.username !== '' && storageForm.username !== 'anonymous'">
+          <el-input v-model="storageForm.password" type="password" :placeholder="$t('admin.storage.inputPassword')" show-password />
         </el-form-item>
-        <el-form-item label="域" v-if="storageForm.type === 'smb'">
-          <el-input v-model="storageForm.domain" placeholder="AD域（可选）" />
+        <el-form-item :label="$t('admin.storage.domain')" v-if="storageForm.type === 'smb'">
+          <el-input v-model="storageForm.domain" :placeholder="$t('admin.storage.domainPlaceholder')" />
         </el-form-item>
         <!-- Cloud drive OAuth tokens -->
         <el-form-item label="Access Token" v-if="['baidu', 'aliyun', 'tencent'].includes(storageForm.type)">
-          <el-input v-model="storageForm.accessToken" type="textarea" :rows="3" placeholder="请输入 OAuth Access Token" />
-          <div class="form-tip">从云盘开放平台获取的访问令牌</div>
+          <el-input v-model="storageForm.accessToken" type="textarea" :rows="3" :placeholder="$t('admin.storage.accessTokenPlaceholder')" />
+          <div class="form-tip">{{ $t('admin.storage.accessTokenTip') }}</div>
         </el-form-item>
         <el-form-item label="Refresh Token" v-if="['aliyun'].includes(storageForm.type)">
-          <el-input v-model="storageForm.refreshToken" type="textarea" :rows="2" placeholder="请输入 OAuth Refresh Token（可选）" />
-          <div class="form-tip">用于自动刷新 Access Token</div>
+          <el-input v-model="storageForm.refreshToken" type="textarea" :rows="2" :placeholder="$t('admin.storage.refreshTokenPlaceholder')" />
+          <div class="form-tip">{{ $t('admin.storage.refreshTokenTip') }}</div>
         </el-form-item>
-        <el-form-item label="挂载点">
-          <el-input v-model="storageForm.mountPoint" placeholder="如: /mnt/remote-storage">
+        <el-form-item :label="$t('admin.storage.mountPoint')">
+          <el-input v-model="storageForm.mountPoint" :placeholder="$t('admin.storage.mountPointPlaceholder')">
             <template #prepend>/mnt/</template>
           </el-input>
-          <div class="form-tip">远程存储在系统中的挂载路径</div>
+          <div class="form-tip">{{ $t('admin.storage.mountPointTip') }}</div>
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="showAddStorageDialog = false">取消</el-button>
-        <el-button @click="testConnectionFromDialog" :loading="testingConnection">测试连接</el-button>
-        <el-button type="primary" @click="submitStorage" :loading="submittingStorage">确定</el-button>
+        <el-button @click="showAddStorageDialog = false">{{ $t('common.cancel') }}</el-button>
+        <el-button @click="testConnectionFromDialog" :loading="testingConnection">{{ $t('admin.storage.testConnection') }}</el-button>
+        <el-button type="primary" @click="submitStorage" :loading="submittingStorage">{{ $t('common.confirm') }}</el-button>
       </template>
     </el-dialog>
   </div>
@@ -270,7 +270,10 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
+
+const { t } = useI18n()
 import type { FormInstance, FormRules } from 'element-plus'
 import {
   getAdminStorageUsage,
@@ -361,7 +364,7 @@ async function loadAvailableDirs() {
     const res = await listDirectories(currentDirPath.value)
     availableDirs.value = res.data || []
   } catch (err: any) {
-    ElMessage.error(err.message || '获取目录列表失败')
+    ElMessage.error(err.message || t('admin.storage.loadDirsFailed'))
     availableDirs.value = []
   } finally {
     loadingDirs.value = false
@@ -406,9 +409,9 @@ async function saveSystemStoragePaths() {
       ...data,
       systemStoragePaths: systemStoragePaths.value,
     })
-    ElMessage.success('系统存储路径已保存')
+    ElMessage.success(t('admin.storage.pathSaved'))
   } catch (err: any) {
-    ElMessage.error(err.message || '保存失败')
+    ElMessage.error(err.message || t('admin.storage.saveFailed'))
   } finally {
     savingSystemPaths.value = false
   }
@@ -437,14 +440,14 @@ const storageForm = ref({
 })
 
 const storageRules: FormRules = {
-  name: [{ required: true, message: '请输入存储名称', trigger: 'blur' }],
-  type: [{ required: true, message: '请选择存储类型', trigger: 'change' }],
-  mountPoint: [{ required: true, message: '请输入挂载点', trigger: 'blur' }],
+  name: [{ required: true, message: () => t('admin.storage.inputStorageName'), trigger: 'blur' }],
+  type: [{ required: true, message: () => t('admin.storage.selectStorageType'), trigger: 'change' }],
+  mountPoint: [{ required: true, message: () => t('admin.storage.inputMountPoint'), trigger: 'blur' }],
 }
 
 function getDefaultPort(type: string): string {
   const ports: Record<string, number> = { ftp: 21, sftp: 22, smb: 445, nfs: 2049, webdav: 80 }
-  return `默认端口: ${ports[type] || '-'}`
+  return t('admin.storage.defaultPort') + `: ${ports[type] || '-'}`
 }
 
 // Update port when type changes
@@ -481,9 +484,9 @@ async function testConnectionFromDialog() {
       username: storageForm.value.username,
       password: storageForm.value.password,
     })
-    ElMessage.success('连接成功')
+    ElMessage.success(t('admin.storage.connectionSuccess'))
   } catch (err: any) {
-    ElMessage.error(err.message || '连接失败')
+    ElMessage.error(err.message || t('admin.storage.connectionFailed'))
   } finally {
     testingConnection.value = false
   }
@@ -517,15 +520,15 @@ async function submitStorage() {
 
     if (editingStorage.value) {
       await updateRemoteStorage(editingStorage.value.id, data)
-      ElMessage.success('存储已更新')
+      ElMessage.success(t('admin.storage.storageUpdated'))
     } else {
       await createRemoteStorage(data)
-      ElMessage.success('存储已添加')
+      ElMessage.success(t('admin.storage.storageAdded'))
     }
     showAddStorageDialog.value = false
     fetchRemoteStorages()
   } catch (err: any) {
-    ElMessage.error(err.message || '操作失败')
+    ElMessage.error(err.message || t('common.operationFailed'))
   } finally {
     submittingStorage.value = false
   }
@@ -536,10 +539,10 @@ async function testStorageConnection(s: RemoteStorage) {
   try {
     await testRemoteStorageConnection(s.id)
     s.status = 'connected'
-    ElMessage.success('连接成功')
+    ElMessage.success(t('admin.storage.connectionSuccess'))
   } catch (err: any) {
     s.status = 'error'
-    ElMessage.error(err.message || '连接失败')
+    ElMessage.error(err.message || t('admin.storage.connectionFailed'))
   } finally {
     s.testing = false
   }
@@ -550,10 +553,10 @@ async function reconnectStorage(s: RemoteStorage) {
   try {
     await connectRemoteStorage(s.id)
     s.status = 'connected'
-    ElMessage.success('重新连接成功')
+    ElMessage.success(t('admin.storage.reconnectSuccess'))
   } catch (err: any) {
     s.status = 'error'
-    ElMessage.error(err.message || '重新连接失败')
+    ElMessage.error(err.message || t('admin.storage.reconnectFailed'))
   } finally {
     s.reconnecting = false
   }
@@ -564,22 +567,22 @@ async function disconnectStorage(s: RemoteStorage) {
   try {
     await disconnectRemoteStorage(s.id)
     s.status = 'disconnected'
-    ElMessage.success('已断开连接')
+    ElMessage.success(t('admin.storage.disconnectSuccess'))
   } catch (err: any) {
-    ElMessage.error(err.message || '断开连接失败')
+    ElMessage.error(err.message || t('admin.storage.disconnectFailed'))
   } finally {
     s.disconnecting = false
   }
 }
 
 async function deleteStorage(s: RemoteStorage) {
-  await ElMessageBox.confirm(`确定要删除存储 "${s.name}" 吗？`, '删除确认')
+  await ElMessageBox.confirm(t('admin.storage.deleteConfirm', { name: s.name }), t('admin.storage.deleteTitle'))
   try {
     await deleteRemoteStorage(s.id)
     remoteStorages.value = remoteStorages.value.filter(x => x.id !== s.id)
-    ElMessage.success('已删除')
+    ElMessage.success(t('common.deleted'))
   } catch (err: any) {
-    ElMessage.error(err.message || '删除失败')
+    ElMessage.error(err.message || t('admin.storage.deleteFailed'))
   }
 }
 
@@ -601,9 +604,9 @@ async function saveStoragePolicy() {
       ...data,
       storagePolicy: storagePolicy.value,
     })
-    ElMessage.success('存储策略已保存')
+    ElMessage.success(t('admin.storage.policySaved'))
   } catch (err: any) {
-    ElMessage.error(err.message || '保存失败')
+    ElMessage.error(err.message || t('admin.storage.saveFailed'))
   } finally {
     savingPolicy.value = false
   }
@@ -862,5 +865,39 @@ onMounted(() => {
 }
 .action-buttons .el-button {
   padding: 4px 8px;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 768px) {
+  .storage-settings {
+    padding: 16px;
+  }
+  .storage-overview {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .overview-card {
+    min-width: 140px;
+    padding: 14px;
+  }
+  .el-table {
+    overflow-x: auto;
+  }
+}
+@media (max-width: 640px) {
+  .storage-settings {
+    padding: 12px;
+  }
+  .storage-overview {
+    flex-direction: column;
+  }
+  .overview-card {
+    min-width: 0;
+  }
+}
+@media (max-width: 480px) {
+  .storage-settings {
+    padding: 8px;
+  }
 }
 </style>

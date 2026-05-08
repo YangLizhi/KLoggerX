@@ -10,17 +10,53 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// GetTemplates godoc
+// @Summary 获取模板列表
+// @Description 获取可用模板列表，支持分类筛选和关键词搜索
+// @Tags 模板
+// @Produce json
+// @Param category query string false "分类筛选"
+// @Param keyword query string false "搜索关键词"
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /template/list [get]
 func GetTemplates(c *gin.Context) {
 	category := c.Query("category")
-	list, err := service.GetTemplates(category)
+	keyword := c.Query("keyword")
+
+	var list []model.Template
+	var err error
+
+	if keyword != "" {
+		list, err = service.SearchTemplates(keyword)
+	} else {
+		list, err = service.GetTemplates(category)
+	}
 	if err != nil {
 		c.JSON(http.StatusOK, model.ErrorMsg(err.Error()))
 		return
 	}
+
+	// Attach favorite info if user is authenticated
+	var favoriteIDs []uint
+	uid := extractUserID(c)
+	if uid > 0 {
+		favoriteIDs, _ = service.GetUserFavoriteTemplateIDs(uid)
+	}
+
 	cats, _ := service.GetTemplateCategories()
-	c.JSON(http.StatusOK, model.Success(gin.H{"list": list, "categories": cats}))
+	c.JSON(http.StatusOK, model.Success(gin.H{"list": list, "categories": cats, "favoriteIds": favoriteIDs}))
 }
 
+// GetTemplateDetail godoc
+// @Summary 获取模板详情
+// @Description 获取指定模板的详细信息
+// @Tags 模板
+// @Produce json
+// @Param id path int true "模板ID"
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /template/{id} [get]
 func GetTemplateDetail(c *gin.Context) {
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
 	t, err := service.GetTemplateDetail(uint(id))
@@ -31,13 +67,22 @@ func GetTemplateDetail(c *gin.Context) {
 	c.JSON(http.StatusOK, model.Success(t))
 }
 
-// UseTemplate creates a new document pre-filled with a template's content.
+// UseTemplate godoc
+// @Summary 使用模板
+// @Description 基于模板创建新文档
+// @Tags 模板
+// @Accept json
+// @Produce json
+// @Param id path int true "模板ID"
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /template/{id}/use [post]
 func UseTemplate(c *gin.Context) {
 	uid := extractUserID(c)
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
 	var body struct {
 		ParentID *uint  `json:"parentId"`
-		Title    string `json:"title"`
+		Title    string `json:"title" binding:"max=500"`
 	}
 	c.ShouldBindJSON(&body)
 
@@ -77,16 +122,70 @@ func extractUserID(c *gin.Context) uint {
 	return 0
 }
 
+// FavoriteTemplateHandler godoc
+// @Summary 收藏模板
+// @Description 将模板添加到用户收藏
+// @Tags 模板
+// @Produce json
+// @Param id path int true "模板ID"
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /template/{id}/favorite [post]
+func FavoriteTemplateHandler(c *gin.Context) {
+	uid := extractUserID(c)
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg("无效的模板ID"))
+		return
+	}
+	if err := service.FavoriteTemplate(uid, uint(id)); err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg("收藏失败: "+err.Error()))
+		return
+	}
+	c.JSON(http.StatusOK, model.Success(nil))
+}
+
+// UnfavoriteTemplateHandler godoc
+// @Summary 取消收藏模板
+// @Description 将模板从用户收藏中移除
+// @Tags 模板
+// @Produce json
+// @Param id path int true "模板ID"
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /template/{id}/favorite [delete]
+func UnfavoriteTemplateHandler(c *gin.Context) {
+	uid := extractUserID(c)
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg("无效的模板ID"))
+		return
+	}
+	if err := service.UnfavoriteTemplate(uid, uint(id)); err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg("取消收藏失败: "+err.Error()))
+		return
+	}
+	c.JSON(http.StatusOK, model.Success(nil))
+}
+
 // Admin handlers for template management
 
-// CreateTemplateHandler creates a new template (admin only)
+// CreateTemplateHandler godoc
+// @Summary 创建模板
+// @Description 管理员创建新模板
+// @Tags 系统管理
+// @Accept json
+// @Produce json
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /admin/template/create [post]
 func CreateTemplateHandler(c *gin.Context) {
 	var req struct {
-		Name        string `json:"name" binding:"required"`
-		Description string `json:"description"`
-		Category    string `json:"category"`
-		Type        string `json:"type" binding:"required"`
-		Content     string `json:"content"`
+		Name        string `json:"name" binding:"required,max=200"`
+		Description string `json:"description" binding:"max=1000"`
+		Category    string `json:"category" binding:"max=100"`
+		Type        string `json:"type" binding:"required,oneof=doc sheet slide mind code survey bitable"`
+		Content     string `json:"content" binding:"max=5000000"`
 		IsBuiltin   bool   `json:"isBuiltin"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -109,7 +208,16 @@ func CreateTemplateHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, model.Success(t))
 }
 
-// UpdateTemplateHandler updates an existing template (admin only)
+// UpdateTemplateHandler godoc
+// @Summary 更新模板
+// @Description 管理员更新模板
+// @Tags 系统管理
+// @Accept json
+// @Produce json
+// @Param id path int true "模板ID"
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /admin/template/{id} [put]
 func UpdateTemplateHandler(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
@@ -130,7 +238,15 @@ func UpdateTemplateHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, model.Success(gin.H{"id": id}))
 }
 
-// DeleteTemplateHandler deletes a template (admin only)
+// DeleteTemplateHandler godoc
+// @Summary 删除模板
+// @Description 管理员删除模板
+// @Tags 系统管理
+// @Produce json
+// @Param id path int true "模板ID"
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /admin/template/{id} [delete]
 func DeleteTemplateHandler(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
@@ -145,7 +261,14 @@ func DeleteTemplateHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, model.Success(gin.H{"id": id}))
 }
 
-// GetAllTemplatesHandler returns all templates including non-builtin (admin only)
+// GetAllTemplatesHandler godoc
+// @Summary 获取所有模板
+// @Description 管理员获取所有模板包括非内置模板
+// @Tags 系统管理
+// @Produce json
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /admin/templates [get]
 func GetAllTemplatesHandler(c *gin.Context) {
 	list, err := service.GetAllTemplates()
 	if err != nil {

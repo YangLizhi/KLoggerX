@@ -1,8 +1,8 @@
 <template>
   <div class="recent-docs-page">
-    <h2>最近访问</h2>
+    <h2>{{ $t('home.recentVisit') }}</h2>
     <el-table v-loading="loading" :data="documents" style="width: 100%; margin-top: 16px" table-layout="auto" @row-click="handleRowClick">
-      <el-table-column label="名称" min-width="200">
+      <el-table-column :label="$t('common.name')" min-width="200">
         <template #default="{ row }">
           <div style="display:flex;align-items:center;gap:8px">
             <el-icon :color="typeColor(row.type)"><component :is="typeIcon(row.type)" /></el-icon>
@@ -10,8 +10,8 @@
           </div>
         </template>
       </el-table-column>
-      <el-table-column label="所有者" prop="ownerName" min-width="100" />
-      <el-table-column label="访问时间" min-width="130">
+      <el-table-column :label="$t('document.owner')" prop="ownerName" min-width="100" />
+      <el-table-column :label="$t('document.lastModified')" min-width="130">
         <template #default="{ row }">{{ fmtTime(row.updatedAt) }}</template>
       </el-table-column>
     </el-table>
@@ -23,8 +23,11 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { getRecentDocuments } from '@/api/modules/document'
 import type { Document } from '@/types'
+
+const { t: _t } = useI18n()
 
 const loading = ref(false)
 const documents = ref<Document[]>([])

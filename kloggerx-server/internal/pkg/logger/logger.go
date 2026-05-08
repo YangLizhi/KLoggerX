@@ -49,3 +49,5 @@ func Error(args ...interface{})             { if logger != nil { logger.Error(ar
 func Errorf(tpl string, args ...interface{}){ if logger != nil { logger.Errorf(tpl, args...) } }
 func Warn(args ...interface{})              { if logger != nil { logger.Warn(args...) } }
 func Debug(args ...interface{})             { if logger != nil { logger.Debug(args...) } }
+func Debugf(tpl string, args ...interface{}){ if logger != nil { logger.Debugf(tpl, args...) } }
+func Warnf(tpl string, args ...interface{}) { if logger != nil { logger.Warnf(tpl, args...) } }

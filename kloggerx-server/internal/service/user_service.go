@@ -12,15 +12,15 @@ import (
 )
 
 type LoginReq struct {
-	Email    string `json:"email" binding:"required,email"`
-	Password string `json:"password" binding:"required,min=6"`
+	Email    string `json:"email" binding:"required,email,max=200"`
+	Password string `json:"password" binding:"required,max=128"`
 }
 
 type RegisterReq struct {
 	Username        string `json:"username" binding:"required,min=2,max=20"`
-	Email           string `json:"email" binding:"required,email"`
-	Password        string `json:"password" binding:"required,min=6"`
-	ConfirmPassword string `json:"confirmPassword" binding:"required"`
+	Email           string `json:"email" binding:"required,email,max=200"`
+	Password        string `json:"password" binding:"required,min=6,max=128"`
+	ConfirmPassword string `json:"confirmPassword" binding:"required,max=128"`
 }
 
 func Login(req LoginReq) (string, *model.User, error) {

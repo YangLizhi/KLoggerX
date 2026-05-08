@@ -10,7 +10,14 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// GetStorageStats returns system storage statistics
+// GetStorageStats godoc
+// @Summary 获取存储统计
+// @Description 获取系统存储统计信息
+// @Tags 文件
+// @Produce json
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /storage/stats [get]
 func GetStorageStats(c *gin.Context) {
 	stats, err := service.GetSystemStorageStats()
 	if err != nil {
@@ -21,7 +28,14 @@ func GetStorageStats(c *gin.Context) {
 	c.JSON(http.StatusOK, model.Success(stats))
 }
 
-// GetStorageUsage returns storage usage breakdown
+// GetStorageUsage godoc
+// @Summary 获取存储使用情况
+// @Description 获取当前用户的存储使用情况
+// @Tags 文件
+// @Produce json
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /storage/usage [get]
 func GetStorageUsage(c *gin.Context) {
 	userID := utils.GetUserID(c.MustGet("userId"))
 
@@ -38,7 +52,14 @@ func GetStorageUsage(c *gin.Context) {
 	}))
 }
 
-// GetAdminStorageUsage returns storage usage for all users (admin only)
+// GetAdminStorageUsage godoc
+// @Summary 获取全局存储使用情况
+// @Description 管理员获取所有用户的存储使用情况
+// @Tags 系统管理
+// @Produce json
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /admin/storage/usage [get]
 func GetAdminStorageUsage(c *gin.Context) {
 	usage, totalSize, fileCount, err := service.GetAllStorageUsage()
 	if err != nil {

@@ -35,6 +35,7 @@ type SearchResult struct {
 	Source        string  `json:"source"` // "vector", "fulltext", or "hybrid"
 	VectorScore   float64 `json:"vectorScore,omitempty"`
 	FulltextScore float64 `json:"fulltextScore,omitempty"`
+	QualityScore  float64 `json:"qualityScore,omitempty"` // quality_score from feedback, default 1.0
 }
 
 // HybridSearchOptions holds options for hybrid search
@@ -110,6 +111,7 @@ func (s *RetrievalService) HybridSearch(ctx context.Context, kbID uint, query st
 				Score:         r.Score,
 				Source:        "vector",
 				VectorScore:   r.Score,
+				QualityScore:  r.QualityScore,
 			}
 		}
 		vectorCh <- searchResult{results, nil, "vector"}
@@ -141,6 +143,20 @@ func (s *RetrievalService) HybridSearch(ctx context.Context, kbID uint, query st
 
 	// Apply RRF fusion
 	merged := s.rrfFusion(vectorResults, fulltextResults, opts.RRF_K)
+
+	// Apply quality_score weighting to final scores
+	for i := range merged {
+		qs := merged[i].QualityScore
+		if qs <= 0 {
+			qs = 1.0
+		}
+		merged[i].Score = merged[i].Score * qs
+	}
+
+	// Re-sort after quality_score weighting
+	sort.Slice(merged, func(i, j int) bool {
+		return merged[i].Score > merged[j].Score
+	})
 
 	// Apply permission filtering if UserID is provided
 	if opts.UserID != nil {
@@ -293,6 +309,7 @@ func (s *RetrievalService) VectorSearchWithPermission(ctx context.Context, kbID 
 			Score:         r.Score,
 			Source:        "vector",
 			VectorScore:   r.Score,
+			QualityScore:  r.QualityScore,
 		}
 	}
 

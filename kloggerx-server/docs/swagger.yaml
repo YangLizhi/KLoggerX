@@ -1,0 +1,2557 @@
+basePath: /api/v1
+definitions:
+  model.Response:
+    properties:
+      code:
+        type: integer
+      data: {}
+      message:
+        type: string
+    type: object
+  service.LoginReq:
+    properties:
+      email:
+        maxLength: 200
+        type: string
+      password:
+        maxLength: 128
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  service.RegisterReq:
+    properties:
+      confirmPassword:
+        maxLength: 128
+        type: string
+      email:
+        maxLength: 200
+        type: string
+      password:
+        maxLength: 128
+        minLength: 6
+        type: string
+      username:
+        maxLength: 20
+        minLength: 2
+        type: string
+    required:
+    - confirmPassword
+    - email
+    - password
+    - username
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: KloggerX 知识协作平台 API 文档
+  title: KloggerX API
+  version: "1.0"
+paths:
+  /admin/departments:
+    get:
+      description: 获取部门树结构
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 获取部门树
+      tags:
+      - 系统管理
+    post:
+      consumes:
+      - application/json
+      description: 管理员创建新部门
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 创建部门
+      tags:
+      - 系统管理
+  /admin/departments/{id}:
+    delete:
+      description: 管理员删除部门
+      parameters:
+      - description: 部门ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 删除部门
+      tags:
+      - 系统管理
+    put:
+      consumes:
+      - application/json
+      description: 管理员更新部门信息
+      parameters:
+      - description: 部门ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 更新部门
+      tags:
+      - 系统管理
+  /admin/departments/{id}/members:
+    get:
+      description: 获取部门下的成员列表
+      parameters:
+      - description: 部门ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 获取部门成员
+      tags:
+      - 系统管理
+  /admin/directories:
+    get:
+      description: 列出服务器目录结构
+      parameters:
+      - description: 目录路径
+        in: query
+        name: path
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 列出目录
+      tags:
+      - 系统管理
+  /admin/feedback/reviews:
+    get:
+      description: 获取待审核的反馈列表
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 获取待审核列表
+      tags:
+      - 系统管理
+  /admin/feedback/reviews/{id}/approve:
+    post:
+      consumes:
+      - application/json
+      description: 通过反馈审核
+      parameters:
+      - description: 审核ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 通过审核
+      tags:
+      - 系统管理
+  /admin/feedback/reviews/{id}/reject:
+    post:
+      consumes:
+      - application/json
+      description: 拒绝反馈审核
+      parameters:
+      - description: 审核ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 拒绝审核
+      tags:
+      - 系统管理
+  /admin/feedback/reviews/stats:
+    get:
+      description: 获取审核统计信息
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 审核统计
+      tags:
+      - 系统管理
+  /admin/ldap/import:
+    post:
+      consumes:
+      - application/json
+      description: 导入选中的LDAP用户到系统
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 导入LDAP用户
+      tags:
+      - 系统管理
+  /admin/ldap/test:
+    post:
+      consumes:
+      - application/json
+      description: 测试LDAP/AD服务器连接
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 测试LDAP连接
+      tags:
+      - 系统管理
+  /admin/ldap/users:
+    post:
+      consumes:
+      - application/json
+      description: 从LDAP/AD获取用户列表
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 获取LDAP用户
+      tags:
+      - 系统管理
+  /admin/remote-storages:
+    get:
+      description: 获取所有远程存储配置
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 获取远程存储列表
+      tags:
+      - 系统管理
+    post:
+      consumes:
+      - application/json
+      description: 创建新的远程存储配置
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 创建远程存储
+      tags:
+      - 系统管理
+  /admin/remote-storages/{id}:
+    delete:
+      description: 删除远程存储配置
+      parameters:
+      - description: 存储ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 删除远程存储
+      tags:
+      - 系统管理
+    put:
+      consumes:
+      - application/json
+      description: 更新远程存储配置
+      parameters:
+      - description: 存储ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 更新远程存储
+      tags:
+      - 系统管理
+  /admin/remote-storages/{id}/connect:
+    post:
+      description: 建立与远程存储的连接
+      parameters:
+      - description: 存储ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 连接远程存储
+      tags:
+      - 系统管理
+  /admin/remote-storages/{id}/disconnect:
+    post:
+      description: 断开与远程存储的连接
+      parameters:
+      - description: 存储ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 断开远程存储
+      tags:
+      - 系统管理
+  /admin/remote-storages/{id}/test:
+    post:
+      description: 测试指定远程存储的连接
+      parameters:
+      - description: 存储ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 测试远程存储连接
+      tags:
+      - 系统管理
+  /admin/settings/ai:
+    get:
+      description: 获取AI模型配置信息
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 获取AI模型设置
+      tags:
+      - 系统管理
+    post:
+      consumes:
+      - application/json
+      description: 保存AI模型配置
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 保存AI模型设置
+      tags:
+      - 系统管理
+  /admin/settings/ai/detect:
+    post:
+      consumes:
+      - application/json
+      description: 探测AI提供商可用模型列表
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 检测AI模型
+      tags:
+      - 系统管理
+  /admin/settings/ai/test:
+    post:
+      consumes:
+      - application/json
+      description: 测试指定AI模型是否可用
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 测试AI模型
+      tags:
+      - 系统管理
+  /admin/settings/storage:
+    get:
+      description: 获取存储配置信息
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 获取存储设置
+      tags:
+      - 系统管理
+    post:
+      consumes:
+      - application/json
+      description: 保存存储配置
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 保存存储设置
+      tags:
+      - 系统管理
+  /admin/settings/storage/test:
+    post:
+      consumes:
+      - application/json
+      description: 测试远程存储连接是否正常
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 测试远程存储连接
+      tags:
+      - 系统管理
+  /admin/storage/usage:
+    get:
+      description: 管理员获取所有用户的存储使用情况
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 获取全局存储使用情况
+      tags:
+      - 系统管理
+  /admin/template/{id}:
+    delete:
+      description: 管理员删除模板
+      parameters:
+      - description: 模板ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 删除模板
+      tags:
+      - 系统管理
+    put:
+      consumes:
+      - application/json
+      description: 管理员更新模板
+      parameters:
+      - description: 模板ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 更新模板
+      tags:
+      - 系统管理
+  /admin/template/create:
+    post:
+      consumes:
+      - application/json
+      description: 管理员创建新模板
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 创建模板
+      tags:
+      - 系统管理
+  /admin/templates:
+    get:
+      description: 管理员获取所有模板包括非内置模板
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 获取所有模板
+      tags:
+      - 系统管理
+  /admin/users:
+    get:
+      description: 管理员分页获取用户列表
+      parameters:
+      - description: 页码
+        in: query
+        name: page
+        type: integer
+      - description: 每页数量
+        in: query
+        name: pageSize
+        type: integer
+      - description: 搜索关键词
+        in: query
+        name: keyword
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 管理员获取用户列表
+      tags:
+      - 系统管理
+    post:
+      consumes:
+      - application/json
+      description: 管理员创建新用户
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 管理员创建用户
+      tags:
+      - 系统管理
+  /admin/users/{id}:
+    delete:
+      description: 管理员删除用户
+      parameters:
+      - description: 用户ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 管理员删除用户
+      tags:
+      - 系统管理
+    put:
+      consumes:
+      - application/json
+      description: 管理员更新用户信息
+      parameters:
+      - description: 用户ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 管理员更新用户
+      tags:
+      - 系统管理
+  /admin/users/{id}/reset-password:
+    post:
+      consumes:
+      - application/json
+      description: 管理员重置用户密码
+      parameters:
+      - description: 用户ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 重置用户密码
+      tags:
+      - 系统管理
+  /auth/check/{id}:
+    get:
+      description: 检查当前用户对文档的权限级别
+      parameters:
+      - description: 文档ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 检查权限
+      tags:
+      - 认证
+  /auth/document/{id}:
+    get:
+      description: 获取指定文档的权限设置
+      parameters:
+      - description: 文档ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 获取文档权限列表
+      tags:
+      - 认证
+  /auth/permission/remove:
+    post:
+      consumes:
+      - application/json
+      description: 移除用户对文档的权限
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 移除权限
+      tags:
+      - 认证
+  /auth/permission/set:
+    post:
+      consumes:
+      - application/json
+      description: 设置用户对文档的权限级别
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 设置权限
+      tags:
+      - 认证
+  /auth/share/{id}:
+    get:
+      description: 获取文档的分享设置
+      parameters:
+      - description: 文档ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 获取分享设置
+      tags:
+      - 认证
+  /auth/share/update:
+    post:
+      consumes:
+      - application/json
+      description: 更新文档的分享设置
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 更新分享设置
+      tags:
+      - 认证
+  /collaborate/comment/{id}:
+    get:
+      description: 获取文档的评论列表
+      parameters:
+      - description: 文档ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 获取评论列表
+      tags:
+      - 协作
+  /collaborate/comment/{id}/delete:
+    post:
+      description: 删除指定评论
+      parameters:
+      - description: 评论ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 删除评论
+      tags:
+      - 协作
+  /collaborate/comment/{id}/resolve:
+    post:
+      description: 标记评论为已解决
+      parameters:
+      - description: 评论ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 解决评论
+      tags:
+      - 协作
+  /collaborate/comment/add:
+    post:
+      consumes:
+      - application/json
+      description: 为文档添加评论
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 添加评论
+      tags:
+      - 协作
+  /collaborate/invite:
+    post:
+      consumes:
+      - application/json
+      description: 邀请用户协作编辑文档
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 邀请协作者
+      tags:
+      - 协作
+  /collaborate/notification/{id}/read:
+    post:
+      description: 标记指定通知为已读
+      parameters:
+      - description: 通知ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 标记通知已读
+      tags:
+      - 协作
+  /collaborate/notification/create:
+    post:
+      consumes:
+      - application/json
+      description: 创建一条系统通知
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 创建系统通知
+      tags:
+      - 协作
+  /collaborate/notification/read-all:
+    post:
+      description: 标记所有通知为已读
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 全部标记已读
+      tags:
+      - 协作
+  /collaborate/notifications:
+    get:
+      description: 获取当前用户的通知列表
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 获取通知列表
+      tags:
+      - 协作
+  /document/{id}:
+    delete:
+      description: 永久删除文档
+      parameters:
+      - description: 文档ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 永久删除文档
+      tags:
+      - 文档管理
+    get:
+      description: 获取指定文档的详细信息
+      parameters:
+      - description: 文档ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 获取文档详情
+      tags:
+      - 文档管理
+  /document/{id}/content:
+    post:
+      consumes:
+      - application/json
+      description: 保存文档的内容
+      parameters:
+      - description: 文档ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 保存文档内容
+      tags:
+      - 文档管理
+  /document/{id}/copy:
+    post:
+      description: 复制文档
+      parameters:
+      - description: 文档ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 复制文档
+      tags:
+      - 文档管理
+  /document/{id}/delete:
+    post:
+      description: 将文档移入回收站
+      parameters:
+      - description: 文档ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 删除文档
+      tags:
+      - 文档管理
+  /document/{id}/download:
+    get:
+      description: 下载文档关联的原始文件
+      parameters:
+      - description: 文档ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: file
+      security:
+      - BearerAuth: []
+      summary: 下载文档文件
+      tags:
+      - 文档管理
+  /document/{id}/export:
+    get:
+      description: 导出指定文档
+      parameters:
+      - description: 文档ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 导出文档
+      tags:
+      - 文档管理
+  /document/{id}/favorite:
+    post:
+      consumes:
+      - application/json
+      description: 收藏或取消收藏文档
+      parameters:
+      - description: 文档ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 收藏文档
+      tags:
+      - 文档管理
+  /document/{id}/file-preview:
+    get:
+      description: 获取文档关联文件的预览URL
+      parameters:
+      - description: 文档ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 获取文档文件预览URL
+      tags:
+      - 文档管理
+  /document/{id}/logs:
+    get:
+      description: 获取文档的操作日志列表
+      parameters:
+      - description: 文档ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 页码
+        in: query
+        name: page
+        type: integer
+      - description: 每页数量
+        in: query
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 获取操作日志
+      tags:
+      - 操作日志
+  /document/{id}/move:
+    post:
+      consumes:
+      - application/json
+      description: 移动文档到目标目录
+      parameters:
+      - description: 文档ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 移动文档
+      tags:
+      - 文档管理
+  /document/{id}/pin:
+    post:
+      consumes:
+      - application/json
+      description: 置顶或取消置顶文档
+      parameters:
+      - description: 文档ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 置顶文档
+      tags:
+      - 文档管理
+  /document/{id}/restore:
+    post:
+      description: 从回收站恢复文档
+      parameters:
+      - description: 文档ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 恢复文档
+      tags:
+      - 文档管理
+  /document/{id}/rollback:
+    post:
+      consumes:
+      - application/json
+      description: 回滚文档到指定版本
+      parameters:
+      - description: 文档ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 回滚版本
+      tags:
+      - 文档管理
+  /document/{id}/save-as-template:
+    post:
+      consumes:
+      - application/json
+      description: 将文档保存为模板
+      parameters:
+      - description: 文档ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 保存为模板
+      tags:
+      - 文档管理
+  /document/{id}/transfer:
+    post:
+      consumes:
+      - application/json
+      description: 转移文档所有权给其他用户
+      parameters:
+      - description: 文档ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 转移所有权
+      tags:
+      - 文档管理
+  /document/{id}/update:
+    post:
+      consumes:
+      - application/json
+      description: 更新指定文档的标题
+      parameters:
+      - description: 文档ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 更新文档标题
+      tags:
+      - 文档管理
+  /document/{id}/versions:
+    get:
+      description: 获取文档的版本历史记录
+      parameters:
+      - description: 文档ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 获取文档版本历史
+      tags:
+      - 文档管理
+  /document/{id}/versions/diff:
+    get:
+      description: 获取两个版本之间的差异
+      parameters:
+      - description: 文档ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 版本1
+        in: query
+        name: v1
+        required: true
+        type: string
+      - description: 版本2
+        in: query
+        name: v2
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 获取版本差异
+      tags:
+      - 文档管理
+  /document/create:
+    post:
+      consumes:
+      - application/json
+      description: 创建一个新文档
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 创建文档
+      tags:
+      - 文档管理
+  /document/favorites:
+    get:
+      description: 获取用户收藏的文档列表
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 获取收藏列表
+      tags:
+      - 文档管理
+  /document/import:
+    post:
+      consumes:
+      - multipart/form-data
+      description: 上传文件导入为文档
+      parameters:
+      - description: 文件
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 导入文档
+      tags:
+      - 文档管理
+  /document/migrate:
+    post:
+      consumes:
+      - application/json
+      description: 批量移动文档到目标目录
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 批量迁移文档
+      tags:
+      - 文档管理
+  /document/pinned:
+    get:
+      description: 获取用户置顶的文档列表
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 获取置顶文档
+      tags:
+      - 文档管理
+  /document/recent:
+    get:
+      description: 获取用户最近访问的文档
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 获取最近文档
+      tags:
+      - 文档管理
+  /document/recycle-bin:
+    get:
+      description: 获取回收站中的文档列表
+      parameters:
+      - description: 页码
+        in: query
+        name: page
+        type: integer
+      - description: 每页数量
+        in: query
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 获取回收站
+      tags:
+      - 文档管理
+  /document/search:
+    get:
+      description: 根据关键词搜索文档
+      parameters:
+      - description: 搜索关键词
+        in: query
+        name: keyword
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 搜索文档
+      tags:
+      - 文档管理
+    post:
+      consumes:
+      - application/json
+      description: 多关键词搜索文档，支持标题和内容搜索
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 增强搜索文档
+      tags:
+      - 文档管理
+  /document/shortcut:
+    post:
+      consumes:
+      - application/json
+      description: 创建指向现有文档的快捷方式
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 创建快捷方式
+      tags:
+      - 文档管理
+  /document/tree:
+    get:
+      description: 获取用户的文档树结构
+      parameters:
+      - description: 父文档ID
+        in: query
+        name: parentId
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 获取文档树
+      tags:
+      - 文档管理
+  /file/{id}/delete:
+    post:
+      description: 删除指定文件
+      parameters:
+      - description: 文件ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 删除文件
+      tags:
+      - 文件
+  /file/{id}/preview:
+    get:
+      description: 获取文件的预览访问URL
+      parameters:
+      - description: 文件ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 获取文件预览URL
+      tags:
+      - 文件
+  /file/upload:
+    post:
+      consumes:
+      - multipart/form-data
+      description: 上传文件到存储
+      parameters:
+      - description: 文件
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 上传文件
+      tags:
+      - 文件
+  /knowledge/{id}:
+    delete:
+      description: 删除指定知识库
+      parameters:
+      - description: 知识库ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 删除知识库
+      tags:
+      - 知识库
+    get:
+      description: 获取指定知识库的详细信息
+      parameters:
+      - description: 知识库ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 获取知识库详情
+      tags:
+      - 知识库
+  /knowledge/{id}/chat:
+    post:
+      consumes:
+      - application/json
+      description: 基于知识库进行AI对话
+      parameters:
+      - description: 知识库ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 知识库对话
+      tags:
+      - 知识库
+  /knowledge/{id}/graph:
+    get:
+      description: 获取知识图谱数据
+      parameters:
+      - description: 知识库ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 获取知识图谱数据
+      tags:
+      - 知识库
+  /knowledge/{id}/graph/build:
+    post:
+      description: 触发构建知识图谱
+      parameters:
+      - description: 知识库ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 构建知识图谱
+      tags:
+      - 知识库
+  /knowledge/{id}/graph/status:
+    get:
+      description: 获取知识图谱构建状态
+      parameters:
+      - description: 知识库ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 获取知识图谱状态
+      tags:
+      - 知识库
+  /knowledge/{id}/update:
+    post:
+      consumes:
+      - application/json
+      description: 更新知识库信息
+      parameters:
+      - description: 知识库ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 更新知识库
+      tags:
+      - 知识库
+  /knowledge/conversations:
+    delete:
+      consumes:
+      - application/json
+      description: 批量删除多个会话
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 批量删除会话
+      tags:
+      - 知识库
+    get:
+      description: 获取用户的AI会话历史列表
+      parameters:
+      - description: 页码
+        in: query
+        name: page
+        type: integer
+      - description: 每页数量
+        in: query
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 获取会话列表
+      tags:
+      - 知识库
+    post:
+      consumes:
+      - application/json
+      description: 创建新的AI会话
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 创建会话
+      tags:
+      - 知识库
+  /knowledge/conversations/{id}:
+    delete:
+      description: 删除指定会话
+      parameters:
+      - description: 会话ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 删除会话
+      tags:
+      - 知识库
+    get:
+      description: 获取会话详情及消息列表
+      parameters:
+      - description: 会话ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 获取会话详情
+      tags:
+      - 知识库
+    put:
+      consumes:
+      - application/json
+      description: 更新会话标题或置顶状态
+      parameters:
+      - description: 会话ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 更新会话
+      tags:
+      - 知识库
+  /knowledge/create:
+    post:
+      consumes:
+      - application/json
+      description: 创建新的知识库
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 创建知识库
+      tags:
+      - 知识库
+  /knowledge/list:
+    get:
+      description: 分页获取知识库列表
+      parameters:
+      - description: 页码
+        in: query
+        name: page
+        type: integer
+      - description: 每页数量
+        in: query
+        name: pageSize
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 获取知识库列表
+      tags:
+      - 知识库
+  /onlyoffice/callback/{docId}:
+    post:
+      consumes:
+      - application/json
+      description: 处理OnlyOffice服务器的回调请求
+      parameters:
+      - description: 文档ID
+        in: path
+        name: docId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: OnlyOffice回调
+      tags:
+      - 文档管理
+  /onlyoffice/config:
+    post:
+      consumes:
+      - application/json
+      description: 获取文档的OnlyOffice编辑器配置
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 获取OnlyOffice编辑器配置
+      tags:
+      - 文档管理
+  /onlyoffice/download/{docId}:
+    get:
+      description: 为OnlyOffice提供文档内容下载
+      parameters:
+      - description: 文档ID
+        in: path
+        name: docId
+        required: true
+        type: integer
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: file
+      summary: OnlyOffice文档下载
+      tags:
+      - 文档管理
+  /onlyoffice/server-url:
+    get:
+      description: 返回OnlyOffice服务器地址
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 获取OnlyOffice服务器URL
+      tags:
+      - 文档管理
+  /remote-storage/{id}/disconnect:
+    post:
+      description: 断开与远程存储的连接
+      parameters:
+      - description: 存储ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 断开远程存储连接
+      tags:
+      - 远程存储
+  /remote-storage/{id}/download:
+    get:
+      description: 从远程存储下载文件
+      parameters:
+      - description: 存储ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 文件路径
+        in: query
+        name: path
+        required: true
+        type: string
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: file
+      security:
+      - BearerAuth: []
+      summary: 下载远程文件
+      tags:
+      - 远程存储
+  /remote-storage/{id}/file:
+    delete:
+      consumes:
+      - application/json
+      description: 删除远程存储中的文件或目录
+      parameters:
+      - description: 存储ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 删除远程文件
+      tags:
+      - 远程存储
+  /remote-storage/{id}/files:
+    get:
+      description: 列出远程存储目录中的文件
+      parameters:
+      - description: 存储ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 目录路径
+        in: query
+        name: path
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 列出远程存储文件
+      tags:
+      - 远程存储
+  /remote-storage/{id}/mkdir:
+    post:
+      consumes:
+      - application/json
+      description: 在远程存储中创建目录
+      parameters:
+      - description: 存储ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 创建远程目录
+      tags:
+      - 远程存储
+  /remote-storage/{id}/test:
+    post:
+      description: 测试与远程存储的连接
+      parameters:
+      - description: 存储ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 测试远程存储连接
+      tags:
+      - 远程存储
+  /remote-storage/{id}/upload:
+    post:
+      consumes:
+      - multipart/form-data
+      description: 上传文件到远程存储
+      parameters:
+      - description: 存储ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 上传文件到远程存储
+      tags:
+      - 远程存储
+  /search/suggestions:
+    get:
+      description: 根据前缀返回文档标题建议
+      parameters:
+      - description: 搜索前缀
+        in: query
+        name: q
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 搜索建议
+      tags:
+      - 文档管理
+  /storage/stats:
+    get:
+      description: 获取系统存储统计信息
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 获取存储统计
+      tags:
+      - 文件
+  /storage/usage:
+    get:
+      description: 获取当前用户的存储使用情况
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 获取存储使用情况
+      tags:
+      - 文件
+  /template/{id}:
+    get:
+      description: 获取指定模板的详细信息
+      parameters:
+      - description: 模板ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 获取模板详情
+      tags:
+      - 模板
+  /template/{id}/use:
+    post:
+      consumes:
+      - application/json
+      description: 基于模板创建新文档
+      parameters:
+      - description: 模板ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 使用模板
+      tags:
+      - 模板
+  /template/list:
+    get:
+      description: 获取可用模板列表
+      parameters:
+      - description: 分类筛选
+        in: query
+        name: category
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 获取模板列表
+      tags:
+      - 模板
+  /user/change-password:
+    post:
+      consumes:
+      - application/json
+      description: 修改当前用户密码
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 修改密码
+      tags:
+      - 用户
+  /user/info:
+    get:
+      description: 获取当前登录用户的详细信息
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 获取当前用户信息
+      tags:
+      - 用户
+  /user/list:
+    get:
+      description: 分页获取用户列表
+      parameters:
+      - description: 页码
+        in: query
+        name: page
+        type: integer
+      - description: 每页数量
+        in: query
+        name: pageSize
+        type: integer
+      - description: 搜索关键词
+        in: query
+        name: keyword
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 获取用户列表
+      tags:
+      - 用户
+  /user/login:
+    post:
+      consumes:
+      - application/json
+      description: 用户账号密码登录
+      parameters:
+      - description: 登录请求
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/service.LoginReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      summary: 用户登录
+      tags:
+      - 认证
+  /user/register:
+    post:
+      consumes:
+      - application/json
+      description: 注册新用户
+      parameters:
+      - description: 注册请求
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/service.RegisterReq'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      summary: 用户注册
+      tags:
+      - 认证
+  /user/storage-settings:
+    get:
+      description: 获取用户个人存储设置
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 获取用户存储设置
+      tags:
+      - 用户
+    post:
+      consumes:
+      - application/json
+      description: 保存用户个人存储设置
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 保存用户存储设置
+      tags:
+      - 用户
+  /user/update:
+    post:
+      consumes:
+      - application/json
+      description: 更新当前用户的昵称、头像等信息
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 更新用户信息
+      tags:
+      - 用户
+  /users/search:
+    get:
+      description: 根据用户名搜索用户（用于@提及）
+      parameters:
+      - description: 搜索关键词
+        in: query
+        name: q
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Response'
+      security:
+      - BearerAuth: []
+      summary: 搜索用户
+      tags:
+      - 用户
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

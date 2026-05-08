@@ -40,3 +40,7 @@ export function updateDepartment(data: { id: number; name: string }) {
 export function deleteDepartment(id: number) {
   return post<ApiResponse>('/api/v1/department/delete', { id })
 }
+
+export function searchUsers(keyword: string) {
+  return get<ApiResponse>('/api/v1/users/search', { q: keyword })
+}

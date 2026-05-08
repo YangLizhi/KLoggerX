@@ -109,6 +109,11 @@ func (c *FTPClient) List(path string) ([]RemoteFileInfo, error) {
 		return nil, err
 	}
 
+	// Validate path security
+	if _, err := ValidatePath(path); err != nil {
+		return nil, err
+	}
+
 	// Normalize path
 	path = normalizePathFTP(path)
 
@@ -159,6 +164,11 @@ func (c *FTPClient) Download(path string) (io.ReadCloser, error) {
 		return nil, err
 	}
 
+	// Validate path security
+	if _, err := ValidatePath(path); err != nil {
+		return nil, err
+	}
+
 	path = normalizePathFTP(path)
 
 	// Use Retr to get a reader
@@ -173,6 +183,11 @@ func (c *FTPClient) Download(path string) (io.ReadCloser, error) {
 // Upload uploads a file to remote storage
 func (c *FTPClient) Upload(path string, reader io.Reader, size int64) error {
 	if err := c.ensureConnected(); err != nil {
+		return err
+	}
+
+	// Validate path security
+	if _, err := ValidatePath(path); err != nil {
 		return err
 	}
 
@@ -191,6 +206,11 @@ func (c *FTPClient) Upload(path string, reader io.Reader, size int64) error {
 // Delete removes a file or directory
 func (c *FTPClient) Delete(path string) error {
 	if err := c.ensureConnected(); err != nil {
+		return err
+	}
+
+	// Validate path security
+	if _, err := ValidatePath(path); err != nil {
 		return err
 	}
 
@@ -214,6 +234,10 @@ func (c *FTPClient) Delete(path string) error {
 // Mkdir creates a directory
 func (c *FTPClient) Mkdir(path string) error {
 	if err := c.ensureConnected(); err != nil {
+		return err
+	}
+	// Validate path security
+	if _, err := ValidatePath(path); err != nil {
 		return err
 	}
 	path = normalizePathFTP(path)

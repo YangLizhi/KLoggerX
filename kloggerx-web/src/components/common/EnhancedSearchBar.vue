@@ -8,7 +8,7 @@
         v-model="searchKeyword"
         type="text"
         class="search-input"
-        :placeholder="placeholder"
+        :placeholder="placeholder || t('search.placeholder')"
         @input="handleInput"
         @keyup.enter="handleSearch"
         @focus="handleFocus"
@@ -22,7 +22,7 @@
     <!-- Search History Dropdown -->
     <div v-if="showHistory" class="search-dropdown history-dropdown">
       <div class="dropdown-header">
-        <span class="dropdown-title">搜索历史</span>
+        <span class="dropdown-title">{{ t('search.history') }}</span>
       </div>
       <div
         v-for="(item, index) in searchHistory"
@@ -36,7 +36,7 @@
         <el-icon class="dropdown-delete" @click.stop="removeSearchHistory(item)"><Close /></el-icon>
       </div>
       <div class="dropdown-footer" @click="clearSearchHistory">
-        <span>清空搜索历史</span>
+        <span>{{ t('search.clearHistory') }}</span>
       </div>
     </div>
 
@@ -60,17 +60,17 @@
         class="filter-tag"
         :class="{ active: filterType === 'all' }"
         @click="filterType = 'all'"
-      >全部</span>
+      >{{ t('search.filterAll') }}</span>
       <span
         class="filter-tag"
         :class="{ active: filterType === 'document' }"
         @click="filterType = 'document'"
-      >文档</span>
+      >{{ t('search.filterDocument') }}</span>
       <span
         class="filter-tag"
         :class="{ active: filterType === 'knowledge' }"
         @click="filterType = 'knowledge'"
-      >知识库</span>
+      >{{ t('search.filterKnowledge') }}</span>
     </div>
 
     <!-- Search Results Panel -->
@@ -78,14 +78,14 @@
       <!-- Loading State -->
       <div v-if="loading" class="search-loading">
         <el-icon class="loading-spinner"><Loading /></el-icon>
-        <span>搜索中...</span>
+        <span>{{ t('search.searching') }}</span>
       </div>
 
       <!-- Empty State -->
       <div v-else-if="!hasResults" class="search-empty">
         <el-icon><Search /></el-icon>
-        <span v-if="searchKeyword">未找到相关内容</span>
-        <span v-else>输入关键词开始搜索</span>
+        <span v-if="searchKeyword">{{ t('search.noResults') }}</span>
+        <span v-else>{{ t('search.inputHint') }}</span>
       </div>
 
       <!-- Results -->
@@ -93,8 +93,8 @@
         <!-- Document Results -->
         <div v-if="documentResults.length > 0 && (filterType === 'all' || filterType === 'document')" class="result-group">
           <div class="group-header">
-            <span class="group-title">文档</span>
-            <span class="group-count">{{ documentResults.length }} 条结果</span>
+            <span class="group-title">{{ t('search.resultType.document') }}</span>
+            <span class="group-count">{{ t('search.resultCount', { count: documentResults.length }) }}</span>
           </div>
           <div
             v-for="doc in documentResults"
@@ -108,7 +108,7 @@
               </el-icon>
             </div>
             <div class="result-content">
-              <div class="result-title" v-html="highlightText(doc.title || doc.originalName || '未命名', searchKeyword)"></div>
+              <div class="result-title" v-html="highlightText(doc.title || doc.originalName || t('search.unnamed'), searchKeyword)"></div>
               <div class="result-summary" v-if="doc.content">
                 <span v-html="highlightText(truncateText(doc.content, 200), searchKeyword)"></span>
               </div>
@@ -125,8 +125,8 @@
         <!-- Knowledge Results -->
         <div v-if="knowledgeResults.length > 0 && (filterType === 'all' || filterType === 'knowledge')" class="result-group">
           <div class="group-header">
-            <span class="group-title">知识库</span>
-            <span class="group-count">{{ knowledgeResults.length }} 条结果</span>
+            <span class="group-title">{{ t('search.resultType.knowledge') }}</span>
+            <span class="group-count">{{ t('search.resultCount', { count: knowledgeResults.length }) }}</span>
           </div>
           <div
             v-for="kb in knowledgeResults"
@@ -138,12 +138,12 @@
               <el-icon color="#9254de" :size="20"><Collection /></el-icon>
             </div>
             <div class="result-content">
-              <div class="result-title" v-html="highlightText(kb.name || '未命名知识库', searchKeyword)"></div>
+              <div class="result-title" v-html="highlightText(kb.name || t('search.unnamedKb'), searchKeyword)"></div>
               <div class="result-summary" v-if="kb.description">
                 <span v-html="highlightText(truncateText(kb.description, 200), searchKeyword)"></span>
               </div>
               <div class="result-meta">
-                <el-tag size="small" type="primary" disable-transitions>知识库</el-tag>
+                <el-tag size="small" type="primary" disable-transitions>{{ t('search.resultType.knowledge') }}</el-tag>
                 <span class="result-time">{{ formatDate(kb.updatedAt) }}</span>
               </div>
             </div>
@@ -156,10 +156,13 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { searchDocuments, getSearchSuggestions } from '@/api/modules/document'
 import { searchKnowledge } from '@/api/modules/knowledge'
 import type { Document, KnowledgeBase } from '@/types'
+
+const { t } = useI18n()
 
 interface Props {
   placeholder?: string
@@ -171,7 +174,7 @@ interface SearchResult {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  placeholder: '搜索文档、知识库...'
+  placeholder: undefined
 })
 
 const emit = defineEmits<{
@@ -237,43 +240,43 @@ const extIconMap: Record<string, { icon: string; color: string }> = {
   svg: { icon: 'Picture', color: '#ff7d00' },
 }
 
-const typeNameMap: Record<string, string> = {
-  folder: '文件夹', doc: '文档', sheet: '表格', slide: '幻灯片',
-  mindnote: '思维笔记', bitable: '多维表格', survey: '问卷',
-  file: '其他', image: '图片', code: '代码',
-}
+const typeNameMap = computed<Record<string, string>>(() => ({
+  folder: t('search.typeName.folder'), doc: t('search.typeName.doc'), sheet: t('search.typeName.sheet'), slide: t('search.typeName.slide'),
+  mindnote: t('search.typeName.mindnote'), bitable: t('search.typeName.bitable'), survey: t('search.typeName.survey'),
+  file: t('search.typeName.other'), image: t('search.typeName.image'), code: t('search.typeName.code'),
+}))
 
-const extTypeMap: Record<string, string> = {
-  txt: '文本文档', doc: 'Word文档', docx: 'Word文档', pdf: 'PDF文档',
-  xls: 'Excel表格', xlsx: 'Excel表格', csv: 'CSV表格',
-  ppt: '幻灯片', pptx: '幻灯片',
-  png: 'PNG图片', jpg: 'JPEG图片', jpeg: 'JPEG图片', gif: 'GIF动图',
-  mp3: '音频文件', mp4: '视频文件', zip: '压缩包', rar: '压缩包',
-  md: 'Markdown', json: 'JSON文件',
-}
+const extTypeMap = computed<Record<string, string>>(() => ({
+  txt: t('search.extType.txt'), doc: t('search.extType.word'), docx: t('search.extType.word'), pdf: t('search.extType.pdf'),
+  xls: t('search.extType.excel'), xlsx: t('search.extType.excel'), csv: t('search.extType.csv'),
+  ppt: t('search.extType.ppt'), pptx: t('search.extType.ppt'),
+  png: t('search.extType.png'), jpg: t('search.extType.jpeg'), jpeg: t('search.extType.jpeg'), gif: t('search.extType.gif'),
+  mp3: t('search.extType.audio'), mp4: t('search.extType.video'), zip: t('search.extType.archive'), rar: t('search.extType.archive'),
+  md: t('search.extType.markdown'), json: t('search.extType.json'),
+}))
 
 // Methods
-function getTypeIcon(t: string, ext?: string): string {
+function getTypeIcon(type: string, ext?: string): string {
   if (ext) {
     const e = ext.replace('.', '').toLowerCase()
     if (extIconMap[e]) return extIconMap[e].icon
   }
-  return typeMap[t]?.icon || 'Document'
+  return typeMap[type]?.icon || 'Document'
 }
 
-function getTypeColor(t: string, ext?: string): string {
+function getTypeColor(type: string, ext?: string): string {
   if (ext) {
     const e = ext.replace('.', '').toLowerCase()
     if (extIconMap[e]) return extIconMap[e].color
   }
-  return typeMap[t]?.color || '#888'
+  return typeMap[type]?.color || '#888'
 }
 
 function getTypeName(doc: Document): string {
   const ext = (doc.fileExt || '').replace('.', '').toLowerCase()
-  if (ext && extTypeMap[ext]) return extTypeMap[ext]
-  if (typeNameMap[doc.type]) return typeNameMap[doc.type]
-  return '其他'
+  if (ext && extTypeMap.value[ext]) return extTypeMap.value[ext]
+  if (typeNameMap.value[doc.type]) return typeNameMap.value[doc.type]
+  return t('search.typeName.other')
 }
 
 function getTypeTagType(type: string): '' | 'success' | 'warning' | 'info' | 'danger' {
@@ -284,12 +287,12 @@ function getTypeTagType(type: string): '' | 'success' | 'warning' | 'info' | 'da
   return m[type] || 'info'
 }
 
-function formatDate(t: string): string {
-  if (!t) return ''
-  const d = new Date(t)
+function formatDate(dateStr: string): string {
+  if (!dateStr) return ''
+  const d = new Date(dateStr)
   const now = new Date()
   const isToday = d.toDateString() === now.toDateString()
-  if (isToday) return `今天 ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`
+  if (isToday) return `${t('search.today')} ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`
   return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}`
 }
 

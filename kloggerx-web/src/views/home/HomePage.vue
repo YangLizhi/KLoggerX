@@ -1,64 +1,55 @@
 <template>
   <div class="home-page">
-    <!-- Enhanced Search Bar -->
-    <div class="search-section">
-      <EnhancedSearchBar
-        ref="searchBarRef"
-        placeholder="搜索文档、知识库..."
-        @select="handleSearchSelect"
-      />
-    </div>
-
-    <!-- Top Action Bar (fixed, 3 cards) -->
+<!-- Top Action Bar (fixed, 3 cards) -->
     <div class="action-bar">
       <div class="action-card" @click.stop="showNewMenu = !showNewMenu; showUploadMenu = false">
         <div class="action-icon" style="background: #e8f0fe"><el-icon :size="20" color="#3370ff"><Document /></el-icon></div>
         <div class="action-info">
-          <div class="action-label">新建</div>
-          <div class="action-desc">新建文档开始协作</div>
+          <div class="action-label">{{ $t('home.new') }}</div>
+          <div class="action-desc">{{ $t('home.newDesc') }}</div>
         </div>
         <el-icon class="action-arrow"><ArrowDown /></el-icon>
         <div v-if="showNewMenu" class="action-dropdown action-dropdown-large" @click.stop>
-          <div class="dropdown-item" @click="handleCreate('doc')"><el-icon color="#3370ff"><Document /></el-icon>文档</div>
-          <div class="dropdown-item" @click="handleCreate('sheet')"><el-icon color="#36b37e"><Grid /></el-icon>表格</div>
-          <div class="dropdown-item" @click="handleCreate('slide')"><el-icon color="#ff7d00"><Monitor /></el-icon>幻灯片</div>
-          <div class="dropdown-item" @click="handleCreate('bitable')"><el-icon color="#00b8d9"><Tickets /></el-icon>多维表格</div>
-          <div class="dropdown-item" @click="handleCreate('survey')"><el-icon color="#f54a45"><Notebook /></el-icon>问卷</div>
-          <div class="dropdown-item" @click="handleCreate('mindnote')"><el-icon color="#9254de"><Share /></el-icon>思维笔记</div>
-          <div class="dropdown-item dropdown-item-arrow" @click.stop="showMoreTypes = !showMoreTypes"><el-icon color="#36b37e"><Grid /></el-icon>更多类型<el-icon class="arrow-right"><ArrowRight /></el-icon>
+          <div class="dropdown-item" @click="handleCreate('doc')"><el-icon color="#3370ff"><Document /></el-icon>{{ $t('home.doc') }}</div>
+          <div class="dropdown-item" @click="handleCreate('sheet')"><el-icon color="#36b37e"><Grid /></el-icon>{{ $t('home.sheet') }}</div>
+          <div class="dropdown-item" @click="handleCreate('slide')"><el-icon color="#ff7d00"><Monitor /></el-icon>{{ $t('home.slide') }}</div>
+          <div class="dropdown-item" @click="handleCreate('bitable')"><el-icon color="#00b8d9"><Tickets /></el-icon>{{ $t('home.bitable') }}</div>
+          <div class="dropdown-item" @click="handleCreate('survey')"><el-icon color="#f54a45"><Notebook /></el-icon>{{ $t('home.survey') }}</div>
+          <div class="dropdown-item" @click="handleCreate('mindnote')"><el-icon color="#9254de"><Share /></el-icon>{{ $t('home.mindNote') }}</div>
+          <div class="dropdown-item dropdown-item-arrow" @click.stop="showMoreTypes = !showMoreTypes"><el-icon color="#36b37e"><Grid /></el-icon>{{ $t('home.moreTypes') }}<el-icon class="arrow-right"><ArrowRight /></el-icon>
             <div v-if="showMoreTypes" class="dropdown-submenu" @click.stop>
-              <div class="dropdown-item" @click="handleCreate('doc')"><el-icon color="#3370ff"><Document /></el-icon>白板</div>
-              <div class="dropdown-item" @click="handleCreate('doc')"><el-icon color="#ff7d00"><Connection /></el-icon>UML图</div>
-              <div class="dropdown-item" @click="handleCreate('doc')"><el-icon color="#36b37e"><TrendCharts /></el-icon>甘特图</div>
-              <div class="dropdown-item" @click="handleCreate('doc')"><el-icon color="#9254de"><Share /></el-icon>组织架构图</div>
+              <div class="dropdown-item" @click="handleCreate('whiteboard')"><el-icon color="#3370ff"><Document /></el-icon>{{ $t('home.whiteboard') }}</div>
+              <div class="dropdown-item" @click="handleCreate('uml')"><el-icon color="#ff7d00"><Connection /></el-icon>{{ $t('home.uml') }}</div>
+              <div class="dropdown-item" @click="handleCreate('gantt')"><el-icon color="#36b37e"><TrendCharts /></el-icon>{{ $t('home.gantt') }}</div>
+              <div class="dropdown-item" @click="handleCreate('flowchart')"><el-icon color="#9254de"><Share /></el-icon>{{ $t('home.orgChart') }}</div>
             </div>
           </div>
           <div class="dropdown-sep" />
-          <div class="dropdown-item" @click="handleCreate('folder')"><el-icon color="#f5a623"><Folder /></el-icon>文件夹</div>
-          <div class="dropdown-group-title">文档应用</div>
-          <div class="dropdown-item" @click="handleCreate('doc')"><el-icon color="#36b37e"><EditPen /></el-icon>画板</div>
-          <div class="dropdown-item" @click="handleCreate('mindnote')"><el-icon color="#9254de"><Share /></el-icon>思维导图</div>
-          <div class="dropdown-item" @click="handleCreate('doc')"><el-icon color="#ff7d00"><Connection /></el-icon>流程图</div>
+          <div class="dropdown-item" @click="handleCreate('folder')"><el-icon color="#f5a623"><Folder /></el-icon>{{ $t('home.folder') }}</div>
+          <div class="dropdown-group-title">{{ $t('home.docApps') }}</div>
+          <div class="dropdown-item" @click="handleCreate('doc')"><el-icon color="#36b37e"><EditPen /></el-icon>{{ $t('home.canvas') }}</div>
+          <div class="dropdown-item" @click="handleCreate('mindnote')"><el-icon color="#9254de"><Share /></el-icon>{{ $t('document.mindMap') }}</div>
+          <div class="dropdown-item" @click="handleCreate('doc')"><el-icon color="#ff7d00"><Connection /></el-icon>{{ $t('home.flowchart') }}</div>
         </div>
       </div>
       <div class="action-card" @click.stop="showUploadMenu = !showUploadMenu; showNewMenu = false">
         <div class="action-icon" style="background: #e6f7ef"><el-icon :size="20" color="#36b37e"><Upload /></el-icon></div>
         <div class="action-info">
-          <div class="action-label">上传</div>
-          <div class="action-desc">上传本地文件</div>
+          <div class="action-label">{{ $t('home.upload') }}</div>
+          <div class="action-desc">{{ $t('home.uploadDesc') }}</div>
         </div>
         <el-icon class="action-arrow"><ArrowDown /></el-icon>
         <div v-if="showUploadMenu" class="action-dropdown" @click.stop>
-          <div class="dropdown-item" @click="triggerUpload('file')"><el-icon color="#f5a623"><Document /></el-icon>上传文件</div>
-          <div class="dropdown-item" @click="triggerUpload('folder')"><el-icon color="#f5a623"><Folder /></el-icon>上传文件夹</div>
-          <div class="dropdown-item" @click="triggerUpload('import')"><el-icon color="#3370ff"><DocumentCopy /></el-icon>导入为在线文档</div>
+          <div class="dropdown-item" @click="triggerUpload('file')"><el-icon color="#f5a623"><Document /></el-icon>{{ $t('home.uploadFile') }}</div>
+          <div class="dropdown-item" @click="triggerUpload('folder')"><el-icon color="#f5a623"><Folder /></el-icon>{{ $t('home.uploadFolder') }}</div>
+          <div class="dropdown-item" @click="triggerUpload('import')"><el-icon color="#3370ff"><DocumentCopy /></el-icon>{{ $t('home.importOnline') }}</div>
         </div>
       </div>
       <div class="action-card" @click="$router.push('/templates')">
         <div class="action-icon" style="background: #fef3e0"><el-icon :size="20" color="#f5a623"><Files /></el-icon></div>
         <div class="action-info">
-          <div class="action-label">模板库</div>
-          <div class="action-desc">选择模板快速新建</div>
+          <div class="action-label">{{ $t('home.templateLib') }}</div>
+          <div class="action-desc">{{ $t('home.templateLibDesc') }}</div>
         </div>
       </div>
     </div>
@@ -66,10 +57,11 @@
     <!-- View Tabs + Filter Bar -->
     <div class="view-bar">
       <div class="view-tabs">
-        <span class="view-tab" :class="{ active: activeTab === 'recent' }" @click="switchTab('recent')">最近访问</span>
-        <span class="view-tab" :class="{ active: activeTab === 'owned' }" @click="switchTab('owned')">归我所有</span>
-        <span class="view-tab" :class="{ active: activeTab === 'shared' }" @click="switchTab('shared')">与我共享</span>
-        <span class="view-tab" :class="{ active: activeTab === 'favorites' }" @click="switchTab('favorites')">收藏</span>
+        <span class="view-tab" :class="{ active: activeTab === 'recent' }" @click="switchTab('recent')">{{ $t('home.recentVisit') }}</span>
+        <span class="view-tab" :class="{ active: activeTab === 'owned' }" @click="switchTab('owned')">{{ $t('home.ownedByMe') }}</span>
+        <span class="view-tab" :class="{ active: activeTab === 'shared' }" @click="switchTab('shared')">{{ $t('home.sharedWithMe') }}</span>
+        <span class="view-tab" :class="{ active: activeTab === 'favorites' }" @click="switchTab('favorites')">{{ $t('home.favorites') }}</span>
+        <span class="view-tab" :class="{ active: activeTab === 'recycle' }" @click="switchTab('recycle')">{{ $t('document.trash') }}</span>
         <span
           v-for="cv in customViews"
           :key="cv.id"
@@ -81,13 +73,13 @@
           <el-icon class="cv-close" @click.stop="removeCustomView(cv.id)"><Close /></el-icon>
         </span>
         <span class="view-tab view-tab-add" @click="addCustomView">
-          <span class="custom-view-text">未命名视图</span>
+          <span class="custom-view-text">{{ $t('home.unnamedView') }}</span>
           <el-icon :size="14"><Plus /></el-icon>
         </span>
       </div>
       <div class="view-actions">
-        <span class="view-action" @click.stop="showFilterPanel = !showFilterPanel"><el-icon><Filter /></el-icon> 筛选</span>
-        <span class="view-action" @click.stop="showDisplaySettings = !showDisplaySettings"><el-icon><Setting /></el-icon> 显示设置</span>
+        <span class="view-action" @click.stop="showFilterPanel = !showFilterPanel"><el-icon><Filter /></el-icon> {{ $t('home.filter') }}</span>
+        <span class="view-action" @click.stop="showDisplaySettings = !showDisplaySettings"><el-icon><Setting /></el-icon> {{ $t('home.displaySettings') }}</span>
         <el-icon class="view-toggle" :class="{ active: viewMode === 'list' }" @click="viewMode = 'list'"><List /></el-icon>
         <el-icon class="view-toggle" :class="{ active: viewMode === 'grid' }" @click="viewMode = 'grid'"><Grid /></el-icon>
       </div>
@@ -97,61 +89,78 @@
     <div v-if="showFilterPanel" class="filter-panel" @click.stop>
       <div class="filter-row">
         <div class="filter-group">
-          <label>文档类型</label>
-          <el-select v-model="filterType" placeholder="全部类型" clearable size="small" style="width:140px">
-            <el-option label="文档" value="doc" />
-            <el-option label="表格" value="sheet" />
-            <el-option label="幻灯片" value="slide" />
-            <el-option label="多维表格" value="bitable" />
-            <el-option label="问卷" value="survey" />
-            <el-option label="思维笔记" value="mindnote" />
-            <el-option label="文件夹" value="folder" />
+          <label>{{ $t('home.docType') }}</label>
+          <el-select v-model="filterType" :placeholder="$t('home.allTypes')" clearable size="small" style="width:140px">
+            <el-option :label="$t('home.doc')" value="doc" />
+            <el-option :label="$t('home.sheet')" value="sheet" />
+            <el-option :label="$t('home.slide')" value="slide" />
+            <el-option :label="$t('home.bitable')" value="bitable" />
+            <el-option :label="$t('home.survey')" value="survey" />
+            <el-option :label="$t('home.mindNote')" value="mindnote" />
+            <el-option :label="$t('home.folder')" value="folder" />
           </el-select>
         </div>
         <div class="filter-group">
-          <label>所有者</label>
-          <el-input v-model="filterOwner" placeholder="输入用户名" clearable size="small" style="width:140px" />
+          <label>{{ $t('document.owner') }}</label>
+          <el-input v-model="filterOwner" :placeholder="$t('home.enterUsername')" clearable size="small" style="width:140px" />
         </div>
         <div class="filter-group">
-          <label>创建时间</label>
-          <el-select v-model="filterCreatedRange" placeholder="不限" clearable size="small" style="width:120px">
-            <el-option label="今日" value="today" />
-            <el-option label="昨日" value="yesterday" />
-            <el-option label="近7天" value="7days" />
-            <el-option label="近30天" value="30days" />
+          <label>{{ $t('home.createdTime') }}</label>
+          <el-select v-model="filterCreatedRange" :placeholder="$t('common.noLimit')" clearable size="small" style="width:120px">
+            <el-option :label="$t('common.today')" value="today" />
+            <el-option :label="$t('common.yesterday')" value="yesterday" />
+            <el-option :label="$t('common.last7days')" value="7days" />
+            <el-option :label="$t('common.last30days')" value="30days" />
           </el-select>
         </div>
         <div class="filter-group">
-          <label>修改时间</label>
-          <el-select v-model="filterUpdatedRange" placeholder="不限" clearable size="small" style="width:120px">
-            <el-option label="今日" value="today" />
-            <el-option label="昨日" value="yesterday" />
-            <el-option label="近7天" value="7days" />
-            <el-option label="近30天" value="30days" />
+          <label>{{ $t('home.updatedTime') }}</label>
+          <el-select v-model="filterUpdatedRange" :placeholder="$t('common.noLimit')" clearable size="small" style="width:120px">
+            <el-option :label="$t('common.today')" value="today" />
+            <el-option :label="$t('common.yesterday')" value="yesterday" />
+            <el-option :label="$t('common.last7days')" value="7days" />
+            <el-option :label="$t('common.last30days')" value="30days" />
           </el-select>
         </div>
-        <el-button size="small" @click="applyFilter">应用</el-button>
-        <el-button size="small" text @click="resetFilter">重置</el-button>
+        <el-button size="small" @click="applyFilter">{{ $t('common.apply') }}</el-button>
+        <el-button size="small" text @click="resetFilter">{{ $t('common.reset') }}</el-button>
       </div>
     </div>
 
     <!-- Display Settings Panel -->
     <div v-if="showDisplaySettings" class="display-settings-panel" @click.stop>
-      <div class="display-title">显示列设置</div>
-      <el-checkbox v-model="colVisible.title" disabled>标题</el-checkbox>
-      <el-checkbox v-model="colVisible.fileType">文件类型</el-checkbox>
-      <el-checkbox v-model="colVisible.fileSize">文件大小</el-checkbox>
-      <el-checkbox v-model="colVisible.location">位置</el-checkbox>
-      <el-checkbox v-model="colVisible.owner">所有者</el-checkbox>
-      <el-checkbox v-model="colVisible.createdAt">创建时间</el-checkbox>
-      <el-checkbox v-model="colVisible.updatedAt">修改时间</el-checkbox>
+      <div class="display-title">{{ $t('home.displayColumns') }}</div>
+      <el-checkbox v-model="colVisible.title" disabled>{{ $t('home.title') }}</el-checkbox>
+      <el-checkbox v-model="colVisible.fileType">{{ $t('home.fileType') }}</el-checkbox>
+      <el-checkbox v-model="colVisible.fileSize">{{ $t('home.fileSize') }}</el-checkbox>
+      <el-checkbox v-model="colVisible.location">{{ $t('home.location') }}</el-checkbox>
+      <el-checkbox v-model="colVisible.owner">{{ $t('document.owner') }}</el-checkbox>
+      <el-checkbox v-model="colVisible.createdAt">{{ $t('home.createdTime') }}</el-checkbox>
+      <el-checkbox v-model="colVisible.updatedAt">{{ $t('home.updatedTime') }}</el-checkbox>
     </div>
 
     <!-- Document List -->
-    <div v-loading="loading" class="doc-list-area">
+    <div class="doc-list-area">
+      <!-- Skeleton Loading -->
+      <div v-if="loading" class="doc-list-skeleton">
+        <div v-for="i in 4" :key="i" class="doc-skeleton-row">
+          <el-skeleton animated :loading="true">
+            <template #template>
+              <div class="skeleton-row-inner">
+                <el-skeleton-item variant="circle" style="width: 16px; height: 16px; flex-shrink: 0" />
+                <el-skeleton-item variant="text" style="width: 40%; height: 16px" />
+                <el-skeleton-item variant="text" style="width: 60px; height: 16px" />
+                <el-skeleton-item variant="text" style="width: 80px; height: 16px" />
+                <el-skeleton-item variant="text" style="width: 100px; height: 16px" />
+              </div>
+            </template>
+          </el-skeleton>
+        </div>
+      </div>
+
       <!-- List View -->
       <el-table
-        v-if="viewMode === 'list'"
+        v-if="!loading && viewMode === 'list'"
         :data="filteredDocuments"
         style="width: 100%"
         table-layout="auto"
@@ -162,57 +171,79 @@
         @sort-change="handleSortChange"
       >
         <el-table-column type="selection" width="50" />
-        <el-table-column label="标题" prop="title" min-width="240" sortable="custom">
+        <el-table-column :label="$t('home.title')" prop="title" min-width="240" sortable="custom">
           <template #default="{ row }">
             <div class="doc-name-cell">
+              <el-icon
+                class="favorite-star"
+                :class="{ 'is-favorited': row.isFavorite }"
+                :size="16"
+                @click.stop="toggleFavorite(row)"
+              >
+                <StarFilled v-if="row.isFavorite" />
+                <Star v-else />
+              </el-icon>
               <el-icon :color="getTypeColor(row.type, row.fileExt)" :size="16"><component :is="getTypeIcon(row.type, row.fileExt)" /></el-icon>
               <span class="doc-title-text">{{ getDisplayName(row) }}</span>
               <el-icon v-if="row.isPinned" class="pin-badge" color="#3370ff" :size="12"><Flag /></el-icon>
             </div>
           </template>
         </el-table-column>
-        <el-table-column v-if="colVisible.fileType" label="文件类型" min-width="100">
+        <el-table-column v-if="colVisible.fileType" :label="$t('home.fileType')" min-width="100">
           <template #default="{ row }">
             <el-tag size="small" :type="getTypeTagType(row.type)" disable-transitions>{{ getTypeName(row) }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column v-if="colVisible.fileSize" label="文件大小" min-width="100">
+        <el-table-column v-if="colVisible.fileSize" :label="$t('home.fileSize')" min-width="100">
           <template #default="{ row }">
             <span class="size-cell">{{ row.fileSize > 0 ? formatFileSize(row.fileSize) : (row.type === 'folder' ? '—' : '—') }}</span>
           </template>
         </el-table-column>
-        <el-table-column v-if="colVisible.location" label="位置" min-width="140">
+        <el-table-column v-if="colVisible.location" :label="$t('home.location')" min-width="140">
           <template #default="{ row }">
             <div class="location-cell">
               <el-icon :size="14" color="#f5a623"><FolderOpened /></el-icon>
-              <span>{{ row.parentId ? '我的文档库' : '云盘' }}</span>
+              <span>{{ row.parentId ? $t('home.myDocLib') : $t('home.cloudDrive') }}</span>
             </div>
           </template>
         </el-table-column>
-        <el-table-column v-if="colVisible.owner" label="所有者" min-width="100">
+        <el-table-column v-if="colVisible.owner" :label="$t('document.owner')" min-width="100">
           <template #default="{ row }">
             <div class="owner-cell">
               <el-avatar :size="20" :style="{ background: getAvatarColor(row.ownerId) }">{{ (row.ownerName || 'U')[0] }}</el-avatar>
-              <span>{{ row.ownerName || '未知' }}</span>
+              <span>{{ row.ownerName || $t('common.unknown') }}</span>
             </div>
           </template>
         </el-table-column>
-        <el-table-column v-if="colVisible.createdAt" label="创建时间" prop="createdAt" min-width="130" sortable="custom">
+        <el-table-column v-if="colVisible.createdAt" :label="$t('home.createdTime')" prop="createdAt" min-width="130" sortable="custom">
           <template #header>
-            <span>创建时间 {{ sortField === 'createdAt' ? (sortOrder === 'descending' ? '↓' : '↑') : '' }}</span>
+            <span>{{ $t('home.createdTime') }} {{ sortField === 'createdAt' ? (sortOrder === 'descending' ? '↓' : '↑') : '' }}</span>
           </template>
           <template #default="{ row }">{{ formatDate(row.createdAt) }}</template>
         </el-table-column>
-        <el-table-column v-if="colVisible.updatedAt" label="修改时间" prop="updatedAt" min-width="130" sortable="custom">
+        <el-table-column v-if="colVisible.updatedAt" :label="$t('home.updatedTime')" prop="updatedAt" min-width="130" sortable="custom">
           <template #header>
-            <span>修改时间 {{ sortField === 'updatedAt' ? (sortOrder === 'descending' ? '↓' : '↑') : '' }}</span>
+            <span>{{ $t('home.updatedTime') }} {{ sortField === 'updatedAt' ? (sortOrder === 'descending' ? '↓' : '↑') : '' }}</span>
           </template>
           <template #default="{ row }">{{ formatDate(row.updatedAt) }}</template>
+        </el-table-column>
+        <el-table-column v-if="activeTab === 'recycle'" :label="$t('home.autoCleanCountdown')" min-width="140">
+          <template #default="{ row }">
+            <el-tag :type="getRemainingDays(row.deletedAt) <= 7 ? 'danger' : 'warning'" size="small">
+              {{ $t('home.remainingDays', { days: getRemainingDays(row.deletedAt) }) }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column v-if="activeTab === 'recycle'" :label="$t('home.operations')" min-width="180" fixed="right">
+          <template #default="{ row }">
+            <el-button size="small" type="primary" link @click.stop="handleRestoreSingle(row)">{{ $t('home.restore') }}</el-button>
+            <el-button size="small" type="danger" link @click.stop="handlePermanentDeleteSingle(row)">{{ $t('home.permanentDelete') }}</el-button>
+          </template>
         </el-table-column>
       </el-table>
 
       <!-- Grid View -->
-      <div v-else class="doc-grid">
+      <div v-else-if="!loading && viewMode === 'grid'" class="doc-grid">
         <div
           v-for="doc in filteredDocuments"
           :key="doc.id"
@@ -222,6 +253,12 @@
         >
           <div class="doc-card-check" @click.stop>
             <el-checkbox :model-value="(doc as any)._selected" @update:model-value="(val: any) => (doc as any)._selected = val" />
+          </div>
+          <div class="doc-card-star" @click.stop="toggleFavorite(doc)">
+            <el-icon :class="{ 'is-favorited': doc.isFavorite }">
+              <StarFilled v-if="doc.isFavorite" />
+              <Star v-else />
+            </el-icon>
           </div>
           <div class="doc-card-icon">
             <el-icon :size="36" :color="getTypeColor(doc.type, doc.fileExt)"><component :is="getTypeIcon(doc.type, doc.fileExt)" /></el-icon>
@@ -237,51 +274,59 @@
       </div>
 
       <div v-if="!loading && !filteredDocuments.length" class="empty-state">
-        <el-empty description="暂无文档" />
+        <el-empty :description="$t('home.noDocument')" />
       </div>
     </div>
 
     <div class="end-marker" v-if="filteredDocuments.length">
-      <span>已经到底了</span>
+      <span>{{ $t('home.endOfList') }}</span>
     </div>
 
     <!-- Batch Action Bar -->
-    <div v-if="selectedDocs.length" class="batch-bar">
-      <span class="batch-info">已选 {{ selectedDocs.length }} 项</span>
-      <el-button size="small" @click="batchAction('move')">移动到</el-button>
-      <el-button size="small" @click="batchAction('share')">分享</el-button>
-      <el-button size="small" type="danger" @click="batchAction('delete')">删除</el-button>
-      <el-button size="small" text @click="clearSelection">取消选择</el-button>
+    <div v-if="selectedDocs.length && activeTab !== 'recycle'" class="batch-bar">
+      <span class="batch-info">{{ $t('common.selected', { count: selectedDocs.length }) }}</span>
+      <el-button size="small" @click="batchAction('move')">{{ $t('home.moveTo') }}</el-button>
+      <el-button size="small" @click="batchAction('share')">{{ $t('common.share') }}</el-button>
+      <el-button size="small" type="danger" @click="batchAction('delete')">{{ $t('common.delete') }}</el-button>
+      <el-button size="small" text @click="clearSelection">{{ $t('home.cancelSelect') }}</el-button>
+    </div>
+
+    <!-- Recycle Bin Batch Action Bar -->
+    <div v-if="selectedDocs.length && activeTab === 'recycle'" class="batch-bar">
+      <span class="batch-info">{{ $t('common.selected', { count: selectedDocs.length }) }}</span>
+      <el-button size="small" type="primary" @click="handleBatchRestore">{{ $t('home.batchRestore') }}</el-button>
+      <el-button size="small" type="danger" @click="handleBatchPermanentDelete">{{ $t('home.permanentDelete') }}</el-button>
+      <el-button size="small" text @click="clearSelection">{{ $t('home.cancelSelect') }}</el-button>
     </div>
 
     <!-- Context Menu (right-click / ... button) -->
     <div v-if="contextMenu.visible" class="context-menu" :style="{ left: contextMenu.x + 'px', top: contextMenu.y + 'px' }">
-      <div class="ctx-item" @click="handleAction('share')"><el-icon><Share /></el-icon>分享</div>
-      <div class="ctx-item" @click="handleAction('copyLink')"><el-icon><Link /></el-icon>复制链接</div>
-      <div v-if="contextMenu.doc?.type === 'file' || contextMenu.doc?.fileSize" class="ctx-item" @click="handleAction('download')"><el-icon><Download /></el-icon>下载原文件</div>
+      <div class="ctx-item" @click="handleAction('share')"><el-icon><Share /></el-icon>{{ $t('common.share') }}</div>
+      <div class="ctx-item" @click="handleAction('copyLink')"><el-icon><Link /></el-icon>{{ $t('home.copyLink') }}</div>
+      <div v-if="contextMenu.doc?.type === 'file' || contextMenu.doc?.fileSize" class="ctx-item" @click="handleAction('download')"><el-icon><Download /></el-icon>{{ $t('home.downloadOriginal') }}</div>
       <div class="ctx-sep" />
-      <div class="ctx-item" @click="handleAction('copy')"><el-icon><DocumentCopy /></el-icon>创建副本</div>
-      <div class="ctx-item" @click="handleAction('shortcut')"><el-icon><Position /></el-icon>添加快捷方式到</div>
+      <div class="ctx-item" @click="handleAction('copy')"><el-icon><DocumentCopy /></el-icon>{{ $t('home.createCopy') }}</div>
+      <div class="ctx-item" @click="handleAction('shortcut')"><el-icon><Position /></el-icon>{{ $t('home.addShortcut') }}</div>
       <div class="ctx-item" @click="handleAction('pin')">
-        <el-icon><Flag /></el-icon>{{ contextMenu.doc?.isPinned ? '从"置顶"移除' : '添加到"置顶"' }}
+        <el-icon><Flag /></el-icon>{{ contextMenu.doc?.isPinned ? $t('home.removeFromTop') : $t('home.addToTop') }}
       </div>
       <div class="ctx-item" @click="handleAction('favorite')">
-        <el-icon><Star /></el-icon>{{ contextMenu.doc?.isFavorite ? '取消收藏' : '收藏' }}
+        <el-icon><Star /></el-icon>{{ contextMenu.doc?.isFavorite ? $t('home.cancelFavorite') : $t('home.addFavorite') }}
       </div>
       <div class="ctx-sep" />
       <div class="ctx-item ctx-item-toggle" @click.stop="handleAction('offline')">
-        <el-icon><Download /></el-icon>设为离线可使用
+        <el-icon><Download /></el-icon>{{ $t('home.offlineAvailable') }}
         <el-switch v-model="offlineToggle" size="small" class="ctx-switch" @click.stop />
       </div>
       <div class="ctx-item ctx-item-toggle" @click.stop="handleAction('follow')">
-        <el-icon><BellFilled /></el-icon>关注文档更新
+        <el-icon><BellFilled /></el-icon>{{ $t('home.followUpdates') }}
         <el-switch v-model="followToggle" size="small" class="ctx-switch" @click.stop />
       </div>
       <div class="ctx-sep" />
-      <div class="ctx-item" @click="handleAction('move')"><el-icon><Rank /></el-icon>移动到</div>
-      <div class="ctx-item" @click="handleAction('rename')"><el-icon><EditPen /></el-icon>重命名</div>
-      <div class="ctx-item" @click="handleAction('transfer')"><el-icon><Switch /></el-icon>转移所有权</div>
-      <div class="ctx-item danger" @click="handleAction('delete')"><el-icon><Delete /></el-icon>删除</div>
+      <div class="ctx-item" @click="handleAction('move')"><el-icon><Rank /></el-icon>{{ $t('home.moveTo') }}</div>
+      <div class="ctx-item" @click="handleAction('rename')"><el-icon><EditPen /></el-icon>{{ $t('common.rename') }}</div>
+      <div class="ctx-item" @click="handleAction('transfer')"><el-icon><Switch /></el-icon>{{ $t('home.transferOwnership') }}</div>
+      <div class="ctx-item danger" @click="handleAction('delete')"><el-icon><Delete /></el-icon>{{ $t('common.delete') }}</div>
     </div>
 
     <!-- Import Dialog -->
@@ -295,11 +340,11 @@
         directory
         webkitdirectory
         :on-change="handleFolderSelect"
-        :on-exceed="() => ElMessage.warning('文件数量过多')"
+        :on-exceed="() => ElMessage.warning(t('home.fileLimitExceed'))"
       >
         <el-icon class="el-icon--upload"><UploadFilled /></el-icon>
-        <div class="el-upload__text">拖拽文件夹到此处，或 <em>点击选择文件夹</em></div>
-        <template #tip><div class="el-upload__tip">选择文件夹批量上传文件</div></template>
+        <div class="el-upload__text">{{ t('home.dragFolderHint') }} <em>{{ t('home.clickSelectFolder') }}</em></div>
+        <template #tip><div class="el-upload__tip">{{ t('home.batchUploadHint') }}</div></template>
       </el-upload>
       <el-upload
         v-else-if="uploadType === 'file'"
@@ -308,11 +353,11 @@
         :limit="10"
         multiple
         :on-change="handleFileSelect"
-        :on-exceed="() => ElMessage.warning('最多上传10个文件')"
+        :on-exceed="() => ElMessage.warning(t('home.maxUpload10'))"
       >
         <el-icon class="el-icon--upload"><UploadFilled /></el-icon>
-        <div class="el-upload__text">拖拽文件到此处，或 <em>点击上传</em></div>
-        <template #tip><div class="el-upload__tip">支持所有常见文件格式</div></template>
+        <div class="el-upload__text">{{ t('home.dragFileHint') }} <em>{{ t('home.clickUpload') }}</em></div>
+        <template #tip><div class="el-upload__tip">{{ t('home.supportAllFormats') }}</div></template>
       </el-upload>
       <el-upload
         v-else
@@ -321,11 +366,11 @@
         :limit="1"
         accept=".md,.json,.txt,.html,.docx,.doc,.xlsx,.xls,.pptx,.ppt,.pdf,.png,.jpg,.jpeg,.gif,.webp"
         :on-change="(f: any) => importFile = f.raw"
-        :on-exceed="() => ElMessage.warning('只能上传一个文件')"
+        :on-exceed="() => ElMessage.warning(t('home.uploadOnly1'))"
       >
         <el-icon class="el-icon--upload"><UploadFilled /></el-icon>
-        <div class="el-upload__text">拖拽文件到此处，或 <em>点击上传</em></div>
-        <template #tip><div class="el-upload__tip">支持 Word、Excel、PPT、PDF、Markdown、JSON、TXT、HTML、图片</div></template>
+        <div class="el-upload__text">{{ t('home.dragFileHint') }} <em>{{ t('home.clickUpload') }}</em></div>
+        <template #tip><div class="el-upload__tip">{{ t('home.supportFormats') }}</div></template>
       </el-upload>
       <div v-if="importFiles.length > 0" class="import-file-list">
         <div v-for="(f, i) in importFiles" :key="i" class="import-file-item">
@@ -336,78 +381,78 @@
       </div>
       <el-progress v-if="importLoading && importProgress > 0" :percentage="importProgress" style="margin-top: 12px" />
       <template #footer>
-        <el-button @click="showImportDialog = false; importFile = null; importFiles = []">取消</el-button>
-        <el-button type="primary" :loading="importLoading" :disabled="!importFile && !importFiles.length" @click="handleImport">导入</el-button>
+        <el-button @click="showImportDialog = false; importFile = null; importFiles = []">{{ $t('common.cancel') }}</el-button>
+        <el-button type="primary" :loading="importLoading" :disabled="!importFile && !importFiles.length" @click="handleImport">{{ $t('common.import') }}</el-button>
       </template>
     </el-dialog>
 
     <!-- Move Dialog -->
-    <el-dialog v-model="showMoveDialog" title="移动到" width="420px" destroy-on-close>
+    <el-dialog v-model="showMoveDialog" :title="$t('home.moveTo')" width="420px" destroy-on-close>
       <div class="move-folder-list">
         <div class="move-folder-item" :class="{ active: moveTarget === null }" @click="moveTarget = null">
-          <el-icon color="#f5a623"><FolderOpened /></el-icon><span>根目录</span>
+          <el-icon color="#f5a623"><FolderOpened /></el-icon><span>{{ $t('home.rootDir') }}</span>
         </div>
         <div v-for="f in allFolders" :key="f.id" class="move-folder-item" :class="{ active: moveTarget === f.id }" @click="moveTarget = f.id">
           <el-icon color="#f5a623"><Folder /></el-icon><span>{{ f.title }}</span>
         </div>
       </div>
       <template #footer>
-        <el-button @click="showMoveDialog = false">取消</el-button>
-        <el-button type="primary" @click="confirmMove">确认移动</el-button>
+        <el-button @click="showMoveDialog = false">{{ $t('common.cancel') }}</el-button>
+        <el-button type="primary" @click="confirmMove">{{ $t('home.confirmMove') }}</el-button>
       </template>
     </el-dialog>
 
     <!-- Rename Dialog -->
-    <el-dialog v-model="showRenameDialog" title="重命名" width="400px" destroy-on-close>
-      <el-input v-model="renameValue" placeholder="输入新名称" maxlength="100" show-word-limit @keyup.enter="confirmRename" />
+    <el-dialog v-model="showRenameDialog" :title="$t('common.rename')" width="400px" destroy-on-close>
+      <el-input v-model="renameValue" :placeholder="$t('home.enterNewName')" maxlength="100" show-word-limit @keyup.enter="confirmRename" />
       <template #footer>
-        <el-button @click="showRenameDialog = false">取消</el-button>
-        <el-button type="primary" :loading="renaming" @click="confirmRename">确认</el-button>
+        <el-button @click="showRenameDialog = false">{{ $t('common.cancel') }}</el-button>
+        <el-button type="primary" :loading="renaming" @click="confirmRename">{{ $t('common.confirm') }}</el-button>
       </template>
     </el-dialog>
 
     <!-- Transfer Dialog -->
-    <el-dialog v-model="showTransferDialog" title="转移所有权" width="420px" destroy-on-close>
+    <el-dialog v-model="showTransferDialog" :title="$t('home.transferOwnership')" width="420px" destroy-on-close>
       <el-form label-position="top">
-        <el-form-item label="选择目标用户">
-          <el-input v-model="transferUser" placeholder="输入用户名或邮箱搜索" prefix-icon="Search" />
+        <el-form-item :label="$t('home.selectTargetUser')">
+          <el-input v-model="transferUser" :placeholder="$t('home.searchUserOrEmail')" prefix-icon="Search" />
         </el-form-item>
         <el-form-item>
-          <el-checkbox v-model="transferKeepPerm">保留我的协作权限</el-checkbox>
+          <el-checkbox v-model="transferKeepPerm">{{ $t('home.keepPermission') }}</el-checkbox>
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="showTransferDialog = false">取消</el-button>
-        <el-button type="primary" @click="confirmTransfer">确认转移</el-button>
+        <el-button @click="showTransferDialog = false">{{ $t('common.cancel') }}</el-button>
+        <el-button type="primary" @click="confirmTransfer">{{ $t('home.confirmTransfer') }}</el-button>
       </template>
     </el-dialog>
 
     <!-- Share Dialog -->
-    <el-dialog v-model="showShareDialog" title="分享" width="520px" destroy-on-close>
+    <el-dialog v-model="showShareDialog" :title="$t('common.share')" width="520px" destroy-on-close>
       <div class="share-section">
-        <div class="share-subtitle">邀请协作者</div>
+        <div class="share-subtitle">{{ $t('home.inviteCollaborator') }}</div>
         <div class="share-invite-row">
-          <el-input v-model="shareInvite" placeholder="输入用户名或邮箱" style="flex:1" />
+          <el-input v-model="shareInvite" :placeholder="$t('home.enterUserOrEmail')" style="flex:1" />
           <el-select v-model="sharePermLevel" style="width:120px">
-            <el-option label="可管理" value="manage" />
-            <el-option label="可编辑" value="edit" />
-            <el-option label="可查看" value="view" />
-            <el-option label="只读" value="readonly" />
+            <el-option :label="$t('home.canManage')" value="manage" />
+            <el-option :label="$t('home.canEdit')" value="edit" />
+            <el-option :label="$t('home.canView')" value="view" />
+            <el-option :label="$t('home.readOnly')" value="readonly" />
           </el-select>
-          <el-button type="primary" @click="ElMessage.info('已发送邀请')">邀请</el-button>
+          <el-button type="primary" @click="ElMessage.info(t('home.inviteSent'))">{{ $t('common.invite') }}</el-button>
         </div>
       </div>
       <div class="share-section" style="margin-top:16px">
-        <div class="share-subtitle">分享链接</div>
+        <div class="share-subtitle">{{ $t('home.shareLink') }}</div>
         <div class="share-link-row">
           <el-input :model-value="shareLink" readonly style="flex:1" />
-          <el-button @click="copyShareLink">复制</el-button>
+          <el-button @click="copyShareLink">{{ $t('common.copy') }}</el-button>
         </div>
         <div class="share-options">
           <el-select v-model="shareLinkScope" size="small" style="width:160px;margin-top:8px">
-            <el-option label="仅协作者可见" value="collaborator" />
-            <el-option label="组织内可见" value="org" />
-            <el-option label="互联网公开可见" value="public" />
+            <el-option :label="$t('home.collaboratorOnly')" value="collaborator" />
+            <el-option :label="$t('home.orgVisible')" value="org" />
+            <el-option :label="$t('home.publicVisible')" value="public" />
           </el-select>
         </div>
       </div>
@@ -421,11 +466,14 @@ import { useRouter, useRoute } from 'vue-router'
 import {
   getRecentDocuments, getDocumentTree, getFavorites, searchDocuments,
   createDocument, pinDocument, favoriteDocument, deleteDocument,
-  copyDocument, importDocument, moveDocument, updateDocument
+  copyDocument, importDocument, moveDocument, updateDocument, transferOwnership,
+  getRecycleBin, permanentDeleteDocument, batchRestoreDocuments, restoreDocument
 } from '@/api/modules/document'
 import type { Document, DocumentType, KnowledgeBase } from '@/types'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import EnhancedSearchBar from '@/components/common/EnhancedSearchBar.vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const router = useRouter()
 const route = useRoute()
@@ -434,7 +482,6 @@ const viewMode = ref<'list' | 'grid'>('list')
 const documents = ref<Document[]>([])
 const allFolders = ref<Document[]>([])
 const activeTab = ref('recent')
-// const searchBarRef = ref<InstanceType<typeof EnhancedSearchBar>>()
 const showNewMenu = ref(false)
 const showUploadMenu = ref(false)
 const showMoreTypes = ref(false)
@@ -566,115 +613,119 @@ const extIconMap: Record<string, { icon: string; color: string }> = {
 
 const avatarColors = ['#3370ff', '#36b37e', '#ff7d00', '#f54a45', '#9254de', '#00b8d9']
 
-const typeNameMap: Record<string, string> = {
-  folder: '文件夹', doc: '文档', sheet: '表格', slide: '幻灯片',
-  mindnote: '思维笔记', bitable: '多维表格', survey: '问卷',
-  file: '其他', image: '图片', code: '代码',
+function getTypeNameMap(): Record<string, string> {
+  return {
+    folder: t('home.folder'), doc: t('home.doc'), sheet: t('home.sheet'), slide: t('home.slide'),
+    mindnote: t('home.mindNote'), bitable: t('home.bitable'), survey: t('home.survey'),
+    file: t('home.other'), image: t('home.canvas'), code: t('document.codeEditor'),
+  }
 }
-const extTypeMap: Record<string, string> = {
- // 文档类
-  txt: '文本文档',
-  doc: 'Word文档',
-  docx: 'Word文档',
-  pdf: 'PDF文档',
-  rtf: '富文本',
-  epub: '电子书',
-  mobi: '电子书',
+function getExtTypeMap(): Record<string, string> {
+  return {
+    // 文档类
+    txt: t('fileType.textDoc'),
+    doc: t('fileType.wordDoc'),
+    docx: t('fileType.wordDoc'),
+    pdf: t('fileType.pdfDoc'),
+    rtf: t('fileType.richText'),
+    epub: t('fileType.ebook'),
+    mobi: t('fileType.ebook'),
 
-  // 表格/数据类
-  xls: 'Excel表格',
-  xlsx: 'Excel表格',
-  csv: 'Csv表格',
-  db: '数据库',
-  sqlite: '数据库',
-  sql: '数据库',
+    // 表格/数据类
+    xls: t('fileType.excelSheet'),
+    xlsx: t('fileType.excelSheet'),
+    csv: t('fileType.csvSheet'),
+    db: t('fileType.database'),
+    sqlite: t('fileType.database'),
+    sql: t('fileType.database'),
 
-  // 演示文稿
-  ppt: '幻灯片',
-  pptx: '幻灯片',
-  pot: '幻灯片模板',
+    // 演示文稿
+    ppt: t('fileType.presentation'),
+    pptx: t('fileType.presentation'),
+    pot: t('fileType.presentationTemplate'),
 
-  // 图片类
-  png: 'PNG图片',
-  jpg: 'JPEG图片',
-  jpeg: 'JPEG图片',
-  gif: 'GIF动图',
-  bmp: 'BMP图片',
-  webp: 'WebP图片',
-  svg: '矢量图片',
-  ico: '图标文件',
+    // 图片类
+    png: t('fileType.pngImage'),
+    jpg: t('fileType.jpegImage'),
+    jpeg: t('fileType.jpegImage'),
+    gif: t('fileType.gifImage'),
+    bmp: t('fileType.bmpImage'),
+    webp: t('fileType.webpImage'),
+    svg: t('fileType.vectorImage'),
+    ico: t('fileType.iconFile'),
 
-  // 音频
-  mp3: '音频文件',
-  wav: '无损音频',
-  flac: 'FLAC无损音频',
-  aac: 'AAC音频',
-  ogg: 'OGG音频',
-  m4a: 'M4A音频',
+    // 音频
+    mp3: t('fileType.audioFile'),
+    wav: t('fileType.losslessAudio'),
+    flac: t('fileType.flacAudio'),
+    aac: t('fileType.aacAudio'),
+    ogg: t('fileType.oggAudio'),
+    m4a: t('fileType.m4aAudio'),
 
-  // 视频
-  mp4: '视频文件',
-  mkv: 'MKV视频',
-  avi: 'AVI视频',
-  mov: 'MOV视频',
-  wmv: 'WMV视频',
-  flv: 'FLV视频',
-  webm: 'WEBM视频',
+    // 视频
+    mp4: t('fileType.videoFile'),
+    mkv: t('fileType.mkvVideo'),
+    avi: t('fileType.aviVideo'),
+    mov: t('fileType.movVideo'),
+    wmv: t('fileType.wmvVideo'),
+    flv: t('fileType.flvVideo'),
+    webm: t('fileType.webmVideo'),
 
-  // 压缩包
-  zip: '压缩包',
-  rar: '压缩包',
-  '7z': '7Z压缩包',
-  tar: 'TAR打压缩包',
-  gz: 'GZ压缩包',
-  'tar.gz': 'TAR.GZ压缩包',
-  bz2: 'BZ2压缩包',
+    // 压缩包
+    zip: t('fileType.archive'),
+    rar: t('fileType.archive'),
+    '7z': t('fileType.7zArchive'),
+    tar: t('fileType.tarArchive'),
+    gz: t('fileType.gzArchive'),
+    'tar.gz': t('fileType.tarGzArchive'),
+    bz2: t('fileType.bz2Archive'),
 
-  // 系统/安装包
-  exe: 'Windows程序',
-  msi: 'Windows安装包',
-  dll: '系统库文件',
-  apk: '安卓安装包',
-  aab: '安卓应用捆绑包',
-  ipa: 'iOS安装包',
-  app: 'macOS应用',
-  dmg: '苹果磁盘镜像',
-  deb: 'Ubuntu安装包',
-  rpm: 'RedHat安装包',
-  AppImage: 'Linux便携程序',
-  sh: 'Shell脚本',
-  iso: '光盘镜像',
+    // 系统/安装包
+    exe: t('fileType.winProgram'),
+    msi: t('fileType.winInstaller'),
+    dll: t('fileType.systemLib'),
+    apk: t('fileType.androidApp'),
+    aab: t('fileType.androidBundle'),
+    ipa: t('fileType.iosApp'),
+    app: t('fileType.macApp'),
+    dmg: t('fileType.macDiskImage'),
+    deb: t('fileType.debPackage'),
+    rpm: t('fileType.rpmPackage'),
+    AppImage: t('fileType.linuxPortable'),
+    sh: t('fileType.shellScript'),
+    iso: t('fileType.discImage'),
 
-  // 网页/代码
-  html: '网页文件',
-  htm: '网页文件',
-  css: '样式文件',
-  js: 'JavaScript',
-  ts: 'TypeScript',
-  vue: 'Vue组件',
-  jsx: 'React组件',
-  md: 'Markdown文档',
-  json: 'JSON配置',
-  xml: 'XML文件',
-  yaml: 'YAML文件',
-  yml: 'YAML文件',
+    // 网页/代码
+    html: t('fileType.webPage'),
+    htm: t('fileType.webPage'),
+    css: t('fileType.stylesheet'),
+    js: 'JavaScript',
+    ts: 'TypeScript',
+    vue: t('fileType.vueComponent'),
+    jsx: t('fileType.reactComponent'),
+    md: t('fileType.markdownDoc'),
+    json: t('fileType.jsonConfig'),
+    xml: t('fileType.xmlFile'),
+    yaml: t('fileType.yamlFile'),
+    yml: t('fileType.yamlFile'),
 
-  // 编程源码
-  c: 'C语言代码',
-  cpp: 'C++代码',
-  h: '头文件',
-  java: 'Java代码',
-  class: 'Java编译文件',
-  jar: 'Java包',
-  py: 'Python代码',
-  go: 'Go代码',
-  php: 'PHP脚本',
+    // 编程源码
+    c: t('fileType.cCode'),
+    cpp: t('fileType.cppCode'),
+    h: t('fileType.headerFile'),
+    java: t('fileType.javaCode'),
+    class: t('fileType.javaCompiled'),
+    jar: t('fileType.javaPackage'),
+    py: t('fileType.pythonCode'),
+    go: t('fileType.goCode'),
+    php: t('fileType.phpScript'),
 
-  // 其他
-  log: '日志文件',
-  tmp: '临时文件',
-  vmdk: '虚拟机磁盘',
-  vdi: '虚拟机磁盘',
+    // 其他
+    log: t('fileType.logFile'),
+    tmp: t('fileType.tempFile'),
+    vmdk: t('fileType.vmDisk'),
+    vdi: t('fileType.vmDisk'),
+  }
 }
 
 function getTypeIcon(t: string, ext?: string): string {
@@ -703,9 +754,11 @@ function getDisplayName(doc: Document): string {
 // Returns human-friendly type name, using file extension if available
 function getTypeName(doc: Document): string {
   const ext = (doc.fileExt || '').replace('.', '').toLowerCase()
+  const extTypeMap = getExtTypeMap()
   if (ext && extTypeMap[ext]) return extTypeMap[ext]
-  if (typeNameMap[doc.type]) return typeNameMap[doc.type]
-  return '其他'
+  const nameMap = getTypeNameMap()
+  if (nameMap[doc.type]) return nameMap[doc.type]
+  return t('home.other')
 }
 
 function getTypeTagType(type: string): '' | 'success' | 'warning' | 'info' | 'danger' {
@@ -716,13 +769,13 @@ function getTypeTagType(type: string): '' | 'success' | 'warning' | 'info' | 'da
   return m[type] || 'info'
 }
 
-function formatDate(t: string) {
-  if (!t) return ''
-  const d = new Date(t)
+function formatDate(dateStr: string) {
+  if (!dateStr) return ''
+  const d = new Date(dateStr)
   const now = new Date()
   const isToday = d.toDateString() === now.toDateString()
-  if (isToday) return `今天 ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`
-  return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`
+  if (isToday) return `${t('common.today')} ${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`
+  return d.toLocaleDateString()
 }
 
 // Filter logic
@@ -794,6 +847,9 @@ async function fetchDocuments() {
     } else if (activeTab.value === 'favorites') {
       res = await getFavorites({ page: page.value, pageSize })
       documents.value = res.data?.list || []
+    } else if (activeTab.value === 'recycle') {
+      res = await getRecycleBin({ page: page.value, pageSize })
+      documents.value = res.data?.list || []
     } else {
       // custom view - use recent as default
       res = await getRecentDocuments({ page: page.value, pageSize })
@@ -819,20 +875,22 @@ function handleDocClick(doc: Document) {
 async function handleCreate(type: DocumentType | 'folder') {
   showNewMenu.value = false
   try {
-    const res: any = await createDocument({ title: type === 'folder' ? '新建文件夹' : `未命名${typeLabel(type)}`, type, parentId: null })
+    const res: any = await createDocument({ title: type === 'folder' ? t('document.newFolder') : `${t('document.untitled')}${typeLabel(type)}`, type, parentId: null })
     if (type !== 'folder') {
       // Open in new browser tab
       window.open(`/doc/${res.data.id}`, '_blank')
     } else {
-      ElMessage.success('文件夹已创建')
+      ElMessage.success(t('home.folderCreated'))
       fetchDocuments()
     }
-  } catch { /* handled */ }
+  } catch (e: any) {
+    ElMessage.error(e?.response?.data?.message || t('home.createFailed'))
+  }
 }
 
 function typeLabel(type: string): string {
-  const m: Record<string, string> = { doc: '文档', sheet: '表格', slide: '幻灯片', bitable: '多维表格', survey: '问卷', mindnote: '思维笔记' }
-  return m[type] || '文档'
+  const nameMap = getTypeNameMap()
+  return nameMap[type] || t('home.doc')
 }
 
 function showContextMenu(e: MouseEvent, doc: Document) {
@@ -893,25 +951,26 @@ function clearSelection() {
 
 async function batchAction(action: string) {
   if (action === 'delete') {
-    await ElMessageBox.confirm(`确定将 ${selectedDocs.value.length} 项移至回收站？删除后30天内可恢复。`, '删除确认')
+    await ElMessageBox.confirm(t('home.deleteConfirmBatch', { count: selectedDocs.value.length }), t('home.deleteConfirmTitle'))
     for (const d of selectedDocs.value) { await deleteDocument(d.id) }
-    ElMessage.success('已移至回收站')
+    ElMessage.success(t('home.movedToTrash'))
     fetchDocuments()
   } else if (action === 'move') {
     showMoveDialog.value = true
   } else if (action === 'share') {
-    // Batch share - open share dialog
-    // shareLink.value = `${window.location.origin}/documents?ids=${selectedDocs.value.map(d => d.id).join(',')}`
-    // shareLinkScope.value = 'collaborator'
-    // shareDialogVisible.value = true
-    ElMessage.info('批量分享功能开发中')
+    // Batch share - open share dialog with batch link
+    const ids = selectedDocs.value.map(d => d.id).join(',')
+    showShareDialog.value = true
+    // shareLink is computed, so we set contextMenu.doc to null to show batch link
+    ElMessage.info(t('home.batchShareGenerated', { count: selectedDocs.value.length }))
+    navigator.clipboard.writeText(`${window.location.origin}/share?docs=${ids}`)
   }
   clearSelection()
 }
 
 // Custom views
 function addCustomView() {
-  customViews.value.push({ id: cvIdCounter++, name: '未命名视图' })
+  customViews.value.push({ id: cvIdCounter++, name: t('home.unnamedView') })
 }
 function removeCustomView(id: number) {
   customViews.value = customViews.value.filter(v => v.id !== id)
@@ -929,9 +988,9 @@ function triggerUpload(type: string) {
 
 const uploadDialogTitle = computed(() => {
   switch (uploadType.value) {
-    case 'file': return '上传文件'
-    case 'folder': return '上传文件夹'
-    default: return '导入为在线文档'
+    case 'file': return t('home.uploadDialogFile')
+    case 'folder': return t('home.uploadDialogFolder')
+    default: return t('home.uploadDialogImport')
   }
 })
 
@@ -961,7 +1020,7 @@ async function handleImport() {
     importProgress.value = 0
     try {
       const res: any = await importDocument(importFile.value, null, (p) => { importProgress.value = p })
-      ElMessage.success('导入成功')
+      ElMessage.success(t('home.importSuccess'))
       showImportDialog.value = false
       importFile.value = null
       importProgress.value = 0
@@ -969,7 +1028,7 @@ async function handleImport() {
       if (res.data?.id && res.data?.type !== 'folder') {
         window.open(`/doc/${res.data.id}`, '_blank')
       }
-    } catch { ElMessage.error('导入失败') } finally { importLoading.value = false }
+    } catch { ElMessage.error(t('home.importFailed')) } finally { importLoading.value = false }
     return
   }
 
@@ -988,7 +1047,8 @@ async function handleImport() {
           importProgress.value = Math.round(((i + p / 100) / total) * 100)
         })
         successCount++
-      } catch {
+      } catch (e: any) {
+        console.error('[HomePage] importDocument failed:', e)
         failCount++
       }
     }
@@ -997,13 +1057,24 @@ async function handleImport() {
     importProgress.value = 0
 
     if (successCount > 0) {
-      ElMessage.success(`成功上传 ${successCount} 个文件${failCount > 0 ? `，${failCount} 个失败` : ''}`)
+      ElMessage.success(failCount > 0 ? t('home.uploadSuccessWithFail', { success: successCount, fail: failCount }) : t('home.uploadSuccess', { success: successCount }))
       showImportDialog.value = false
       importFiles.value = []
       fetchDocuments()
     } else {
-      ElMessage.error('上传失败')
+      ElMessage.error(t('home.uploadFailed'))
     }
+  }
+}
+
+async function toggleFavorite(doc: Document) {
+  const newState = !doc.isFavorite
+  try {
+    await favoriteDocument(doc.id, newState)
+    doc.isFavorite = newState
+    ElMessage.success(newState ? t('home.favorited') : t('home.unfavorited'))
+  } catch {
+    ElMessage.error(t('home.operationFailed'))
   }
 }
 
@@ -1019,7 +1090,7 @@ async function handleAction(action: string) {
     case 'copyLink': {
       const link = `${window.location.origin}/doc/${doc.id}`
       navigator.clipboard.writeText(link)
-      ElMessage.success('链接已复制')
+      ElMessage.success(t('common.linkCopied'))
       break
     }
     case 'download': {
@@ -1030,29 +1101,29 @@ async function handleAction(action: string) {
     }
     case 'copy':
       await copyDocument(doc.id, false)
-      ElMessage.success('副本已创建，标题为"' + doc.title + ' 副本"')
+      ElMessage.success(t('home.copyCreated'))
       fetchDocuments()
       break
     case 'shortcut':
-      ElMessage.success(`"${doc.title}" 的快捷方式已添加到桌面`)
+      ElMessage.success(t('home.shortcutAdded'))
       break
     case 'pin':
       await pinDocument(doc.id, !doc.isPinned)
-      ElMessage.success(doc.isPinned ? '已从置顶移除' : '已添加到置顶')
+      ElMessage.success(doc.isPinned ? t('home.removedFromTop') : t('home.addedToTop'))
       fetchDocuments()
       break
     case 'favorite':
       await favoriteDocument(doc.id, !doc.isFavorite)
-      ElMessage.success(doc.isFavorite ? '已取消收藏' : '已收藏')
+      ElMessage.success(doc.isFavorite ? t('home.unfavorited') : t('home.favorited'))
       fetchDocuments()
       break
     case 'offline':
       offlineToggle.value = !offlineToggle.value
-      ElMessage.success(offlineToggle.value ? '已设为离线可使用' : '已取消离线使用')
+      ElMessage.success(offlineToggle.value ? t('home.offlineEnabled') : t('home.offlineDisabled'))
       break
     case 'follow':
       followToggle.value = !followToggle.value
-      ElMessage.success(followToggle.value ? '已关注文档更新' : '已取消关注')
+      ElMessage.success(followToggle.value ? t('home.followEnabled') : t('home.followDisabled'))
       break
     case 'move':
       moveTarget.value = null
@@ -1068,9 +1139,9 @@ async function handleAction(action: string) {
       showTransferDialog.value = true
       break
     case 'delete':
-      await ElMessageBox.confirm(`确定要删除"${doc.title}"吗？删除后将移入回收站，30天内可恢复。`, '删除确认')
+      await ElMessageBox.confirm(t('home.deleteConfirmSingle', { title: doc.title }), t('home.deleteConfirmTitle'))
       await deleteDocument(doc.id)
-      ElMessage.success('已移至回收站')
+      ElMessage.success(t('home.movedToTrash'))
       fetchDocuments()
       break
   }
@@ -1080,7 +1151,7 @@ async function confirmMove() {
   const doc = contextMenu.doc
   if (doc) {
     await moveDocument(doc.id, moveTarget.value)
-    ElMessage.success('已移动')
+    ElMessage.success(t('home.moved'))
   }
   // batch move
   for (const d of selectedDocs.value) {
@@ -1092,34 +1163,98 @@ async function confirmMove() {
 
 async function confirmRename() {
   const doc = contextMenu.doc
-  if (!doc || !renameValue.value.trim()) { ElMessage.warning('名称不能为空'); return }
+  if (!doc || !renameValue.value.trim()) { ElMessage.warning(t('home.nameRequired')); return }
   renaming.value = true
   try {
     await updateDocument(doc.id, { title: renameValue.value.trim() })
-    ElMessage.success('重命名成功')
+    ElMessage.success(t('home.renameSuccess'))
     showRenameDialog.value = false
     fetchDocuments()
-  } catch { ElMessage.error('重命名失败') }
+  } catch { ElMessage.error(t('home.renameFailed')) }
   finally { renaming.value = false }
 }
 
-function confirmTransfer() {
-  ElMessage.info('转移所有权功能需要后端支持用户搜索')
-  showTransferDialog.value = false
+async function confirmTransfer() {
+  if (!transferUser.value?.trim()) {
+    ElMessage.warning(t('home.enterTargetUser'))
+    return
+  }
+  const doc = contextMenu.doc
+  if (!doc) return
+  try {
+    await transferOwnership(doc.id, transferUser.value.trim(), transferKeepPerm.value)
+    ElMessage.success(t('home.ownershipTransferred'))
+    showTransferDialog.value = false
+    fetchDocuments()
+  } catch (e: any) {
+    ElMessage.error(e?.response?.data?.message || t('home.transferFailed'))
+  }
 }
 
 function copyShareLink() {
   if (shareLink.value) {
     navigator.clipboard.writeText(shareLink.value)
-    ElMessage.success('链接已复制')
+    ElMessage.success(t('common.linkCopied'))
   }
 }
 
-// Handle search result selection from EnhancedSearchBar
-function handleSearchSelect(_result: { type: 'document' | 'knowledge'; data: Document | KnowledgeBase }) {
-  // Navigation is already handled in the component
-  // Just close any open menus and ensure clean state
-  closeMenus()
+// === Recycle Bin Functions ===
+
+// Calculate remaining days before auto-cleanup (30 days from deletion)
+function getRemainingDays(deletedAt: string): number {
+  if (!deletedAt) return 30
+  const deleted = new Date(deletedAt)
+  const expireDate = new Date(deleted.getTime() + 30 * 24 * 60 * 60 * 1000)
+  const now = new Date()
+  const remaining = Math.ceil((expireDate.getTime() - now.getTime()) / (24 * 60 * 60 * 1000))
+  return remaining > 0 ? remaining : 0
+}
+
+async function handleRestoreSingle(doc: Document) {
+  try {
+    await restoreDocument(doc.id)
+    ElMessage.success(t('home.restored', { title: doc.title }))
+    fetchDocuments()
+  } catch {
+    ElMessage.error(t('home.restoreFailed'))
+  }
+}
+
+async function handlePermanentDeleteSingle(doc: Document) {
+  await ElMessageBox.confirm(t('home.permanentDeleteConfirm'), t('home.permanentDeleteTitle'), { type: 'warning' })
+  try {
+    await permanentDeleteDocument(doc.id)
+    ElMessage.success(t('home.permanentDeleted'))
+    fetchDocuments()
+  } catch {
+    ElMessage.error(t('common.failed'))
+  }
+}
+
+async function handleBatchRestore() {
+  const ids = selectedDocs.value.map(d => d.id)
+  try {
+    await batchRestoreDocuments(ids)
+    ElMessage.success(t('home.batchRestored', { count: ids.length }))
+    clearSelection()
+    fetchDocuments()
+  } catch {
+    ElMessage.error(t('home.batchRestoreFailed'))
+  }
+}
+
+async function handleBatchPermanentDelete() {
+  await ElMessageBox.confirm(t('home.batchPermanentDeleteConfirm', { count: selectedDocs.value.length }), t('home.permanentDeleteTitle'), { type: 'warning' })
+  try {
+    for (const doc of selectedDocs.value) {
+      await permanentDeleteDocument(doc.id)
+    }
+    ElMessage.success(t('home.permanentDeleted'))
+    clearSelection()
+    fetchDocuments()
+  } catch {
+    ElMessage.error(t('common.failed'))
+  }
 }
 
 watch(() => route.query.keyword, (val) => {
@@ -1158,11 +1293,6 @@ onBeforeUnmount(() => {
 }
 
 /* Action Bar */
-/* Search Section */
-.search-section {
-  margin-bottom: 24px;
-  padding: 0;
-}
 
 .action-bar {
   display: grid;
@@ -1382,6 +1512,34 @@ onBeforeUnmount(() => {
   white-space: nowrap;
 }
 .pin-badge { flex-shrink: 0; }
+.favorite-star {
+  cursor: pointer;
+  color: var(--kx-text-placeholder);
+  flex-shrink: 0;
+  transition: color 0.2s;
+}
+.favorite-star:hover {
+  color: #f5a623;
+}
+.favorite-star.is-favorited {
+  color: #f5a623;
+}
+.doc-card-star {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  cursor: pointer;
+  color: var(--kx-text-placeholder);
+  transition: color 0.2s, opacity 0.15s;
+  opacity: 0;
+}
+.doc-card:hover .doc-card-star { opacity: 1; }
+.doc-card-star .is-favorited {
+  color: #f5a623;
+}
+.doc-card-star:hover {
+  color: #f5a623;
+}
 .location-cell {
   display: flex;
   align-items: center;
@@ -1493,6 +1651,20 @@ onBeforeUnmount(() => {
 .end-marker::after { left: calc(50% + 60px); }
 .empty-state { padding: 60px 0; }
 
+/* Document List Skeleton */
+.doc-list-skeleton {
+  padding: 12px 0;
+}
+.doc-skeleton-row {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--kx-border);
+}
+.skeleton-row-inner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
 /* Batch Bar */
 .batch-bar {
   position: fixed;
@@ -1594,5 +1766,104 @@ onBeforeUnmount(() => {
   box-shadow: 0 4px 16px rgba(0,0,0,0.12);
   padding: 4px 0;
   z-index: 101;
+}
+
+/* ===== Responsive: 768px - Tablet ===== */
+@media (max-width: 768px) {
+  .home-page {
+    padding: 16px 16px;
+  }
+  .action-bar {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  .action-card {
+    padding: 12px 14px;
+  }
+  .action-desc {
+    display: none;
+  }
+  .view-bar {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .view-tabs {
+    overflow-x: auto;
+    white-space: nowrap;
+    flex: 1;
+  }
+  .view-actions {
+    flex-shrink: 0;
+  }
+  .view-action span {
+    display: none;
+  }
+  /* Grid view columns reduce */
+  .doc-grid {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)) !important;
+  }
+}
+
+/* ===== Responsive: 640px - Large Phone ===== */
+@media (max-width: 640px) {
+  .home-page {
+    padding: 12px 12px;
+  }
+  .action-bar {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .action-card {
+    padding: 12px 14px;
+  }
+    .view-tab {
+    font-size: 13px;
+    padding: 6px 10px;
+  }
+  .custom-view-text {
+    display: none;
+  }
+  .filter-panel {
+    padding: 10px 12px;
+  }
+  .filter-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .doc-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important;
+  }
+}
+
+/* ===== Responsive: 480px - Small Phone ===== */
+@media (max-width: 480px) {
+  .home-page {
+    padding: 8px 8px;
+  }
+  .action-bar {
+    margin-bottom: 12px;
+  }
+  .action-icon {
+    width: 30px;
+    height: 30px;
+  }
+  .action-label {
+    font-size: 13px;
+  }
+  .view-bar {
+    margin-bottom: 8px;
+  }
+  .view-tab {
+    font-size: 12px;
+    padding: 5px 8px;
+  }
+  .view-actions {
+    gap: 4px;
+  }
+  .doc-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+  }
 }
 </style>

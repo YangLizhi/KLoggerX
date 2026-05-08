@@ -1,0 +1,2411 @@
+{
+  "src/views/admin/OperationLog.vue": [
+    {
+      "line_num": 8,
+      "chinese": "过滤器",
+      "context": "<!-- 过滤器 -->"
+    },
+    {
+      "line_num": 53,
+      "chinese": "表格",
+      "context": "<!-- 表格 -->"
+    },
+    {
+      "line_num": 83,
+      "chinese": "分页",
+      "context": "<!-- 分页 -->"
+    }
+  ],
+  "src/views/admin/DepartmentManagement.vue": [
+    {
+      "line_num": 424,
+      "chinese": "产品需求文档",
+      "context": "{ id: 1, type: 'doc', name: '产品需求文档', level: 'edit' },"
+    },
+    {
+      "line_num": 425,
+      "chinese": "项目资料",
+      "context": "{ id: 2, type: 'folder', name: '项目资料', level: 'view' },"
+    },
+    {
+      "line_num": 451,
+      "chinese": "总公司",
+      "context": "{ name: '总公司', children: ["
+    },
+    {
+      "line_num": 452,
+      "chinese": "技术部",
+      "context": "{ name: '技术部', children: ["
+    },
+    {
+      "line_num": 453,
+      "chinese": "前端组",
+      "context": "{ name: '前端组' },"
+    },
+    {
+      "line_num": 454,
+      "chinese": "后端组",
+      "context": "{ name: '后端组' },"
+    },
+    {
+      "line_num": 456,
+      "chinese": "产品部",
+      "context": "{ name: '产品部' },"
+    },
+    {
+      "line_num": 504,
+      "chinese": "技术部",
+      "context": "{ id: 1, name: '技术部', parentId: null, memberCount: 15 },"
+    },
+    {
+      "line_num": 505,
+      "chinese": "产品部",
+      "context": "{ id: 2, name: '产品部', parentId: null, memberCount: 8 },"
+    },
+    {
+      "line_num": 506,
+      "chinese": "前端组",
+      "context": "{ id: 3, name: '前端组', parentId: 1, memberCount: 5 },"
+    },
+    {
+      "line_num": 507,
+      "chinese": "后端组",
+      "context": "{ id: 4, name: '后端组', parentId: 1, memberCount: 6 },"
+    },
+    {
+      "line_num": 508,
+      "chinese": "测试组",
+      "context": "{ id: 5, name: '测试组', parentId: 1, memberCount: 4 },"
+    },
+    {
+      "line_num": 509,
+      "chinese": "产品设计",
+      "context": "{ id: 6, name: '产品设计', parentId: 2, memberCount: 4 },"
+    },
+    {
+      "line_num": 510,
+      "chinese": "运营部",
+      "context": "{ id: 7, name: '运营部', parentId: null, memberCount: 10 },"
+    },
+    {
+      "line_num": 518,
+      "chinese": "张三",
+      "context": "{ id: 1, name: '张三' },"
+    },
+    {
+      "line_num": 519,
+      "chinese": "李四",
+      "context": "{ id: 2, name: '李四' },"
+    },
+    {
+      "line_num": 520,
+      "chinese": "王五",
+      "context": "{ id: 3, name: '王五' },"
+    },
+    {
+      "line_num": 521,
+      "chinese": "赵六",
+      "context": "{ id: 4, name: '赵六' },"
+    },
+    {
+      "line_num": 530,
+      "chinese": "产品需求文档",
+      "context": "{ id: 1, name: '产品需求文档', level: 'none' },"
+    },
+    {
+      "line_num": 531,
+      "chinese": "技术方案",
+      "context": "{ id: 2, name: '技术方案', level: 'none' },"
+    },
+    {
+      "line_num": 534,
+      "chinese": "项目资料",
+      "context": "{ id: 1, name: '项目资料', level: 'none' },"
+    },
+    {
+      "line_num": 535,
+      "chinese": "共享文档",
+      "context": "{ id: 2, name: '共享文档', level: 'none' },"
+    },
+    {
+      "line_num": 538,
+      "chinese": "技术文档库",
+      "context": "{ id: 1, name: '技术文档库', level: 'none' },"
+    },
+    {
+      "line_num": 539,
+      "chinese": "产品知识库",
+      "context": "{ id: 2, name: '产品知识库', level: 'none' },"
+    }
+  ],
+  "src/views/admin/FeedbackReview.vue": [
+    {
+      "line_num": 5,
+      "chinese": "统计卡片区",
+      "context": "<!-- 统计卡片区 -->"
+    },
+    {
+      "line_num": 27,
+      "chinese": "审核列表",
+      "context": "<!-- 审核列表 -->"
+    },
+    {
+      "line_num": 96,
+      "chinese": "拒绝原因弹窗",
+      "context": "<!-- 拒绝原因弹窗 -->"
+    }
+  ],
+  "src/views/document/DocumentLibrary.vue": [
+    {
+      "line_num": 173,
+      "chinese": "文件列表滚动容器",
+      "context": "<!-- 文件列表滚动容器 -->"
+    },
+    {
+      "line_num": 1084,
+      "chinese": "全部内部",
+      "context": "breadcrumbs.value = [{ id: null, title: '全部内部' }, ...path]"
+    },
+    {
+      "line_num": 1101,
+      "chinese": "请输入搜索关键词",
+      "context": "ElMessage.warning('请输入搜索关键词')"
+    },
+    {
+      "line_num": 1104,
+      "chinese": "正在搜索",
+      "context": "ElMessage.success(`正在搜索 \"${createFolderForm.collaborator}\"...`)"
+    },
+    {
+      "line_num": 1110,
+      "chinese": "请输入文件夹名称",
+      "context": "ElMessage.warning('请输入文件夹名称')"
+    },
+    {
+      "line_num": 1116,
+      "chinese": "文件夹已创建",
+      "context": "ElMessage.success('文件夹已创建')"
+    },
+    {
+      "line_num": 1131,
+      "chinese": "无标题文档",
+      "context": "const res: any = await createDocument({ title: '无标题文档', type, parentId: currentParentId.value })"
+    },
+    {
+      "line_num": 1148,
+      "chinese": "菜单宽度",
+      "context": "const menuWidth = 200"
+    },
+    {
+      "line_num": 1149,
+      "chinese": "菜单高度",
+      "context": "const menuHeight = 320"
+    },
+    {
+      "line_num": 1149,
+      "chinese": "根据菜单项数量估算",
+      "context": "const menuHeight = 320"
+    },
+    {
+      "line_num": 1150,
+      "chinese": "边距",
+      "context": "const padding = 8"
+    },
+    {
+      "line_num": 1244,
+      "chinese": "链接已复制",
+      "context": "ElMessage.success('链接已复制')"
+    },
+    {
+      "line_num": 1255,
+      "chinese": "已添加到快速访问",
+      "context": "ElMessage.success('已添加到快速访问')"
+    },
+    {
+      "line_num": 1257,
+      "chinese": "已在快速访问列表中",
+      "context": "ElMessage.info('已在快速访问列表中')"
+    },
+    {
+      "line_num": 1262,
+      "chinese": "已收藏",
+      "context": "ElMessage.success('已收藏')"
+    },
+    {
+      "line_num": 1265,
+      "chinese": "请在文档编辑页面中转移所有权",
+      "context": "ElMessage.info('请在文档编辑页面中转移所有权')"
+    },
+    {
+      "line_num": 1268,
+      "chinese": "正在打包下载",
+      "context": "ElMessage.success(`正在打包下载 \"${folder.title}\"...`)"
+    },
+    {
+      "line_num": 1271,
+      "chinese": "文件夹已打包完成",
+      "context": "ElMessage.success('文件夹已打包完成，开始下载')"
+    },
+    {
+      "line_num": 1271,
+      "chinese": "开始下载",
+      "context": "ElMessage.success('文件夹已打包完成，开始下载')"
+    },
+    {
+      "line_num": 1280,
+      "chinese": "确定将文件夹",
+      "context": "await ElMessageBox.confirm(`确定将文件夹\"${folder.title}\"移至回收站？`, '删除确认')"
+    },
+    {
+      "line_num": 1280,
+      "chinese": "移至回收站",
+      "context": "await ElMessageBox.confirm(`确定将文件夹\"${folder.title}\"移至回收站？`, '删除确认')"
+    },
+    {
+      "line_num": 1280,
+      "chinese": "删除确认",
+      "context": "await ElMessageBox.confirm(`确定将文件夹\"${folder.title}\"移至回收站？`, '删除确认')"
+    },
+    {
+      "line_num": 1282,
+      "chinese": "已移至回收站",
+      "context": "ElMessage.success('已移至回收站')"
+    },
+    {
+      "line_num": 1291,
+      "chinese": "名称不能为空",
+      "context": "ElMessage.warning('名称不能为空')"
+    },
+    {
+      "line_num": 1297,
+      "chinese": "重命名成功",
+      "context": "ElMessage.success('重命名成功')"
+    },
+    {
+      "line_num": 1301,
+      "chinese": "重命名失败",
+      "context": "} catch { ElMessage.error('重命名失败') }"
+    },
+    {
+      "line_num": 1315,
+      "chinese": "已从置顶移除",
+      "context": "ElMessage.success(doc.isPinned ? '已从置顶移除' : '已添加到置顶')"
+    },
+    {
+      "line_num": 1315,
+      "chinese": "已添加到置顶",
+      "context": "ElMessage.success(doc.isPinned ? '已从置顶移除' : '已添加到置顶')"
+    },
+    {
+      "line_num": 1321,
+      "chinese": "已取消收藏",
+      "context": "ElMessage.success(doc.isFavorite ? '已取消收藏' : '已收藏')"
+    },
+    {
+      "line_num": 1321,
+      "chinese": "已收藏",
+      "context": "ElMessage.success(doc.isFavorite ? '已取消收藏' : '已收藏')"
+    },
+    {
+      "line_num": 1327,
+      "chinese": "副本已创建",
+      "context": "ElMessage.success('副本已创建')"
+    },
+    {
+      "line_num": 1334,
+      "chinese": "链接已复制",
+      "context": "ElMessage.success('链接已复制')"
+    },
+    {
+      "line_num": 1343,
+      "chinese": "快捷方式已添加到桌面",
+      "context": "ElMessage.success('快捷方式已添加到桌面')"
+    },
+    {
+      "line_num": 1348,
+      "chinese": "的快捷方式已添加",
+      "context": "ElMessage.success(`\"${doc.title}\" 的快捷方式已添加`)"
+    },
+    {
+      "line_num": 1353,
+      "chinese": "请输入新所有者的邮箱或用户名",
+      "context": "const { value } = await ElMessageBox.prompt('请输入新所有者的邮箱或用户名', '转移所有权', {"
+    },
+    {
+      "line_num": 1353,
+      "chinese": "转移所有权",
+      "context": "const { value } = await ElMessageBox.prompt('请输入新所有者的邮箱或用户名', '转移所有权', {"
+    },
+    {
+      "line_num": 1354,
+      "chinese": "转移",
+      "context": "confirmButtonText: '转移',"
+    },
+    {
+      "line_num": 1355,
+      "chinese": "取消",
+      "context": "cancelButtonText: '取消',"
+    },
+    {
+      "line_num": 1356,
+      "chinese": "输入用户邮箱",
+      "context": "inputPlaceholder: '输入用户邮箱',"
+    },
+    {
+      "line_num": 1359,
+      "chinese": "的所有权已转移给",
+      "context": "ElMessage.success(`\"${doc.title}\" 的所有权已转移给 ${value}`)"
+    },
+    {
+      "line_num": 1371,
+      "chinese": "已移动",
+      "context": "ElMessage.success('已移动')"
+    },
+    {
+      "line_num": 1385,
+      "chinese": "确定删除",
+      "context": "await ElMessageBox.confirm(`确定删除\"${doc.title}\"？`, '删除确认')"
+    },
+    {
+      "line_num": 1385,
+      "chinese": "删除确认",
+      "context": "await ElMessageBox.confirm(`确定删除\"${doc.title}\"？`, '删除确认')"
+    },
+    {
+      "line_num": 1388,
+      "chinese": "已删除",
+      "context": "ElMessage.success('已删除')"
+    },
+    {
+      "line_num": 1391,
+      "chinese": "删除失败",
+      "context": "ElMessage.error(`删除失败: ${err.message || '未知错误'}`)"
+    },
+    {
+      "line_num": 1391,
+      "chinese": "未知错误",
+      "context": "ElMessage.error(`删除失败: ${err.message || '未知错误'}`)"
+    },
+    {
+      "line_num": 1397,
+      "chinese": "确定将",
+      "context": "await ElMessageBox.confirm(`确定将\"${doc.title}\"移至回收站？`, '删除确认')"
+    },
+    {
+      "line_num": 1397,
+      "chinese": "移至回收站",
+      "context": "await ElMessageBox.confirm(`确定将\"${doc.title}\"移至回收站？`, '删除确认')"
+    },
+    {
+      "line_num": 1397,
+      "chinese": "删除确认",
+      "context": "await ElMessageBox.confirm(`确定将\"${doc.title}\"移至回收站？`, '删除确认')"
+    },
+    {
+      "line_num": 1399,
+      "chinese": "已移至回收站",
+      "context": "ElMessage.success('已移至回收站')"
+    },
+    {
+      "line_num": 1441,
+      "chinese": "导入成功",
+      "context": "ElMessage.success('导入成功')"
+    },
+    {
+      "line_num": 1449,
+      "chinese": "导入失败",
+      "context": "} catch { ElMessage.error('导入失败') } finally { importLoading.value = false }"
+    },
+    {
+      "line_num": 1477,
+      "chinese": "成功上传",
+      "context": "ElMessage.success(`成功上传 ${successCount} 个文件${failCount > 0 ? `，${failCount} 个失败` : ''}`)"
+    },
+    {
+      "line_num": 1477,
+      "chinese": "个文件",
+      "context": "ElMessage.success(`成功上传 ${successCount} 个文件${failCount > 0 ? `，${failCount} 个失败` : ''}`)"
+    },
+    {
+      "line_num": 1477,
+      "chinese": "个失败",
+      "context": "ElMessage.success(`成功上传 ${successCount} 个文件${failCount > 0 ? `，${failCount} 个失败` : ''}`)"
+    },
+    {
+      "line_num": 1482,
+      "chinese": "上传失败",
+      "context": "ElMessage.error('上传失败')"
+    },
+    {
+      "line_num": 1520,
+      "chinese": "成功上传",
+      "context": "ElMessage.success(`成功上传 ${successCount} 个文件${failCount > 0 ? `，${failCount} 个失败` : ''}`)"
+    },
+    {
+      "line_num": 1520,
+      "chinese": "个文件",
+      "context": "ElMessage.success(`成功上传 ${successCount} 个文件${failCount > 0 ? `，${failCount} 个失败` : ''}`)"
+    },
+    {
+      "line_num": 1520,
+      "chinese": "个失败",
+      "context": "ElMessage.success(`成功上传 ${successCount} 个文件${failCount > 0 ? `，${failCount} 个失败` : ''}`)"
+    },
+    {
+      "line_num": 1526,
+      "chinese": "上传失败",
+      "context": "ElMessage.error('上传失败')"
+    },
+    {
+      "line_num": 1538,
+      "chinese": "链接已复制",
+      "context": "ElMessage.success('链接已复制')"
+    },
+    {
+      "line_num": 1541,
+      "chinese": "请输入邮箱或用户名",
+      "context": "if (!shareInviteEmail.value.trim()) { ElMessage.warning('请输入邮箱或用户名'); return }"
+    },
+    {
+      "line_num": 1542,
+      "chinese": "邀请已发送",
+      "context": "ElMessage.success('邀请已发送')"
+    },
+    {
+      "line_num": 1556,
+      "chinese": "已创建",
+      "context": "ElMessage.success(`已创建 ${selectedDocs.value.length} 个副本`)"
+    },
+    {
+      "line_num": 1556,
+      "chinese": "个副本",
+      "context": "ElMessage.success(`已创建 ${selectedDocs.value.length} 个副本`)"
+    },
+    {
+      "line_num": 1564,
+      "chinese": "已收藏",
+      "context": "ElMessage.success('已收藏')"
+    },
+    {
+      "line_num": 1569,
+      "chinese": "确定删除选中的",
+      "context": "await ElMessageBox.confirm(`确定删除选中的 ${selectedDocs.value.length} 项？`, '批量删除')"
+    },
+    {
+      "line_num": 1569,
+      "chinese": "项",
+      "context": "await ElMessageBox.confirm(`确定删除选中的 ${selectedDocs.value.length} 项？`, '批量删除')"
+    },
+    {
+      "line_num": 1569,
+      "chinese": "批量删除",
+      "context": "await ElMessageBox.confirm(`确定删除选中的 ${selectedDocs.value.length} 项？`, '批量删除')"
+    },
+    {
+      "line_num": 1573,
+      "chinese": "已删除",
+      "context": "ElMessage.success('已删除')"
+    },
+    {
+      "line_num": 1625,
+      "chinese": "已将",
+      "context": "ElMessage.success(`已将\"${draggedDoc.value.title}\"移动到\"${targetDoc.title}\"`)"
+    },
+    {
+      "line_num": 1625,
+      "chinese": "移动到",
+      "context": "ElMessage.success(`已将\"${draggedDoc.value.title}\"移动到\"${targetDoc.title}\"`)"
+    },
+    {
+      "line_num": 1629,
+      "chinese": "移动失败",
+      "context": "ElMessage.error('移动失败')"
+    }
+  ],
+  "src/views/document/DocEditor.vue": [
+    {
+      "line_num": 42,
+      "chinese": "连接状态指示器",
+      "context": "<!-- Yjs 连接状态指示器 -->"
+    },
+    {
+      "line_num": 83,
+      "chinese": "协作状态条",
+      "context": "<!-- 协作状态条 -->"
+    },
+    {
+      "line_num": 86,
+      "chinese": "断线状态",
+      "context": "<!-- 断线状态 -->"
+    },
+    {
+      "line_num": 93,
+      "chinese": "正在连接",
+      "context": "<!-- 正在连接 -->"
+    },
+    {
+      "line_num": 99,
+      "chinese": "冲突检测",
+      "context": "<!-- 冲突检测 -->"
+    },
+    {
+      "line_num": 106,
+      "chinese": "同步完成",
+      "context": "<!-- 同步完成（短暂显示后自动隐藏） -->"
+    },
+    {
+      "line_num": 106,
+      "chinese": "短暂显示后自动隐藏",
+      "context": "<!-- 同步完成（短暂显示后自动隐藏） -->"
+    },
+    {
+      "line_num": 196,
+      "chinese": "协作通知提示",
+      "context": "<!-- 协作通知提示 -->"
+    },
+    {
+      "line_num": 235,
+      "chinese": "冲突解决弹窗",
+      "context": "<!-- 冲突解决弹窗 -->"
+    },
+    {
+      "line_num": 876,
+      "chinese": "仅用于协作者在线状态",
+      "context": "initWebSocket()"
+    },
+    {
+      "line_num": 877,
+      "chinese": "加载文档数据并初始化编辑器",
+      "context": "await loadDocument()"
+    }
+  ],
+  "src/views/layout/MainLayout.vue": [
+    {
+      "line_num": 28,
+      "chinese": "云盘存储",
+      "context": "<span class=\"nav-label\">云盘存储</span>"
+    },
+    {
+      "line_num": 45,
+      "chinese": "搜索",
+      "context": "<el-input v-model=\"kbSearch\" placeholder=\"搜索\" prefix-icon=\"Search\" size=\"small\" clearable />"
+    },
+    {
+      "line_num": 52,
+      "chinese": "首页",
+      "context": "<span class=\"nav-label\">首页</span>"
+    },
+    {
+      "line_num": 62,
+      "chinese": "个人知识库",
+      "context": "<span class=\"drive-section-title\">个人知识库</span>"
+    },
+    {
+      "line_num": 63,
+      "chinese": "全部",
+      "context": "<el-tag size=\"small\" type=\"info\" style=\"margin-left: auto; cursor:pointer\" @click.stop=\"$router.push"
+    },
+    {
+      "line_num": 66,
+      "chinese": "暂无知识库",
+      "context": "<div v-if=\"!filteredKbList.length\" class=\"drive-tree-empty\">暂无知识库</div>"
+    },
+    {
+      "line_num": 89,
+      "chinese": "共享知识库",
+      "context": "<span class=\"drive-section-title\">共享知识库</span>"
+    },
+    {
+      "line_num": 90,
+      "chinese": "全部",
+      "context": "<el-tag size=\"small\" type=\"info\" style=\"margin-left: auto; cursor:pointer\" @click.stop=\"$router.push"
+    },
+    {
+      "line_num": 93,
+      "chinese": "暂无共享知识库",
+      "context": "<div class=\"drive-tree-empty\">暂无共享知识库</div>"
+    },
+    {
+      "line_num": 102,
+      "chinese": "我创建的",
+      "context": "<span class=\"drive-section-title\">我创建的</span>"
+    },
+    {
+      "line_num": 106,
+      "chinese": "暂无创建的知识库",
+      "context": "<div v-if=\"!filteredKbList.length\" class=\"drive-tree-empty\">暂无创建的知识库</div>"
+    },
+    {
+      "line_num": 129,
+      "chinese": "我加入的",
+      "context": "<span class=\"drive-section-title\">我加入的</span>"
+    },
+    {
+      "line_num": 132,
+      "chinese": "暂无加入的知识库",
+      "context": "<div class=\"drive-tree-empty\">暂无加入的知识库</div>"
+    },
+    {
+      "line_num": 140,
+      "chinese": "新建知识库",
+      "context": "<span>新建知识库</span>"
+    },
+    {
+      "line_num": 145,
+      "chinese": "打开",
+      "context": "<div class=\"ctx-item\" @click=\"handleKbTreeAction('open')\"><el-icon :size=\"13\"><View /></el-icon>打开</"
+    },
+    {
+      "line_num": 146,
+      "chinese": "在新标签页打开",
+      "context": "<div class=\"ctx-item\" @click=\"handleKbTreeAction('openNew')\"><el-icon :size=\"13\"><TopRight /></el-ic"
+    },
+    {
+      "line_num": 148,
+      "chinese": "分享",
+      "context": "<div class=\"ctx-item\" @click=\"handleKbTreeAction('share')\"><el-icon :size=\"13\"><Share /></el-icon>分享"
+    },
+    {
+      "line_num": 149,
+      "chinese": "复制链接",
+      "context": "<div class=\"ctx-item\" @click=\"handleKbTreeAction('copyLink')\"><el-icon :size=\"13\"><Link /></el-icon>"
+    },
+    {
+      "line_num": 151,
+      "chinese": "设置",
+      "context": "<div class=\"ctx-item\" @click=\"handleKbTreeAction('settings')\"><el-icon :size=\"13\"><Setting /></el-ic"
+    },
+    {
+      "line_num": 152,
+      "chinese": "删除",
+      "context": "<div class=\"ctx-item danger\" @click=\"handleKbTreeAction('delete')\"><el-icon :size=\"13\"><Delete /></e"
+    },
+    {
+      "line_num": 168,
+      "chinese": "搜索",
+      "context": "<el-input v-model=\"driveFolderSearch\" placeholder=\"搜索\" prefix-icon=\"Search\" size=\"small\" clearable /"
+    },
+    {
+      "line_num": 177,
+      "chinese": "我的文件夹",
+      "context": "<span class=\"drive-section-title\" :class=\"{ active: driveSelectedFolderId === null }\">我的文件夹</span>"
+    },
+    {
+      "line_num": 180,
+      "chinese": "暂无文件夹",
+      "context": "<div v-if=\"!driveFolderTree.length\" class=\"drive-tree-empty\">暂无文件夹</div>"
+    },
+    {
+      "line_num": 202,
+      "chinese": "共享文件夹",
+      "context": "<span class=\"drive-section-title\">共享文件夹</span>"
+    },
+    {
+      "line_num": 205,
+      "chinese": "暂无共享文件夹",
+      "context": "<div class=\"drive-tree-empty\">暂无共享文件夹</div>"
+    },
+    {
+      "line_num": 214,
+      "chinese": "远程存储",
+      "context": "<span class=\"drive-section-title\">远程存储</span>"
+    },
+    {
+      "line_num": 226,
+      "chinese": "已连接",
+      "context": "<el-tag size=\"small\" type=\"success\" style=\"margin-left: auto; font-size: 11px;\">已连接</el-tag>"
+    },
+    {
+      "line_num": 235,
+      "chinese": "新建文件夹",
+      "context": "<span>新建文件夹</span>"
+    },
+    {
+      "line_num": 256,
+      "chinese": "搜索",
+      "context": "<el-input v-model=\"searchKeyword\" placeholder=\"搜索\" prefix-icon=\"Search\" size=\"small\" clearable @keyu"
+    },
+    {
+      "line_num": 284,
+      "chinese": "置顶文档",
+      "context": "<span class=\"section-title\">置顶文档</span>"
+    },
+    {
+      "line_num": 291,
+      "chinese": "暂无置顶文档",
+      "context": "<div v-if=\"!pinnedDocs.length\" class=\"section-empty\">暂无置顶文档</div>"
+    },
+    {
+      "line_num": 298,
+      "chinese": "置顶知识库",
+      "context": "<span class=\"section-title\" @click=\"pinnedKbExpanded = !pinnedKbExpanded\">置顶知识库</span>"
+    },
+    {
+      "line_num": 301,
+      "chinese": "知识库管理",
+      "context": "<el-icon :size=\"14\" class=\"section-act-btn\" @click.stop=\"ElMessage.info('知识库管理')\"><MoreFilled /></el"
+    },
+    {
+      "line_num": 306,
+      "chinese": "新建",
+      "context": "<div class=\"dropdown-group-title\">新建</div>"
+    },
+    {
+      "line_num": 307,
+      "chinese": "空白知识库",
+      "context": "<div class=\"dropdown-item\" @click=\"handleKbNew('blank')\"><el-icon color=\"#3370ff\"><Collection /></el"
+    },
+    {
+      "line_num": 308,
+      "chinese": "团队项目",
+      "context": "<div class=\"dropdown-item\" @click=\"handleKbNew('team')\"><el-icon color=\"#36b37e\"><UserFilled /></el-"
+    },
+    {
+      "line_num": 309,
+      "chinese": "产品部门",
+      "context": "<div class=\"dropdown-item\" @click=\"handleKbNew('product')\"><el-icon color=\"#f5a623\"><Compass /></el-"
+    },
+    {
+      "line_num": 310,
+      "chinese": "研发部门",
+      "context": "<div class=\"dropdown-item\" @click=\"handleKbNew('dev')\"><el-icon color=\"#3370ff\"><Monitor /></el-icon"
+    },
+    {
+      "line_num": 311,
+      "chinese": "设计部门",
+      "context": "<div class=\"dropdown-item\" @click=\"handleKbNew('design')\"><el-icon color=\"#9254de\"><Brush /></el-ico"
+    },
+    {
+      "line_num": 312,
+      "chinese": "市场营销",
+      "context": "<div class=\"dropdown-item\" @click=\"handleKbNew('marketing')\"><el-icon color=\"#f54a45\"><TrendCharts /"
+    },
+    {
+      "line_num": 313,
+      "chinese": "更多模板",
+      "context": "<div class=\"dropdown-item\" @click=\"handleKbNew('more')\"><el-icon color=\"#646a73\"><Grid /></el-icon>更"
+    },
+    {
+      "line_num": 315,
+      "chinese": "添加",
+      "context": "<div class=\"dropdown-group-title\">添加</div>"
+    },
+    {
+      "line_num": 316,
+      "chinese": "已有知识库",
+      "context": "<div class=\"dropdown-item\" @click=\"handleKbNew('existing')\"><el-icon color=\"#3370ff\"><FolderAdd /></"
+    },
+    {
+      "line_num": 321,
+      "chinese": "新建或置顶知识库",
+      "context": "<span class=\"section-item-text\">新建或置顶知识库</span>"
+    },
+    {
+      "line_num": 329,
+      "chinese": "我的文档库",
+      "context": "<span class=\"section-title\" @click=\"docLibExpanded = !docLibExpanded\">我的文档库</span>"
+    },
+    {
+      "line_num": 333,
+      "chinese": "文档库设置",
+      "context": "<el-icon :size=\"14\" class=\"section-act-btn\" @click.stop=\"ElMessage.info('文档库设置')\"><Setting /></el-ic"
+    },
+    {
+      "line_num": 338,
+      "chinese": "文档",
+      "context": "<div class=\"dropdown-item\" @click=\"handleDocLibCreate('doc')\"><el-icon color=\"#3370ff\"><Document /><"
+    },
+    {
+      "line_num": 339,
+      "chinese": "表格",
+      "context": "<div class=\"dropdown-item\" @click=\"handleDocLibCreate('sheet')\"><el-icon color=\"#36b37e\"><Grid /></e"
+    },
+    {
+      "line_num": 340,
+      "chinese": "幻灯片",
+      "context": "<div class=\"dropdown-item\" @click=\"handleDocLibCreate('slide')\"><el-icon color=\"#ff7d00\"><Monitor />"
+    },
+    {
+      "line_num": 341,
+      "chinese": "多维表格",
+      "context": "<div class=\"dropdown-item\" @click=\"handleDocLibCreate('bitable')\"><el-icon color=\"#00b8d9\"><Tickets "
+    },
+    {
+      "line_num": 342,
+      "chinese": "问卷",
+      "context": "<div class=\"dropdown-item\" @click=\"handleDocLibCreate('survey')\"><el-icon color=\"#f54a45\"><Notebook "
+    },
+    {
+      "line_num": 343,
+      "chinese": "思维笔记",
+      "context": "<div class=\"dropdown-item\" @click=\"handleDocLibCreate('mindnote')\"><el-icon color=\"#9254de\"><Share /"
+    },
+    {
+      "line_num": 344,
+      "chinese": "文档应用",
+      "context": "<div class=\"dropdown-group-title\">文档应用</div>"
+    },
+    {
+      "line_num": 345,
+      "chinese": "画板",
+      "context": "<div class=\"dropdown-item\" @click=\"handleDocLibCreate('doc')\"><el-icon color=\"#36b37e\"><EditPen /></"
+    },
+    {
+      "line_num": 346,
+      "chinese": "思维导图",
+      "context": "<div class=\"dropdown-item\" @click=\"handleDocLibCreate('mindnote')\"><el-icon color=\"#9254de\"><Share /"
+    },
+    {
+      "line_num": 347,
+      "chinese": "流程图",
+      "context": "<div class=\"dropdown-item\" @click=\"handleDocLibCreate('doc')\"><el-icon color=\"#ff7d00\"><Connection /"
+    },
+    {
+      "line_num": 349,
+      "chinese": "上传及导入",
+      "context": "<div class=\"dropdown-item\"><el-icon color=\"#646a73\"><Upload /></el-icon>上传及导入<el-icon class=\"arrow-r"
+    },
+    {
+      "line_num": 350,
+      "chinese": "迁入已有云文档",
+      "context": "<div class=\"dropdown-item\" @click=\"handleImportDocs\"><el-icon color=\"#3370ff\"><FolderAdd /></el-icon"
+    },
+    {
+      "line_num": 368,
+      "chinese": "按",
+      "context": "<div class=\"bottom-hint\" @click=\"showShortcutsHelp = true\">按 ? 查看快捷键</div>"
+    },
+    {
+      "line_num": 368,
+      "chinese": "查看快捷键",
+      "context": "<div class=\"bottom-hint\" @click=\"showShortcutsHelp = true\">按 ? 查看快捷键</div>"
+    },
+    {
+      "line_num": 383,
+      "chinese": "帮助",
+      "context": "<el-icon class=\"topbar-icon\" @click=\"ElMessage.info('帮助')\"><QuestionFilled /></el-icon>"
+    },
+    {
+      "line_num": 384,
+      "chinese": "应用",
+      "context": "<el-icon class=\"topbar-icon\" @click=\"ElMessage.info('应用')\"><Menu /></el-icon>"
+    },
+    {
+      "line_num": 385,
+      "chinese": "主题切换",
+      "context": "<!-- 主题切换 -->"
+    },
+    {
+      "line_num": 389,
+      "chinese": "语言切换",
+      "context": "<!-- 语言切换 -->"
+    },
+    {
+      "line_num": 397,
+      "chinese": "中文",
+      "context": "<el-dropdown-item command=\"zh-CN\">中文</el-dropdown-item>"
+    },
+    {
+      "line_num": 420,
+      "chinese": "打开",
+      "context": "<div class=\"ctx-item\" @click=\"handlePinnedAction('open')\"><el-icon><View /></el-icon>打开</div>"
+    },
+    {
+      "line_num": 421,
+      "chinese": "取消置顶",
+      "context": "<div class=\"ctx-item\" @click=\"handlePinnedAction('unpin')\"><el-icon><Flag /></el-icon>取消置顶</div>"
+    },
+    {
+      "line_num": 422,
+      "chinese": "复制链接",
+      "context": "<div class=\"ctx-item\" @click=\"handlePinnedAction('copyLink')\"><el-icon><Link /></el-icon>复制链接</div>"
+    },
+    {
+      "line_num": 427,
+      "chinese": "打开",
+      "context": "<div class=\"ctx-item\" @click=\"handleDriveFolderCtx('open')\"><el-icon><View /></el-icon>打开</div>"
+    },
+    {
+      "line_num": 428,
+      "chinese": "重命名",
+      "context": "<div class=\"ctx-item\" @click=\"handleDriveFolderCtx('rename')\"><el-icon><EditPen /></el-icon>重命名</div"
+    },
+    {
+      "line_num": 429,
+      "chinese": "分享",
+      "context": "<div class=\"ctx-item\" @click=\"handleDriveFolderCtx('share')\"><el-icon><Share /></el-icon>分享</div>"
+    },
+    {
+      "line_num": 431,
+      "chinese": "删除",
+      "context": "<div class=\"ctx-item danger\" @click=\"handleDriveFolderCtx('delete')\"><el-icon><Delete /></el-icon>删除"
+    },
+    {
+      "line_num": 466,
+      "chinese": "加载状态",
+      "context": "isLoading?: boolean"
+    },
+    {
+      "line_num": 467,
+      "chinese": "是否有更多子项需要懒加载",
+      "context": "hasMore?: boolean"
+    },
+    {
+      "line_num": 486,
+      "chinese": "中文",
+      "context": "locale.value === 'zh-CN' ? '中文' : 'English'"
+    },
+    {
+      "line_num": 628,
+      "chinese": "分享链接已复制",
+      "context": "ElMessage.success('分享链接已复制')"
+    },
+    {
+      "line_num": 633,
+      "chinese": "链接已复制",
+      "context": "ElMessage.success('链接已复制')"
+    },
+    {
+      "line_num": 639,
+      "chinese": "确定删除知识库",
+      "context": "await ElMessageBox.confirm(`确定删除知识库\"${kb.name}\"？删除后不可恢复。`, '删除确认', { type: 'warning' })"
+    },
+    {
+      "line_num": 639,
+      "chinese": "删除后不可恢复",
+      "context": "await ElMessageBox.confirm(`确定删除知识库\"${kb.name}\"？删除后不可恢复。`, '删除确认', { type: 'warning' })"
+    },
+    {
+      "line_num": 639,
+      "chinese": "删除确认",
+      "context": "await ElMessageBox.confirm(`确定删除知识库\"${kb.name}\"？删除后不可恢复。`, '删除确认', { type: 'warning' })"
+    },
+    {
+      "line_num": 641,
+      "chinese": "已删除",
+      "context": "ElMessage.success('已删除')"
+    },
+    {
+      "line_num": 649,
+      "chinese": "请输入知识库名称",
+      "context": "const { value } = await ElMessageBox.prompt('请输入知识库名称', '新建知识库', {"
+    },
+    {
+      "line_num": 649,
+      "chinese": "新建知识库",
+      "context": "const { value } = await ElMessageBox.prompt('请输入知识库名称', '新建知识库', {"
+    },
+    {
+      "line_num": 650,
+      "chinese": "创建",
+      "context": "confirmButtonText: '创建',"
+    },
+    {
+      "line_num": 651,
+      "chinese": "取消",
+      "context": "cancelButtonText: '取消',"
+    },
+    {
+      "line_num": 652,
+      "chinese": "输入知识库名称",
+      "context": "inputPlaceholder: '输入知识库名称',"
+    },
+    {
+      "line_num": 656,
+      "chinese": "知识库已创建",
+      "context": "ElMessage.success('知识库已创建')"
+    },
+    {
+      "line_num": 714,
+      "chinese": "文件夹可能有子项",
+      "context": "hasMore: d.type === 'folder',"
+    },
+    {
+      "line_num": 714,
+      "chinese": "需要懒加载",
+      "context": "hasMore: d.type === 'folder',"
+    },
+    {
+      "line_num": 818,
+      "chinese": "文件夹可能有子项",
+      "context": "hasMore: d.type === 'folder'"
+    },
+    {
+      "line_num": 851,
+      "chinese": "请输入新名称",
+      "context": "const { value } = await ElMessageBox.prompt('请输入新名称', '重命名', {"
+    },
+    {
+      "line_num": 851,
+      "chinese": "重命名",
+      "context": "const { value } = await ElMessageBox.prompt('请输入新名称', '重命名', {"
+    },
+    {
+      "line_num": 853,
+      "chinese": "确定",
+      "context": "confirmButtonText: '确定',"
+    },
+    {
+      "line_num": 854,
+      "chinese": "取消",
+      "context": "cancelButtonText: '取消',"
+    },
+    {
+      "line_num": 858,
+      "chinese": "重命名成功",
+      "context": "ElMessage.success('重命名成功')"
+    },
+    {
+      "line_num": 864,
+      "chinese": "分享链接已复制",
+      "context": "ElMessage.success(`分享链接已复制: ${window.location.origin}/documents?folderId=${folder.id}`)"
+    },
+    {
+      "line_num": 868,
+      "chinese": "确定将文件夹",
+      "context": "await ElMessageBox.confirm(`确定将文件夹\"${folder.title}\"移至回收站？`, '删除确认')"
+    },
+    {
+      "line_num": 868,
+      "chinese": "移至回收站",
+      "context": "await ElMessageBox.confirm(`确定将文件夹\"${folder.title}\"移至回收站？`, '删除确认')"
+    },
+    {
+      "line_num": 868,
+      "chinese": "删除确认",
+      "context": "await ElMessageBox.confirm(`确定将文件夹\"${folder.title}\"移至回收站？`, '删除确认')"
+    },
+    {
+      "line_num": 870,
+      "chinese": "已移至回收站",
+      "context": "ElMessage.success('已移至回收站')"
+    },
+    {
+      "line_num": 878,
+      "chinese": "新建文件夹",
+      "context": "await createDocument({ title: '新建文件夹', type: 'folder', parentId: driveSelectedFolderId.value })"
+    },
+    {
+      "line_num": 879,
+      "chinese": "文件夹已创建",
+      "context": "ElMessage.success('文件夹已创建')"
+    },
+    {
+      "line_num": 935,
+      "chinese": "未命名知识库",
+      "context": "await createKnowledgeBase({ name: '未命名知识库', description: '' })"
+    },
+    {
+      "line_num": 936,
+      "chinese": "知识库已创建",
+      "context": "ElMessage.success('知识库已创建')"
+    },
+    {
+      "line_num": 944,
+      "chinese": "团队项目",
+      "context": "const nameMap: Record<string, string> = { team: '团队项目', product: '产品部门', dev: '研发部门', design: '设计部门'"
+    },
+    {
+      "line_num": 944,
+      "chinese": "产品部门",
+      "context": "const nameMap: Record<string, string> = { team: '团队项目', product: '产品部门', dev: '研发部门', design: '设计部门'"
+    },
+    {
+      "line_num": 944,
+      "chinese": "研发部门",
+      "context": "const nameMap: Record<string, string> = { team: '团队项目', product: '产品部门', dev: '研发部门', design: '设计部门'"
+    },
+    {
+      "line_num": 944,
+      "chinese": "设计部门",
+      "context": "const nameMap: Record<string, string> = { team: '团队项目', product: '产品部门', dev: '研发部门', design: '设计部门'"
+    },
+    {
+      "line_num": 944,
+      "chinese": "市场营销",
+      "context": "const nameMap: Record<string, string> = { team: '团队项目', product: '产品部门', dev: '研发部门', design: '设计部门'"
+    },
+    {
+      "line_num": 946,
+      "chinese": "未命名知识库",
+      "context": "await createKnowledgeBase({ name: nameMap[type] || '未命名知识库', description: `基于${nameMap[type] || '模板'"
+    },
+    {
+      "line_num": 946,
+      "chinese": "基于",
+      "context": "await createKnowledgeBase({ name: nameMap[type] || '未命名知识库', description: `基于${nameMap[type] || '模板'"
+    },
+    {
+      "line_num": 946,
+      "chinese": "模板",
+      "context": "await createKnowledgeBase({ name: nameMap[type] || '未命名知识库', description: `基于${nameMap[type] || '模板'"
+    },
+    {
+      "line_num": 946,
+      "chinese": "创建",
+      "context": "await createKnowledgeBase({ name: nameMap[type] || '未命名知识库', description: `基于${nameMap[type] || '模板'"
+    },
+    {
+      "line_num": 947,
+      "chinese": "知识库已创建",
+      "context": "ElMessage.success('知识库已创建')"
+    },
+    {
+      "line_num": 957,
+      "chinese": "新建文件夹",
+      "context": "const res: any = await createDocument({ title: type === 'folder' ? '新建文件夹' : '无标题文档', type, parentId"
+    },
+    {
+      "line_num": 957,
+      "chinese": "无标题文档",
+      "context": "const res: any = await createDocument({ title: type === 'folder' ? '新建文件夹' : '无标题文档', type, parentId"
+    },
+    {
+      "line_num": 963,
+      "chinese": "文件夹已创建",
+      "context": "ElMessage.success('文件夹已创建')"
+    },
+    {
+      "line_num": 973,
+      "chinese": "请使用上传功能导入文档",
+      "context": "ElMessage.success('请使用上传功能导入文档')"
+    },
+    {
+      "line_num": 996,
+      "chinese": "已取消置顶",
+      "context": "ElMessage.success('已取消置顶')"
+    },
+    {
+      "line_num": 1000,
+      "chinese": "链接已复制",
+      "context": "ElMessage.success('链接已复制')"
+    }
+  ],
+  "src/views/knowledge/KnowledgeDetail.vue": [
+    {
+      "line_num": 594,
+      "chinese": "构建控制区",
+      "context": "<!-- 构建控制区 -->"
+    },
+    {
+      "line_num": 614,
+      "chinese": "构建中状态",
+      "context": "<!-- 构建中状态 -->"
+    },
+    {
+      "line_num": 621,
+      "chinese": "失败状态",
+      "context": "<!-- 失败状态 -->"
+    },
+    {
+      "line_num": 630,
+      "chinese": "未构建状态",
+      "context": "<!-- 未构建状态 -->"
+    },
+    {
+      "line_num": 638,
+      "chinese": "图谱展示",
+      "context": "<!-- 图谱展示 -->"
+    }
+  ],
+  "src/views/knowledge/SharedConversation.vue": [
+    {
+      "line_num": 7,
+      "chinese": "知识库助手",
+      "context": "<span class=\"shared-brand\">KLoggerX 知识库助手</span>"
+    },
+    {
+      "line_num": 15,
+      "chinese": "加载中",
+      "context": "<span>加载中...</span>"
+    },
+    {
+      "line_num": 23,
+      "chinese": "返回首页",
+      "context": "<el-button type=\"primary\" @click=\"$router.push('/')\">返回首页</el-button>"
+    },
+    {
+      "line_num": 37,
+      "chinese": "此对话由",
+      "context": "<span>此对话由 KLoggerX 知识库助手生成</span>"
+    },
+    {
+      "line_num": 37,
+      "chinese": "知识库助手生成",
+      "context": "<span>此对话由 KLoggerX 知识库助手生成</span>"
+    },
+    {
+      "line_num": 63,
+      "chinese": "无效链接",
+      "context": "errorTitle.value = '无效链接'"
+    },
+    {
+      "line_num": 64,
+      "chinese": "分享链接格式不正确",
+      "context": "errorDesc.value = '分享链接格式不正确'"
+    },
+    {
+      "line_num": 87,
+      "chinese": "链接不存在",
+      "context": "errorTitle.value = '链接不存在'"
+    },
+    {
+      "line_num": 88,
+      "chinese": "该分享链接不存在或已被取消",
+      "context": "errorDesc.value = '该分享链接不存在或已被取消'"
+    },
+    {
+      "line_num": 90,
+      "chinese": "链接已过期",
+      "context": "errorTitle.value = '链接已过期'"
+    },
+    {
+      "line_num": 91,
+      "chinese": "该分享链接已过期",
+      "context": "errorDesc.value = '该分享链接已过期，请联系分享者重新分享'"
+    },
+    {
+      "line_num": 91,
+      "chinese": "请联系分享者重新分享",
+      "context": "errorDesc.value = '该分享链接已过期，请联系分享者重新分享'"
+    },
+    {
+      "line_num": 93,
+      "chinese": "加载失败",
+      "context": "errorTitle.value = '加载失败'"
+    },
+    {
+      "line_num": 94,
+      "chinese": "无法加载分享内容",
+      "context": "errorDesc.value = '无法加载分享内容，请稍后重试'"
+    },
+    {
+      "line_num": 94,
+      "chinese": "请稍后重试",
+      "context": "errorDesc.value = '无法加载分享内容，请稍后重试'"
+    }
+  ],
+  "src/composables/useYjsCollaboration.ts": [
+    {
+      "line_num": 12,
+      "chinese": "秒防抖",
+      "context": "const TOAST_DEBOUNCE_MS = 10000"
+    },
+    {
+      "line_num": 30,
+      "chinese": "新增",
+      "context": "onSync?: (synced: boolean) => void"
+    },
+    {
+      "line_num": 30,
+      "chinese": "同步完成回调",
+      "context": "onSync?: (synced: boolean) => void"
+    }
+  ],
+  "src/composables/useNotify.ts": [
+    {
+      "line_num": 103,
+      "chinese": "确认",
+      "context": "const confirm = (message: string, title: string = '确认'): Promise<MessageBoxData> => {"
+    },
+    {
+      "line_num": 130,
+      "chinese": "操作成功",
+      "context": "success: '操作成功',"
+    },
+    {
+      "line_num": 131,
+      "chinese": "警告",
+      "context": "warning: '警告',"
+    },
+    {
+      "line_num": 132,
+      "chinese": "提示",
+      "context": "info: '提示',"
+    },
+    {
+      "line_num": 133,
+      "chinese": "错误",
+      "context": "error: '错误',"
+    },
+    {
+      "line_num": 134,
+      "chinese": "系统通知",
+      "context": "system: '系统通知',"
+    },
+    {
+      "line_num": 168,
+      "chinese": "确认",
+      "context": "confirm: (message: string, title: string = '确认') => {"
+    }
+  ],
+  "src/hooks/useDocument.ts": [
+    {
+      "line_num": 15,
+      "chinese": "已保存",
+      "context": "const saveStatus = ref('已保存')"
+    },
+    {
+      "line_num": 37,
+      "chinese": "保存中",
+      "context": "saveStatus.value = '保存中...'"
+    },
+    {
+      "line_num": 40,
+      "chinese": "已保存",
+      "context": "saveStatus.value = '已保存'"
+    },
+    {
+      "line_num": 42,
+      "chinese": "保存失败",
+      "context": "saveStatus.value = '保存失败'"
+    },
+    {
+      "line_num": 47,
+      "chinese": "编辑中",
+      "context": "saveStatus.value = '编辑中...'"
+    },
+    {
+      "line_num": 53,
+      "chinese": "无标题文档",
+      "context": "if (!title.value.trim()) title.value = '无标题文档'"
+    }
+  ],
+  "src/router/index.ts": [
+    {
+      "line_num": 47,
+      "chinese": "主页",
+      "context": "meta: { title: '主页' },"
+    },
+    {
+      "line_num": 53,
+      "chinese": "云盘",
+      "context": "meta: { title: '云盘' },"
+    },
+    {
+      "line_num": 90,
+      "chinese": "模板库",
+      "context": "meta: { title: '模板库' },"
+    },
+    {
+      "line_num": 100,
+      "chinese": "系统管理",
+      "context": "meta: { requiresAdmin: true, title: '系统管理' },"
+    },
+    {
+      "line_num": 106,
+      "chinese": "仪表盘",
+      "context": "meta: { title: '仪表盘' },"
+    },
+    {
+      "line_num": 112,
+      "chinese": "用户和权限",
+      "context": "meta: { title: '用户和权限' },"
+    },
+    {
+      "line_num": 118,
+      "chinese": "部门管理",
+      "context": "meta: { title: '部门管理' },"
+    },
+    {
+      "line_num": 124,
+      "chinese": "模型设置",
+      "context": "meta: { title: 'AI模型设置' },"
+    },
+    {
+      "line_num": 130,
+      "chinese": "云盘存储",
+      "context": "meta: { title: '云盘存储' },"
+    },
+    {
+      "line_num": 136,
+      "chinese": "模板管理",
+      "context": "meta: { title: '模板管理' },"
+    },
+    {
+      "line_num": 142,
+      "chinese": "反馈审核",
+      "context": "meta: { title: '反馈审核' },"
+    },
+    {
+      "line_num": 148,
+      "chinese": "操作日志",
+      "context": "meta: { title: '操作日志' },"
+    },
+    {
+      "line_num": 184,
+      "chinese": "无权限访问管理后台",
+      "context": "ElMessage.warning('无权限访问管理后台')"
+    }
+  ],
+  "src/components/FolderTreeNode.vue": [
+    {
+      "line_num": 28,
+      "chinese": "加载中",
+      "context": "<span>加载中...</span>"
+    },
+    {
+      "line_num": 64,
+      "chinese": "加载状态",
+      "context": "isLoading?: boolean"
+    },
+    {
+      "line_num": 64,
+      "chinese": "由父组件控制",
+      "context": "isLoading?: boolean"
+    },
+    {
+      "line_num": 65,
+      "chinese": "是否有更多子项需要加载",
+      "context": "hasMore?: boolean"
+    }
+  ],
+  "src/components/editor/code/CodeEditor.vue": [
+    {
+      "line_num": 5,
+      "chinese": "常用",
+      "context": "<el-option-group label=\"常用\">"
+    },
+    {
+      "line_num": 13,
+      "chinese": "前端",
+      "context": "<el-option-group label=\"前端\">"
+    },
+    {
+      "line_num": 19,
+      "chinese": "其他",
+      "context": "<el-option-group label=\"其他\">"
+    },
+    {
+      "line_num": 35,
+      "chinese": "格式化代码",
+      "context": "<el-button size=\"small\" text @click=\"formatCode\" title=\"格式化代码\">"
+    },
+    {
+      "line_num": 36,
+      "chinese": "格式化",
+      "context": "<el-icon><MagicStick /></el-icon>格式化"
+    },
+    {
+      "line_num": 38,
+      "chinese": "复制代码",
+      "context": "<el-button size=\"small\" text @click=\"copyCode\" title=\"复制代码\">"
+    },
+    {
+      "line_num": 39,
+      "chinese": "复制",
+      "context": "<el-icon><DocumentCopy /></el-icon>复制"
+    },
+    {
+      "line_num": 41,
+      "chinese": "下载代码",
+      "context": "<el-button size=\"small\" text @click=\"downloadCode\" title=\"下载代码\">"
+    },
+    {
+      "line_num": 42,
+      "chinese": "下载",
+      "context": "<el-icon><Download /></el-icon>下载"
+    },
+    {
+      "line_num": 46,
+      "chinese": "行",
+      "context": "<span class=\"line-info\">行 {{ currentLine }}, 列 {{ currentColumn }}</span>"
+    },
+    {
+      "line_num": 46,
+      "chinese": "列",
+      "context": "<span class=\"line-info\">行 {{ currentLine }}, 列 {{ currentColumn }}</span>"
+    },
+    {
+      "line_num": 65,
+      "chinese": "在此输入",
+      "context": ":placeholder=\"`在此输入 ${language} 代码...`\""
+    },
+    {
+      "line_num": 65,
+      "chinese": "代码",
+      "context": ":placeholder=\"`在此输入 ${language} 代码...`\""
+    },
+    {
+      "line_num": 72,
+      "chinese": "行",
+      "context": "<span>{{ lineCount }} 行</span>"
+    },
+    {
+      "line_num": 73,
+      "chinese": "字符",
+      "context": "<span>{{ code.length }} 字符</span>"
+    },
+    {
+      "line_num": 179,
+      "chinese": "已保存",
+      "context": "ElMessage.success('已保存')"
+    },
+    {
+      "line_num": 220,
+      "chinese": "格式化成功",
+      "context": "ElMessage.success('格式化成功')"
+    },
+    {
+      "line_num": 223,
+      "chinese": "当前语言暂不支持自动格式化",
+      "context": "ElMessage.info('当前语言暂不支持自动格式化')"
+    },
+    {
+      "line_num": 226,
+      "chinese": "格式化失败",
+      "context": "ElMessage.error('格式化失败，请检查代码语法')"
+    },
+    {
+      "line_num": 226,
+      "chinese": "请检查代码语法",
+      "context": "ElMessage.error('格式化失败，请检查代码语法')"
+    },
+    {
+      "line_num": 232,
+      "chinese": "代码已复制到剪贴板",
+      "context": "ElMessage.success('代码已复制到剪贴板')"
+    },
+    {
+      "line_num": 250,
+      "chinese": "下载成功",
+      "context": "ElMessage.success('下载成功')"
+    }
+  ],
+  "src/components/editor/slide/SlideEditor.vue": [
+    {
+      "line_num": 376,
+      "chinese": "请输入图片",
+      "context": "const { value } = await ElMessageBox.prompt('请输入图片URL', '插入在线图片', {"
+    },
+    {
+      "line_num": 376,
+      "chinese": "插入在线图片",
+      "context": "const { value } = await ElMessageBox.prompt('请输入图片URL', '插入在线图片', {"
+    },
+    {
+      "line_num": 378,
+      "chinese": "插入",
+      "context": "confirmButtonText: '插入',"
+    },
+    {
+      "line_num": 379,
+      "chinese": "取消",
+      "context": "cancelButtonText: '取消',"
+    },
+    {
+      "line_num": 392,
+      "chinese": "双击编辑文本",
+      "context": "content: '双击编辑文本',"
+    },
+    {
+      "line_num": 399,
+      "chinese": "请输入链接",
+      "context": "const { value } = await ElMessageBox.prompt('请输入链接URL', '插入链接', {"
+    },
+    {
+      "line_num": 399,
+      "chinese": "插入链接",
+      "context": "const { value } = await ElMessageBox.prompt('请输入链接URL', '插入链接', {"
+    },
+    {
+      "line_num": 401,
+      "chinese": "插入",
+      "context": "confirmButtonText: '插入',"
+    },
+    {
+      "line_num": 402,
+      "chinese": "取消",
+      "context": "cancelButtonText: '取消',"
+    },
+    {
+      "line_num": 406,
+      "chinese": "链接",
+      "context": "currentSlide.value.body += `\\n[链接](${value})`"
+    },
+    {
+      "line_num": 415,
+      "chinese": "插入视频",
+      "context": "const title = type === 'video' ? '插入视频' : '插入音频'"
+    },
+    {
+      "line_num": 415,
+      "chinese": "插入音频",
+      "context": "const title = type === 'video' ? '插入视频' : '插入音频'"
+    },
+    {
+      "line_num": 416,
+      "chinese": "请输入媒体文件",
+      "context": "const { value } = await ElMessageBox.prompt('请输入媒体文件URL', title, {"
+    },
+    {
+      "line_num": 418,
+      "chinese": "插入",
+      "context": "confirmButtonText: '插入',"
+    },
+    {
+      "line_num": 419,
+      "chinese": "取消",
+      "context": "cancelButtonText: '取消',"
+    },
+    {
+      "line_num": 505,
+      "chinese": "请输入背景图片",
+      "context": "const { value } = await ElMessageBox.prompt('请输入背景图片URL', '设置背景图片', {"
+    },
+    {
+      "line_num": 505,
+      "chinese": "设置背景图片",
+      "context": "const { value } = await ElMessageBox.prompt('请输入背景图片URL', '设置背景图片', {"
+    },
+    {
+      "line_num": 507,
+      "chinese": "设置",
+      "context": "confirmButtonText: '设置',"
+    },
+    {
+      "line_num": 508,
+      "chinese": "取消",
+      "context": "cancelButtonText: '取消',"
+    },
+    {
+      "line_num": 569,
+      "chinese": "导出成功",
+      "context": "ElMessage.success('导出成功')"
+    },
+    {
+      "line_num": 590,
+      "chinese": "保存中",
+      "context": "saveStatus.value = '保存中...'"
+    },
+    {
+      "line_num": 594,
+      "chinese": "已保存",
+      "context": "saveStatus.value = '已保存'"
+    }
+  ],
+  "src/components/editor/slide/SlideToolbar.vue": [
+    {
+      "line_num": 39,
+      "chinese": "开始",
+      "context": "<!-- 开始 菜单 -->"
+    },
+    {
+      "line_num": 39,
+      "chinese": "菜单",
+      "context": "<!-- 开始 菜单 -->"
+    },
+    {
+      "line_num": 41,
+      "chinese": "剪贴板",
+      "context": "<!-- 剪贴板 -->"
+    },
+    {
+      "line_num": 53,
+      "chinese": "幻灯片",
+      "context": "<!-- 幻灯片 -->"
+    },
+    {
+      "line_num": 67,
+      "chinese": "字体",
+      "context": "<!-- 字体 -->"
+    },
+    {
+      "line_num": 100,
+      "chinese": "段落",
+      "context": "<!-- 段落 -->"
+    },
+    {
+      "line_num": 113,
+      "chinese": "插入",
+      "context": "<!-- 插入 菜单 -->"
+    },
+    {
+      "line_num": 113,
+      "chinese": "菜单",
+      "context": "<!-- 插入 菜单 -->"
+    },
+    {
+      "line_num": 192,
+      "chinese": "设计",
+      "context": "<!-- 设计 菜单 -->"
+    },
+    {
+      "line_num": 192,
+      "chinese": "菜单",
+      "context": "<!-- 设计 菜单 -->"
+    },
+    {
+      "line_num": 235,
+      "chinese": "动画",
+      "context": "<!-- 动画 菜单 -->"
+    },
+    {
+      "line_num": 235,
+      "chinese": "菜单",
+      "context": "<!-- 动画 菜单 -->"
+    },
+    {
+      "line_num": 279,
+      "chinese": "放映",
+      "context": "<!-- 放映 菜单 -->"
+    },
+    {
+      "line_num": 279,
+      "chinese": "菜单",
+      "context": "<!-- 放映 菜单 -->"
+    }
+  ],
+  "src/components/editor/rich-text/CommentBubble.vue": [
+    {
+      "line_num": 9,
+      "chinese": "已解决评论",
+      "context": ":title=\"bubble.resolved ? '已解决评论' : `点击查看评论`\""
+    },
+    {
+      "line_num": 9,
+      "chinese": "点击查看评论",
+      "context": ":title=\"bubble.resolved ? '已解决评论' : `点击查看评论`\""
+    }
+  ],
+  "src/components/editor/rich-text/CommentPanel.vue": [
+    {
+      "line_num": 4,
+      "chinese": "评论",
+      "context": "<span class=\"panel-title\">评论 ({{ comments.length }})</span>"
+    },
+    {
+      "line_num": 8,
+      "chinese": "暂无评论",
+      "context": "<div v-if=\"!comments.length && !loading\" class=\"comment-empty\">暂无评论</div>"
+    },
+    {
+      "line_num": 20,
+      "chinese": "标记已解决",
+      "context": "<el-button v-if=\"!comment.resolved && canResolveComment(comment)\" text size=\"small\" @click=\"handleRe"
+    },
+    {
+      "line_num": 21,
+      "chinese": "已解决",
+      "context": "<el-tag v-else-if=\"comment.resolved\" size=\"small\" type=\"success\">已解决</el-tag>"
+    },
+    {
+      "line_num": 22,
+      "chinese": "删除",
+      "context": "<el-button v-if=\"canDeleteComment(comment)\" text size=\"small\" type=\"danger\" @click=\"handleDelete(com"
+    },
+    {
+      "line_num": 36,
+      "chinese": "回复",
+      "context": "<el-input v-model=\"replyTexts[comment.id]\" size=\"small\" placeholder=\"回复...\" @keyup.enter=\"handleRepl"
+    },
+    {
+      "line_num": 38,
+      "chinese": "发送",
+      "context": "<el-button size=\"small\" @click=\"handleReply(comment.id)\">发送</el-button>"
+    },
+    {
+      "line_num": 51,
+      "chinese": "添加评论",
+      "context": "placeholder=\"添加评论... 使用 @ 提及他人\""
+    },
+    {
+      "line_num": 51,
+      "chinese": "使用",
+      "context": "placeholder=\"添加评论... 使用 @ 提及他人\""
+    },
+    {
+      "line_num": 51,
+      "chinese": "提及他人",
+      "context": "placeholder=\"添加评论... 使用 @ 提及他人\""
+    },
+    {
+      "line_num": 60,
+      "chinese": "搜索中",
+      "context": "<span>搜索中...</span>"
+    },
+    {
+      "line_num": 63,
+      "chinese": "未找到用户",
+      "context": "未找到用户"
+    },
+    {
+      "line_num": 79,
+      "chinese": "发送",
+      "context": "<el-button type=\"primary\" size=\"small\" :disabled=\"!newComment.trim()\" @click=\"handleAdd\">发送</el-butt"
+    },
+    {
+      "line_num": 314,
+      "chinese": "刚刚",
+      "context": "if (mins < 1) return '刚刚'"
+    },
+    {
+      "line_num": 315,
+      "chinese": "分钟前",
+      "context": "if (mins < 60) return `${mins}分钟前`"
+    },
+    {
+      "line_num": 317,
+      "chinese": "小时前",
+      "context": "if (hours < 24) return `${hours}小时前`"
+    },
+    {
+      "line_num": 401,
+      "chinese": "已标记为已解决",
+      "context": "ElMessage.success('已标记为已解决')"
+    }
+  ],
+  "src/components/common/TemplateLibrary.vue": [
+    {
+      "line_num": 5,
+      "chinese": "模板库",
+      "context": "<div class=\"tpl-title\">模板库</div>"
+    },
+    {
+      "line_num": 6,
+      "chinese": "选择模板",
+      "context": "<div class=\"tpl-subtitle\">选择模板，快速开始创作</div>"
+    },
+    {
+      "line_num": 6,
+      "chinese": "快速开始创作",
+      "context": "<div class=\"tpl-subtitle\">选择模板，快速开始创作</div>"
+    },
+    {
+      "line_num": 10,
+      "chinese": "搜索模板",
+      "context": "placeholder=\"搜索模板...\""
+    },
+    {
+      "line_num": 24,
+      "chinese": "全部模板",
+      "context": ">全部模板</div>"
+    },
+    {
+      "line_num": 40,
+      "chinese": "全部",
+      "context": ">全部</div>"
+    },
+    {
+      "line_num": 77,
+      "chinese": "暂无预览内容",
+      "context": "{{ tpl.preview || tpl.description || '暂无预览内容' }}"
+    },
+    {
+      "line_num": 80,
+      "chinese": "未分类",
+      "context": "<el-tag size=\"small\" type=\"info\">{{ tpl.category || '未分类' }}</el-tag>"
+    },
+    {
+      "line_num": 86,
+      "chinese": "暂无匹配的模板",
+      "context": "<el-empty description=\"暂无匹配的模板\" />"
+    },
+    {
+      "line_num": 96,
+      "chinese": "模板预览",
+      "context": ":title=\"selectedTpl?.name || '模板预览'\""
+    },
+    {
+      "line_num": 102,
+      "chinese": "未分类",
+      "context": "<el-tag size=\"small\" type=\"info\">{{ selectedTpl.category || '未分类' }}</el-tag>"
+    },
+    {
+      "line_num": 113,
+      "chinese": "此模板暂无内容",
+      "context": "<el-empty description=\"此模板暂无内容\" :image-size=\"80\" />"
+    },
+    {
+      "line_num": 114,
+      "chinese": "您可以直接使用此模板创建文档",
+      "context": "<p class=\"preview-hint\">您可以直接使用此模板创建文档，然后在编辑器中添加内容</p>"
+    },
+    {
+      "line_num": 114,
+      "chinese": "然后在编辑器中添加内容",
+      "context": "<p class=\"preview-hint\">您可以直接使用此模板创建文档，然后在编辑器中添加内容</p>"
+    },
+    {
+      "line_num": 119,
+      "chinese": "取消",
+      "context": "<el-button @click=\"showPreviewDialog = false\">取消</el-button>"
+    },
+    {
+      "line_num": 120,
+      "chinese": "使用此模板",
+      "context": "<el-button type=\"primary\" @click=\"handleUseFromPreview\">使用此模板</el-button>"
+    },
+    {
+      "line_num": 128,
+      "chinese": "使用模板",
+      "context": ":title=\"'使用模板：' + (selectedTpl?.name || '')\""
+    },
+    {
+      "line_num": 133,
+      "chinese": "文档标题",
+      "context": "<el-form-item label=\"文档标题\">"
+    },
+    {
+      "line_num": 136,
+      "chinese": "保存位置",
+      "context": "<el-form-item label=\"保存位置\">"
+    },
+    {
+      "line_num": 137,
+      "chinese": "根目录",
+      "context": "<el-select v-model=\"targetParentId\" placeholder=\"根目录（我的文档库）\" clearable style=\"width: 100%\">"
+    },
+    {
+      "line_num": 137,
+      "chinese": "我的文档库",
+      "context": "<el-select v-model=\"targetParentId\" placeholder=\"根目录（我的文档库）\" clearable style=\"width: 100%\">"
+    },
+    {
+      "line_num": 138,
+      "chinese": "根目录",
+      "context": "<el-option :value=\"undefined\" label=\"根目录（我的文档库）\" />"
+    },
+    {
+      "line_num": 138,
+      "chinese": "我的文档库",
+      "context": "<el-option :value=\"undefined\" label=\"根目录（我的文档库）\" />"
+    },
+    {
+      "line_num": 144,
+      "chinese": "取消",
+      "context": "<el-button @click=\"showUseDialog = false\">取消</el-button>"
+    },
+    {
+      "line_num": 145,
+      "chinese": "创建文档",
+      "context": "<el-button type=\"primary\" :loading=\"creating\" @click=\"confirmUse\">创建文档</el-button>"
+    },
+    {
+      "line_num": 203,
+      "chinese": "文档",
+      "context": "doc: '文档', sheet: '表格', slide: '幻灯片', mindnote: '思维笔记',"
+    },
+    {
+      "line_num": 203,
+      "chinese": "表格",
+      "context": "doc: '文档', sheet: '表格', slide: '幻灯片', mindnote: '思维笔记',"
+    },
+    {
+      "line_num": 203,
+      "chinese": "幻灯片",
+      "context": "doc: '文档', sheet: '表格', slide: '幻灯片', mindnote: '思维笔记',"
+    },
+    {
+      "line_num": 203,
+      "chinese": "思维笔记",
+      "context": "doc: '文档', sheet: '表格', slide: '幻灯片', mindnote: '思维笔记',"
+    },
+    {
+      "line_num": 204,
+      "chinese": "多维表格",
+      "context": "bitable: '多维表格', survey: '问卷',"
+    },
+    {
+      "line_num": 204,
+      "chinese": "问卷",
+      "context": "bitable: '多维表格', survey: '问卷',"
+    },
+    {
+      "line_num": 318,
+      "chinese": "已取消收藏",
+      "context": "ElMessage.success('已取消收藏')"
+    },
+    {
+      "line_num": 322,
+      "chinese": "已收藏",
+      "context": "ElMessage.success('已收藏')"
+    },
+    {
+      "line_num": 325,
+      "chinese": "操作失败",
+      "context": "ElMessage.error('操作失败')"
+    },
+    {
+      "line_num": 363,
+      "chinese": "文档已创建",
+      "context": "ElMessage.success('文档已创建')"
+    },
+    {
+      "line_num": 369,
+      "chinese": "创建失败",
+      "context": "ElMessage.error('创建失败')"
+    }
+  ],
+  "src/components/common/EnhancedSearchBar.vue": [
+    {
+      "line_num": 25,
+      "chinese": "搜索历史",
+      "context": "<span class=\"dropdown-title\">搜索历史</span>"
+    },
+    {
+      "line_num": 39,
+      "chinese": "清空搜索历史",
+      "context": "<span>清空搜索历史</span>"
+    },
+    {
+      "line_num": 63,
+      "chinese": "全部",
+      "context": ">全部</span>"
+    },
+    {
+      "line_num": 68,
+      "chinese": "文档",
+      "context": ">文档</span>"
+    },
+    {
+      "line_num": 73,
+      "chinese": "知识库",
+      "context": ">知识库</span>"
+    },
+    {
+      "line_num": 81,
+      "chinese": "搜索中",
+      "context": "<span>搜索中...</span>"
+    },
+    {
+      "line_num": 87,
+      "chinese": "未找到相关内容",
+      "context": "<span v-if=\"searchKeyword\">未找到相关内容</span>"
+    },
+    {
+      "line_num": 88,
+      "chinese": "输入关键词开始搜索",
+      "context": "<span v-else>输入关键词开始搜索</span>"
+    },
+    {
+      "line_num": 96,
+      "chinese": "文档",
+      "context": "<span class=\"group-title\">文档</span>"
+    },
+    {
+      "line_num": 97,
+      "chinese": "条结果",
+      "context": "<span class=\"group-count\">{{ documentResults.length }} 条结果</span>"
+    },
+    {
+      "line_num": 111,
+      "chinese": "未命名",
+      "context": "<div class=\"result-title\" v-html=\"highlightText(doc.title || doc.originalName || '未命名', searchKeywor"
+    },
+    {
+      "line_num": 128,
+      "chinese": "知识库",
+      "context": "<span class=\"group-title\">知识库</span>"
+    },
+    {
+      "line_num": 129,
+      "chinese": "条结果",
+      "context": "<span class=\"group-count\">{{ knowledgeResults.length }} 条结果</span>"
+    },
+    {
+      "line_num": 141,
+      "chinese": "未命名知识库",
+      "context": "<div class=\"result-title\" v-html=\"highlightText(kb.name || '未命名知识库', searchKeyword)\"></div>"
+    },
+    {
+      "line_num": 146,
+      "chinese": "知识库",
+      "context": "<el-tag size=\"small\" type=\"primary\" disable-transitions>知识库</el-tag>"
+    },
+    {
+      "line_num": 174,
+      "chinese": "搜索文档",
+      "context": "placeholder: '搜索文档、知识库...'"
+    },
+    {
+      "line_num": 174,
+      "chinese": "知识库",
+      "context": "placeholder: '搜索文档、知识库...'"
+    },
+    {
+      "line_num": 241,
+      "chinese": "文件夹",
+      "context": "folder: '文件夹', doc: '文档', sheet: '表格', slide: '幻灯片',"
+    },
+    {
+      "line_num": 241,
+      "chinese": "文档",
+      "context": "folder: '文件夹', doc: '文档', sheet: '表格', slide: '幻灯片',"
+    },
+    {
+      "line_num": 241,
+      "chinese": "表格",
+      "context": "folder: '文件夹', doc: '文档', sheet: '表格', slide: '幻灯片',"
+    },
+    {
+      "line_num": 241,
+      "chinese": "幻灯片",
+      "context": "folder: '文件夹', doc: '文档', sheet: '表格', slide: '幻灯片',"
+    },
+    {
+      "line_num": 242,
+      "chinese": "思维笔记",
+      "context": "mindnote: '思维笔记', bitable: '多维表格', survey: '问卷',"
+    },
+    {
+      "line_num": 242,
+      "chinese": "多维表格",
+      "context": "mindnote: '思维笔记', bitable: '多维表格', survey: '问卷',"
+    },
+    {
+      "line_num": 242,
+      "chinese": "问卷",
+      "context": "mindnote: '思维笔记', bitable: '多维表格', survey: '问卷',"
+    },
+    {
+      "line_num": 243,
+      "chinese": "其他",
+      "context": "file: '其他', image: '图片', code: '代码',"
+    },
+    {
+      "line_num": 243,
+      "chinese": "图片",
+      "context": "file: '其他', image: '图片', code: '代码',"
+    },
+    {
+      "line_num": 243,
+      "chinese": "代码",
+      "context": "file: '其他', image: '图片', code: '代码',"
+    },
+    {
+      "line_num": 247,
+      "chinese": "文本文档",
+      "context": "txt: '文本文档', doc: 'Word文档', docx: 'Word文档', pdf: 'PDF文档',"
+    },
+    {
+      "line_num": 247,
+      "chinese": "文档",
+      "context": "txt: '文本文档', doc: 'Word文档', docx: 'Word文档', pdf: 'PDF文档',"
+    },
+    {
+      "line_num": 247,
+      "chinese": "文档",
+      "context": "txt: '文本文档', doc: 'Word文档', docx: 'Word文档', pdf: 'PDF文档',"
+    },
+    {
+      "line_num": 247,
+      "chinese": "文档",
+      "context": "txt: '文本文档', doc: 'Word文档', docx: 'Word文档', pdf: 'PDF文档',"
+    },
+    {
+      "line_num": 248,
+      "chinese": "表格",
+      "context": "xls: 'Excel表格', xlsx: 'Excel表格', csv: 'CSV表格',"
+    },
+    {
+      "line_num": 248,
+      "chinese": "表格",
+      "context": "xls: 'Excel表格', xlsx: 'Excel表格', csv: 'CSV表格',"
+    },
+    {
+      "line_num": 248,
+      "chinese": "表格",
+      "context": "xls: 'Excel表格', xlsx: 'Excel表格', csv: 'CSV表格',"
+    },
+    {
+      "line_num": 249,
+      "chinese": "幻灯片",
+      "context": "ppt: '幻灯片', pptx: '幻灯片',"
+    },
+    {
+      "line_num": 249,
+      "chinese": "幻灯片",
+      "context": "ppt: '幻灯片', pptx: '幻灯片',"
+    },
+    {
+      "line_num": 250,
+      "chinese": "图片",
+      "context": "png: 'PNG图片', jpg: 'JPEG图片', jpeg: 'JPEG图片', gif: 'GIF动图',"
+    },
+    {
+      "line_num": 250,
+      "chinese": "图片",
+      "context": "png: 'PNG图片', jpg: 'JPEG图片', jpeg: 'JPEG图片', gif: 'GIF动图',"
+    },
+    {
+      "line_num": 250,
+      "chinese": "图片",
+      "context": "png: 'PNG图片', jpg: 'JPEG图片', jpeg: 'JPEG图片', gif: 'GIF动图',"
+    },
+    {
+      "line_num": 250,
+      "chinese": "动图",
+      "context": "png: 'PNG图片', jpg: 'JPEG图片', jpeg: 'JPEG图片', gif: 'GIF动图',"
+    },
+    {
+      "line_num": 251,
+      "chinese": "音频文件",
+      "context": "mp3: '音频文件', mp4: '视频文件', zip: '压缩包', rar: '压缩包',"
+    },
+    {
+      "line_num": 251,
+      "chinese": "视频文件",
+      "context": "mp3: '音频文件', mp4: '视频文件', zip: '压缩包', rar: '压缩包',"
+    },
+    {
+      "line_num": 251,
+      "chinese": "压缩包",
+      "context": "mp3: '音频文件', mp4: '视频文件', zip: '压缩包', rar: '压缩包',"
+    },
+    {
+      "line_num": 251,
+      "chinese": "压缩包",
+      "context": "mp3: '音频文件', mp4: '视频文件', zip: '压缩包', rar: '压缩包',"
+    },
+    {
+      "line_num": 252,
+      "chinese": "文件",
+      "context": "md: 'Markdown', json: 'JSON文件',"
+    },
+    {
+      "line_num": 276,
+      "chinese": "其他",
+      "context": "return '其他'"
+    },
+    {
+      "line_num": 292,
+      "chinese": "今天",
+      "context": "if (isToday) return `今天 ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padS"
+    }
+  ],
+  "src/components/common/GlobalSearch.vue": [
+    {
+      "line_num": 5,
+      "chinese": "搜索输入",
+      "context": "<!-- 搜索输入 -->"
+    },
+    {
+      "line_num": 13,
+      "chinese": "搜索历史",
+      "context": "<!-- 搜索历史 (无查询时显示) -->"
+    },
+    {
+      "line_num": 13,
+      "chinese": "无查询时显示",
+      "context": "<!-- 搜索历史 (无查询时显示) -->"
+    },
+    {
+      "line_num": 24,
+      "chinese": "搜索结果",
+      "context": "<!-- 搜索结果 -->"
+    },
+    {
+      "line_num": 43,
+      "chinese": "加载状态",
+      "context": "<!-- 加载状态 -->"
+    }
+  ],
+  "src/components/document/VersionDiff.vue": [
+    {
+      "line_num": 9,
+      "chinese": "版本",
+      "context": "<span class=\"label-old\">版本 {{ oldVersion }}</span>"
+    },
+    {
+      "line_num": 11,
+      "chinese": "版本",
+      "context": "<span class=\"label-new\">版本 {{ newVersion }}</span>"
+    },
+    {
+      "line_num": 28,
+      "chinese": "显示全部",
+      "context": "显示全部 {{ lines.length }} 行（当前显示 {{ maxLines }} 行）"
+    },
+    {
+      "line_num": 28,
+      "chinese": "行",
+      "context": "显示全部 {{ lines.length }} 行（当前显示 {{ maxLines }} 行）"
+    },
+    {
+      "line_num": 28,
+      "chinese": "当前显示",
+      "context": "显示全部 {{ lines.length }} 行（当前显示 {{ maxLines }} 行）"
+    },
+    {
+      "line_num": 28,
+      "chinese": "行",
+      "context": "显示全部 {{ lines.length }} 行（当前显示 {{ maxLines }} 行）"
+    },
+    {
+      "line_num": 33,
+      "chinese": "两个版本内容相同",
+      "context": "<div v-if=\"!lines.length\" class=\"diff-empty\">两个版本内容相同</div>"
+    }
+  ],
+  "src/components/knowledge/ConversationList.vue": [
+    {
+      "line_num": 257,
+      "chinese": "已删除",
+      "context": "ElMessage.success('已删除')"
+    },
+    {
+      "line_num": 260,
+      "chinese": "删除失败",
+      "context": "ElMessage.error('删除失败')"
+    }
+  ],
+  "src/utils/format.ts": [
+    {
+      "line_num": 10,
+      "chinese": "刚刚",
+      "context": "if (minutes < 1) return '刚刚'"
+    },
+    {
+      "line_num": 11,
+      "chinese": "分钟前",
+      "context": "if (minutes < 60) return `${minutes}分钟前`"
+    },
+    {
+      "line_num": 12,
+      "chinese": "小时前",
+      "context": "if (hours < 24) return `${hours}小时前`"
+    },
+    {
+      "line_num": 13,
+      "chinese": "天前",
+      "context": "if (days < 7) return `${days}天前`"
+    }
+  ],
+  "src/api/request.ts": [
+    {
+      "line_num": 26,
+      "chinese": "请求失败",
+      "context": "ElMessage.error(res.message || '请求失败')"
+    },
+    {
+      "line_num": 31,
+      "chinese": "请求失败",
+      "context": "return Promise.reject(new Error(res.message || '请求失败'))"
+    },
+    {
+      "line_num": 36,
+      "chinese": "网络异常",
+      "context": "const msg = error.response?.data?.message || error.message || '网络异常'"
+    }
+  ],
+  "src/api/modules/remote-storage.ts": [
+    {
+      "line_num": 37,
+      "chinese": "下载失败",
+      "context": "throw new Error(`下载失败: ${response.status} ${response.statusText}`)"
+    }
+  ],
+  "src/locales/index.ts": [
+    {
+      "line_num": 6,
+      "chinese": "使用",
+      "context": "legacy: false,"
+    },
+    {
+      "line_num": 6,
+      "chinese": "模式",
+      "context": "legacy: false,"
+    }
+  ]
+}

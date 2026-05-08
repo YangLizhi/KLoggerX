@@ -137,6 +137,11 @@ func (c *SMBClient) List(path string) ([]RemoteFileInfo, error) {
 		return nil, err
 	}
 
+	// Validate path security
+	if _, err := ValidatePath(path); err != nil {
+		return nil, err
+	}
+
 	// Normalize path for SMB
 	path = normalizePathSMB(path)
 
@@ -215,6 +220,11 @@ func (c *SMBClient) Download(path string) (io.ReadCloser, error) {
 		return nil, err
 	}
 
+	// Validate path security
+	if _, err := ValidatePath(path); err != nil {
+		return nil, err
+	}
+
 	path = normalizePathSMB(path)
 	path = strings.ReplaceAll(path, "/", "\\")
 
@@ -228,6 +238,11 @@ func (c *SMBClient) Download(path string) (io.ReadCloser, error) {
 // Upload uploads a file to remote storage
 func (c *SMBClient) Upload(path string, reader io.Reader, size int64) error {
 	if err := c.ensureConnected(); err != nil {
+		return err
+	}
+
+	// Validate path security
+	if _, err := ValidatePath(path); err != nil {
 		return err
 	}
 
@@ -258,6 +273,11 @@ func (c *SMBClient) Delete(path string) error {
 		return err
 	}
 
+	// Validate path security
+	if _, err := ValidatePath(path); err != nil {
+		return err
+	}
+
 	path = normalizePathSMB(path)
 	smbPath := strings.ReplaceAll(path, "/", "\\")
 
@@ -274,6 +294,10 @@ func (c *SMBClient) Delete(path string) error {
 // Mkdir creates a directory
 func (c *SMBClient) Mkdir(path string) error {
 	if err := c.ensureConnected(); err != nil {
+		return err
+	}
+	// Validate path security
+	if _, err := ValidatePath(path); err != nil {
 		return err
 	}
 	path = normalizePathSMB(path)

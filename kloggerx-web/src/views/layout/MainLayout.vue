@@ -7,25 +7,25 @@
           <el-icon class="back-btn" @click="$router.push('/home')"><ArrowLeft /></el-icon>
           <div class="drive-header-info" @click="$router.push('/home')">
             <el-icon color="#646a73"><Setting /></el-icon>
-            <span class="drive-header-title">系统管理</span>
+            <span class="drive-header-title">{{ t('nav.admin') }}</span>
           </div>
         </div>
         <div class="sidebar-nav" style="margin-top: 8px;">
           <div class="nav-item" :class="{ active: route.path === '/admin/users' }" @click="$router.push('/admin/users')">
             <el-icon :size="18"><User /></el-icon>
-            <span class="nav-label">用户和权限</span>
+            <span class="nav-label">{{ t('admin.userManagement') }}</span>
           </div>
           <div class="nav-item" :class="{ active: route.path === '/admin/departments' }" @click="$router.push('/admin/departments')">
             <el-icon :size="18"><OfficeBuilding /></el-icon>
-            <span class="nav-label">部门管理</span>
+            <span class="nav-label">{{ t('admin.departmentManagement') }}</span>
           </div>
           <div class="nav-item" :class="{ active: route.path === '/admin/ai-models' }" @click="$router.push('/admin/ai-models')">
             <el-icon :size="18"><Cpu /></el-icon>
-            <span class="nav-label">AI模型设置</span>
+            <span class="nav-label">{{ t('admin.aiModelSettings') }}</span>
           </div>
           <div class="nav-item" :class="{ active: route.path === '/admin/storage' }" @click="$router.push('/admin/storage')">
             <el-icon :size="18"><FolderOpened /></el-icon>
-            <span class="nav-label">云盘存储</span>
+            <span class="nav-label">{{ t('nav.cloudStorage') }}</span>
           </div>
         </div>
       </template>
@@ -36,20 +36,20 @@
           <el-icon class="back-btn" @click="$router.push('/home')"><ArrowLeft /></el-icon>
           <div class="drive-header-info" @click="$router.push('/knowledge')">
             <el-icon color="#3370ff"><Collection /></el-icon>
-            <span class="drive-header-title">知识库</span>
+            <span class="drive-header-title">{{ t('nav.knowledge') }}</span>
           </div>
         </div>
 
         <!-- Search -->
         <div class="sidebar-search">
-          <el-input v-model="kbSearch" placeholder="搜索" prefix-icon="Search" size="small" clearable />
+          <el-input v-model="kbSearch" :placeholder="t('common.search')" prefix-icon="Search" size="small" clearable />
         </div>
 
         <!-- Navigation -->
         <div class="sidebar-nav" style="margin-top: 0;">
           <div class="nav-item" :class="{ active: route.path === '/knowledge' && !route.params.id }" @click="$router.push('/knowledge')">
             <el-icon :size="18"><HomeFilled /></el-icon>
-            <span class="nav-label">首页</span>
+            <span class="nav-label">{{ t('layout.homePage') }}</span>
           </div>
         </div>
 
@@ -59,11 +59,11 @@
             <div class="drive-section-header" @click="kbPersonalExpanded = !kbPersonalExpanded">
               <el-icon class="drive-expand-arrow" :class="{ expanded: kbPersonalExpanded }"><ArrowRight /></el-icon>
               <el-icon color="#3370ff" :size="15"><User /></el-icon>
-              <span class="drive-section-title">个人知识库</span>
-              <el-tag size="small" type="info" style="margin-left: auto; cursor:pointer" @click.stop="$router.push('/knowledge/list')">全部</el-tag>
+              <span class="drive-section-title">{{ t('layout.personalKnowledge') }}</span>
+              <el-tag size="small" type="info" style="margin-left: auto; cursor:pointer" @click.stop="$router.push('/knowledge/list')">{{ t('common.all') }}</el-tag>
             </div>
             <div v-show="kbPersonalExpanded" class="drive-section-body">
-              <div v-if="!filteredKbList.length" class="drive-tree-empty">暂无知识库</div>
+              <div v-if="!filteredKbList.length" class="drive-tree-empty">{{ t('layout.emptyKnowledge') }}</div>
               <div
                 v-for="kb in filteredKbList"
                 :key="kb.id"
@@ -86,11 +86,11 @@
             <div class="drive-section-header" @click="kbSharedExpanded = !kbSharedExpanded">
               <el-icon class="drive-expand-arrow" :class="{ expanded: kbSharedExpanded }"><ArrowRight /></el-icon>
               <el-icon color="#36b37e" :size="15"><Share /></el-icon>
-              <span class="drive-section-title">共享知识库</span>
-              <el-tag size="small" type="info" style="margin-left: auto; cursor:pointer" @click.stop="$router.push('/knowledge/list')">全部</el-tag>
+              <span class="drive-section-title">{{ t('layout.sharedKnowledge') }}</span>
+              <el-tag size="small" type="info" style="margin-left: auto; cursor:pointer" @click.stop="$router.push('/knowledge/list')">{{ t('common.all') }}</el-tag>
             </div>
             <div v-show="kbSharedExpanded" class="drive-section-body">
-              <div class="drive-tree-empty">暂无共享知识库</div>
+              <div class="drive-tree-empty">{{ t('layout.emptySharedKnowledge') }}</div>
             </div>
           </div>
 
@@ -99,11 +99,11 @@
             <div class="drive-section-header" @click="kbPinnedExpanded = !kbPinnedExpanded">
               <el-icon class="drive-expand-arrow" :class="{ expanded: kbPinnedExpanded }"><ArrowRight /></el-icon>
               <el-icon color="#f5a623" :size="15"><FolderOpened /></el-icon>
-              <span class="drive-section-title">我创建的</span>
+              <span class="drive-section-title">{{ t('layout.createdByMe') }}</span>
               <el-icon :size="14" class="section-act-btn" style="margin-left: auto;" @click.stop="handleNewKb"><Plus /></el-icon>
             </div>
             <div v-show="kbPinnedExpanded" class="drive-section-body">
-              <div v-if="!filteredKbList.length" class="drive-tree-empty">暂无创建的知识库</div>
+              <div v-if="!filteredKbList.length" class="drive-tree-empty">{{ t('layout.emptyCreatedKnowledge') }}</div>
               <div
                 v-for="kb in filteredKbList"
                 :key="'cr-' + kb.id"
@@ -126,10 +126,10 @@
             <div class="drive-section-header" @click="kbRecentExpanded = !kbRecentExpanded">
               <el-icon class="drive-expand-arrow" :class="{ expanded: kbRecentExpanded }"><ArrowRight /></el-icon>
               <el-icon color="#9254de" :size="15"><UserFilled /></el-icon>
-              <span class="drive-section-title">我加入的</span>
+              <span class="drive-section-title">{{ t('layout.joinedByMe') }}</span>
             </div>
             <div v-show="kbRecentExpanded" class="drive-section-body">
-              <div class="drive-tree-empty">暂无加入的知识库</div>
+              <div class="drive-tree-empty">{{ t('layout.emptyJoinedKnowledge') }}</div>
             </div>
           </div>
         </div>
@@ -137,19 +137,19 @@
         <!-- New Knowledge Base button -->
         <div class="drive-bottom-action" @click="handleNewKb">
           <el-icon><Plus /></el-icon>
-          <span>新建知识库</span>
+          <span>{{ t('layout.newKnowledge') }}</span>
         </div>
 
         <!-- Knowledge Base Context Menu -->
         <div v-if="kbTreeCtx.visible" class="context-menu" :style="{ left: kbTreeCtx.x + 'px', top: kbTreeCtx.y + 'px' }">
-          <div class="ctx-item" @click="handleKbTreeAction('open')"><el-icon :size="13"><View /></el-icon>打开</div>
-          <div class="ctx-item" @click="handleKbTreeAction('openNew')"><el-icon :size="13"><TopRight /></el-icon>在新标签页打开</div>
+          <div class="ctx-item" @click="handleKbTreeAction('open')"><el-icon :size="13"><View /></el-icon>{{ t('contextMenu.open') }}</div>
+          <div class="ctx-item" @click="handleKbTreeAction('openNew')"><el-icon :size="13"><TopRight /></el-icon>{{ t('contextMenu.openInNewTab') }}</div>
           <div class="ctx-sep" />
-          <div class="ctx-item" @click="handleKbTreeAction('share')"><el-icon :size="13"><Share /></el-icon>分享</div>
-          <div class="ctx-item" @click="handleKbTreeAction('copyLink')"><el-icon :size="13"><Link /></el-icon>复制链接</div>
+          <div class="ctx-item" @click="handleKbTreeAction('share')"><el-icon :size="13"><Share /></el-icon>{{ t('contextMenu.share') }}</div>
+          <div class="ctx-item" @click="handleKbTreeAction('copyLink')"><el-icon :size="13"><Link /></el-icon>{{ t('contextMenu.copyLink') }}</div>
           <div class="ctx-sep" />
-          <div class="ctx-item" @click="handleKbTreeAction('settings')"><el-icon :size="13"><Setting /></el-icon>设置</div>
-          <div class="ctx-item danger" @click="handleKbTreeAction('delete')"><el-icon :size="13"><Delete /></el-icon>删除</div>
+          <div class="ctx-item" @click="handleKbTreeAction('settings')"><el-icon :size="13"><Setting /></el-icon>{{ t('contextMenu.settings') }}</div>
+          <div class="ctx-item danger" @click="handleKbTreeAction('delete')"><el-icon :size="13"><Delete /></el-icon>{{ t('contextMenu.delete') }}</div>
         </div>
       </template>
 
@@ -159,13 +159,13 @@
           <el-icon class="back-btn" @click="$router.push('/home')"><ArrowLeft /></el-icon>
           <div class="drive-header-info" @click="$router.push('/home')">
             <el-icon color="#3370ff"><FolderOpened /></el-icon>
-            <span class="drive-header-title">云盘</span>
+            <span class="drive-header-title">{{ t('nav.cloudDrive') }}</span>
           </div>
         </div>
 
         <!-- Search -->
         <div class="sidebar-search">
-          <el-input v-model="driveFolderSearch" placeholder="搜索" prefix-icon="Search" size="small" clearable />
+          <el-input v-model="driveFolderSearch" :placeholder="t('common.search')" prefix-icon="Search" size="small" clearable />
         </div>
 
         <!-- My Folders -->
@@ -174,10 +174,10 @@
             <div class="drive-section-header" @click="handleMyFoldersClick">
               <el-icon class="drive-expand-arrow" :class="{ expanded: driveMyFoldersExpanded }"><ArrowRight /></el-icon>
               <el-icon color="#f5a623" :size="15"><FolderOpened /></el-icon>
-              <span class="drive-section-title" :class="{ active: driveSelectedFolderId === null }">我的文件夹</span>
+              <span class="drive-section-title" :class="{ active: driveSelectedFolderId === null }">{{ t('layout.myFolders') }}</span>
             </div>
             <div v-show="driveMyFoldersExpanded" class="drive-section-body">
-              <div v-if="!driveFolderTree.length" class="drive-tree-empty">暂无文件夹</div>
+              <div v-if="!driveFolderTree.length" class="drive-tree-empty">{{ t('layout.emptyFolders') }}</div>
               <FolderTreeNode
                 v-for="node in filteredDriveFolders"
                 :key="node.id"
@@ -199,10 +199,10 @@
             <div class="drive-section-header" @click="driveSharedFoldersExpanded = !driveSharedFoldersExpanded">
               <el-icon class="drive-expand-arrow" :class="{ expanded: driveSharedFoldersExpanded }"><ArrowRight /></el-icon>
               <el-icon color="#3370ff" :size="15"><User /></el-icon>
-              <span class="drive-section-title">共享文件夹</span>
+              <span class="drive-section-title">{{ t('layout.sharedFolders') }}</span>
             </div>
             <div v-show="driveSharedFoldersExpanded" class="drive-section-body">
-              <div class="drive-tree-empty">暂无共享文件夹</div>
+              <div class="drive-tree-empty">{{ t('layout.emptySharedFolders') }}</div>
             </div>
           </div>
 
@@ -211,7 +211,7 @@
             <div class="drive-section-header" @click="driveRemoteStoragesExpanded = !driveRemoteStoragesExpanded">
               <el-icon class="drive-expand-arrow" :class="{ expanded: driveRemoteStoragesExpanded }"><ArrowRight /></el-icon>
               <el-icon color="#9254de" :size="15"><Connection /></el-icon>
-              <span class="drive-section-title">远程存储</span>
+              <span class="drive-section-title">{{ t('layout.remoteStorage') }}</span>
             </div>
             <div v-show="driveRemoteStoragesExpanded" class="drive-section-body">
               <div
@@ -223,7 +223,7 @@
               >
                 <el-icon color="#9254de" :size="15"><Connection /></el-icon>
                 <span class="drive-tree-name">{{ storage.name }}</span>
-                <el-tag size="small" type="success" style="margin-left: auto; font-size: 11px;">已连接</el-tag>
+                <el-tag size="small" type="success" style="margin-left: auto; font-size: 11px;">{{ t('layout.connected') }}</el-tag>
               </div>
             </div>
           </div>
@@ -232,7 +232,7 @@
         <!-- New Folder button -->
         <div class="drive-bottom-action" @click="handleNewDriveFolder">
           <el-icon><Plus /></el-icon>
-          <span>新建文件夹</span>
+          <span>{{ t('layout.newFolder') }}</span>
         </div>
       </template>
 
@@ -253,26 +253,26 @@
         <template v-if="!sidebarCollapsed">
           <!-- Search -->
           <div class="sidebar-search">
-            <el-input v-model="searchKeyword" placeholder="搜索" prefix-icon="Search" size="small" clearable @keyup.enter="handleSearch" />
+            <el-input v-model="searchKeyword" :placeholder="t('common.search')" prefix-icon="Search" size="small" clearable @keyup.enter="handleSearch" />
           </div>
 
           <!-- Nav Items -->
           <div class="sidebar-nav">
             <div class="nav-item" :class="{ active: activeMenu === '/home' }" @click="$router.push('/home')">
               <el-icon :size="18"><HomeFilled /></el-icon>
-              <span class="nav-label">主页</span>
+              <span class="nav-label">{{ t('nav.home') }}</span>
             </div>
             <div class="nav-item" :class="{ active: activeMenu === '/documents' }" @click="$router.push('/documents')">
               <el-icon :size="18"><FolderOpened /></el-icon>
-              <span class="nav-label">云盘</span>
+              <span class="nav-label">{{ t('nav.cloudDrive') }}</span>
             </div>
             <div class="nav-item" :class="{ active: activeMenu === '/knowledge' }" @click="$router.push('/knowledge')">
               <el-icon :size="18"><Collection /></el-icon>
-              <span class="nav-label">知识库</span>
+              <span class="nav-label">{{ t('nav.knowledge') }}</span>
             </div>
             <div v-if="isAdmin" class="nav-item" :class="{ active: activeMenu.startsWith('/admin') }" @click="$router.push('/admin/users')">
               <el-icon :size="18"><Setting /></el-icon>
-              <span class="nav-label">系统管理</span>
+              <span class="nav-label">{{ t('nav.admin') }}</span>
             </div>
           </div>
 
@@ -281,44 +281,44 @@
             <!-- Pinned Documents -->
             <div class="sidebar-section">
               <div class="section-header" @click="pinnedDocsExpanded = !pinnedDocsExpanded">
-                <span class="section-title">置顶文档</span>
+                <span class="section-title">{{ t('layout.pinnedDocs') }}</span>
               </div>
               <div v-show="pinnedDocsExpanded" class="section-body">
                 <div v-for="doc in pinnedDocs" :key="doc.id" class="section-item" @click="openDocInNewTab(doc.id)" @contextmenu.prevent="showPinnedCtxMenu($event, doc)">
                   <el-icon :color="getTypeColor(doc.type)" :size="14"><component :is="getTypeIcon(doc.type)" /></el-icon>
                   <span class="section-item-text">{{ doc.title }}</span>
                 </div>
-                <div v-if="!pinnedDocs.length" class="section-empty">暂无置顶文档</div>
+                <div v-if="!pinnedDocs.length" class="section-empty">{{ t('layout.emptyPinnedDocs') }}</div>
               </div>
             </div>
 
             <!-- Pinned Knowledge Base -->
             <div class="sidebar-section">
               <div class="section-header">
-                <span class="section-title" @click="pinnedKbExpanded = !pinnedKbExpanded">置顶知识库</span>
+                <span class="section-title" @click="pinnedKbExpanded = !pinnedKbExpanded">{{ t('layout.pinnedKnowledge') }}</span>
                 <div class="section-actions" @click.stop>
                   <el-icon :size="14" class="section-act-btn" @click.stop="showKbNewMenu = !showKbNewMenu"><Plus /></el-icon>
-                  <el-icon :size="14" class="section-act-btn" @click.stop="ElMessage.info('知识库管理')"><MoreFilled /></el-icon>
+                  <el-icon :size="14" class="section-act-btn" @click.stop="ElMessage.info(t('layout.knowledgeManagement'))"><MoreFilled /></el-icon>
                 </div>
               </div>
               <!-- KB New Dropdown -->
               <div v-if="showKbNewMenu" class="sidebar-dropdown kb-dropdown" @click.stop>
-                <div class="dropdown-group-title">新建</div>
-                <div class="dropdown-item" @click="handleKbNew('blank')"><el-icon color="#3370ff"><Collection /></el-icon>空白知识库</div>
-                <div class="dropdown-item" @click="handleKbNew('team')"><el-icon color="#36b37e"><UserFilled /></el-icon>团队项目</div>
-                <div class="dropdown-item" @click="handleKbNew('product')"><el-icon color="#f5a623"><Compass /></el-icon>产品部门</div>
-                <div class="dropdown-item" @click="handleKbNew('dev')"><el-icon color="#3370ff"><Monitor /></el-icon>研发部门</div>
-                <div class="dropdown-item" @click="handleKbNew('design')"><el-icon color="#9254de"><Brush /></el-icon>设计部门</div>
-                <div class="dropdown-item" @click="handleKbNew('marketing')"><el-icon color="#f54a45"><TrendCharts /></el-icon>市场营销</div>
-                <div class="dropdown-item" @click="handleKbNew('more')"><el-icon color="#646a73"><Grid /></el-icon>更多模板</div>
+                <div class="dropdown-group-title">{{ t('layout.createNew') }}</div>
+                <div class="dropdown-item" @click="handleKbNew('blank')"><el-icon color="#3370ff"><Collection /></el-icon>{{ t('layout.blankKb') }}</div>
+                <div class="dropdown-item" @click="handleKbNew('team')"><el-icon color="#36b37e"><UserFilled /></el-icon>{{ t('layout.teamProject') }}</div>
+                <div class="dropdown-item" @click="handleKbNew('product')"><el-icon color="#f5a623"><Compass /></el-icon>{{ t('layout.productDept') }}</div>
+                <div class="dropdown-item" @click="handleKbNew('dev')"><el-icon color="#3370ff"><Monitor /></el-icon>{{ t('layout.devDept') }}</div>
+                <div class="dropdown-item" @click="handleKbNew('design')"><el-icon color="#9254de"><Brush /></el-icon>{{ t('layout.designDept') }}</div>
+                <div class="dropdown-item" @click="handleKbNew('marketing')"><el-icon color="#f54a45"><TrendCharts /></el-icon>{{ t('layout.marketing') }}</div>
+                <div class="dropdown-item" @click="handleKbNew('more')"><el-icon color="#646a73"><Grid /></el-icon>{{ t('layout.moreTemplates') }}</div>
                 <div class="dropdown-sep" />
-                <div class="dropdown-group-title">添加</div>
-                <div class="dropdown-item" @click="handleKbNew('existing')"><el-icon color="#3370ff"><FolderAdd /></el-icon>已有知识库</div>
+                <div class="dropdown-group-title">{{ t('layout.addExisting') }}</div>
+                <div class="dropdown-item" @click="handleKbNew('existing')"><el-icon color="#3370ff"><FolderAdd /></el-icon>{{ t('layout.existingKb') }}</div>
               </div>
               <div v-show="pinnedKbExpanded" class="section-body">
                 <div class="section-item section-item-muted" @click="$router.push('/knowledge')">
                   <el-icon :size="14"><Plus /></el-icon>
-                  <span class="section-item-text">新建或置顶知识库</span>
+                  <span class="section-item-text">{{ t('layout.newOrPinKb') }}</span>
                 </div>
               </div>
             </div>
@@ -326,28 +326,28 @@
             <!-- My Document Library -->
             <div class="sidebar-section">
               <div class="section-header">
-                <span class="section-title" @click="docLibExpanded = !docLibExpanded">我的文档库</span>
+                <span class="section-title" @click="docLibExpanded = !docLibExpanded">{{ t('layout.myDocLib') }}</span>
                 <el-icon class="section-collapse-arrow" :class="{ expanded: docLibExpanded }" @click="docLibExpanded = !docLibExpanded"><ArrowDown /></el-icon>
                 <div class="section-actions" @click.stop>
                   <el-icon :size="14" class="section-act-btn" @click.stop="showDocLibMenu = !showDocLibMenu"><Plus /></el-icon>
-                  <el-icon :size="14" class="section-act-btn" @click.stop="ElMessage.info('文档库设置')"><Setting /></el-icon>
+                  <el-icon :size="14" class="section-act-btn" @click.stop="ElMessage.info(t('layout.docLibSettings'))"><Setting /></el-icon>
                 </div>
               </div>
               <!-- Doc Lib + Dropdown -->
               <div v-if="showDocLibMenu" class="sidebar-dropdown doclib-dropdown" @click.stop>
-                <div class="dropdown-item" @click="handleDocLibCreate('doc')"><el-icon color="#3370ff"><Document /></el-icon>文档</div>
-                <div class="dropdown-item" @click="handleDocLibCreate('sheet')"><el-icon color="#36b37e"><Grid /></el-icon>表格</div>
-                <div class="dropdown-item" @click="handleDocLibCreate('slide')"><el-icon color="#ff7d00"><Monitor /></el-icon>幻灯片</div>
-                <div class="dropdown-item" @click="handleDocLibCreate('bitable')"><el-icon color="#00b8d9"><Tickets /></el-icon>多维表格</div>
-                <div class="dropdown-item" @click="handleDocLibCreate('survey')"><el-icon color="#f54a45"><Notebook /></el-icon>问卷</div>
-                <div class="dropdown-item" @click="handleDocLibCreate('mindnote')"><el-icon color="#9254de"><Share /></el-icon>思维笔记</div>
-                <div class="dropdown-group-title">文档应用</div>
-                <div class="dropdown-item" @click="handleDocLibCreate('doc')"><el-icon color="#36b37e"><EditPen /></el-icon>画板</div>
-                <div class="dropdown-item" @click="handleDocLibCreate('mindnote')"><el-icon color="#9254de"><Share /></el-icon>思维导图</div>
-                <div class="dropdown-item" @click="handleDocLibCreate('doc')"><el-icon color="#ff7d00"><Connection /></el-icon>流程图</div>
+                <div class="dropdown-item" @click="handleDocLibCreate('doc')"><el-icon color="#3370ff"><Document /></el-icon>{{ t('layout.docType') }}</div>
+                <div class="dropdown-item" @click="handleDocLibCreate('sheet')"><el-icon color="#36b37e"><Grid /></el-icon>{{ t('layout.sheetType') }}</div>
+                <div class="dropdown-item" @click="handleDocLibCreate('slide')"><el-icon color="#ff7d00"><Monitor /></el-icon>{{ t('layout.slideType') }}</div>
+                <div class="dropdown-item" @click="handleDocLibCreate('bitable')"><el-icon color="#00b8d9"><Tickets /></el-icon>{{ t('layout.bitableType') }}</div>
+                <div class="dropdown-item" @click="handleDocLibCreate('survey')"><el-icon color="#f54a45"><Notebook /></el-icon>{{ t('layout.surveyType') }}</div>
+                <div class="dropdown-item" @click="handleDocLibCreate('mindnote')"><el-icon color="#9254de"><Share /></el-icon>{{ t('layout.mindnoteType') }}</div>
+                <div class="dropdown-group-title">{{ t('layout.docApps') }}</div>
+                <div class="dropdown-item" @click="handleDocLibCreate('doc')"><el-icon color="#36b37e"><EditPen /></el-icon>{{ t('layout.canvas') }}</div>
+                <div class="dropdown-item" @click="handleDocLibCreate('mindnote')"><el-icon color="#9254de"><Share /></el-icon>{{ t('layout.mindmap') }}</div>
+                <div class="dropdown-item" @click="handleDocLibCreate('doc')"><el-icon color="#ff7d00"><Connection /></el-icon>{{ t('layout.flowchart') }}</div>
                 <div class="dropdown-sep" />
-                <div class="dropdown-item"><el-icon color="#646a73"><Upload /></el-icon>上传及导入<el-icon class="arrow-right"><ArrowRight /></el-icon></div>
-                <div class="dropdown-item" @click="handleImportDocs"><el-icon color="#3370ff"><FolderAdd /></el-icon>迁入已有云文档</div>
+                <div class="dropdown-item"><el-icon color="#646a73"><Upload /></el-icon>{{ t('layout.uploadAndImport') }}<el-icon class="arrow-right"><ArrowRight /></el-icon></div>
+                <div class="dropdown-item" @click="handleImportDocs"><el-icon color="#3370ff"><FolderAdd /></el-icon>{{ t('layout.importExistingDocs') }}</div>
               </div>
               <div v-show="docLibExpanded" class="section-body doc-tree-body">
                 <DocumentTree ref="docTreeRef" :show-header="false" @refresh="onTreeRefresh" />
@@ -359,12 +359,13 @@
           <div class="sidebar-bottom">
             <div class="bottom-item" @click="$router.push('/recycle-bin')">
               <el-icon :size="16"><Delete /></el-icon>
-              <span>回收站</span>
+              <span>{{ t('nav.recycleBin') }}</span>
             </div>
             <div class="bottom-item" @click="$router.push('/settings')">
               <el-icon :size="16"><Setting /></el-icon>
-              <span>设置</span>
+              <span>{{ t('nav.settings') }}</span>
             </div>
+            <div class="bottom-hint" @click="showShortcutsHelp = true">{{ t('layout.shortcutHint') }}</div>
           </div>
         </template>
       </template>
@@ -377,18 +378,33 @@
           <h2 class="topbar-title">{{ currentPageTitle }}</h2>
         </div>
         <div class="topbar-right">
-          <el-icon class="topbar-icon" @click="focusSearch"><Search /></el-icon>
-          <el-badge :value="unreadCount" :hidden="unreadCount === 0" :max="99" class="notification-badge">
-            <el-icon class="topbar-icon" @click="showNotifications = true"><Bell /></el-icon>
-          </el-badge>
-          <el-icon class="topbar-icon" @click="ElMessage.info('帮助')"><QuestionFilled /></el-icon>
-          <el-icon class="topbar-icon" @click="ElMessage.info('应用')"><Menu /></el-icon>
+          <el-icon class="topbar-icon" @click="showGlobalSearch = true"><Search /></el-icon>
+          <NotificationPanel />
+          <el-icon class="topbar-icon" @click="ElMessage.info(t('layout.help'))"><QuestionFilled /></el-icon>
+          <el-icon class="topbar-icon" @click="ElMessage.info(t('layout.apps'))"><Menu /></el-icon>
+          <!-- 主题切换 -->
+          <el-button @click="toggleTheme" circle size="small" style="border: none;">
+            <el-icon><Sunny v-if="isDark" /><Moon v-else /></el-icon>
+          </el-button>
+          <!-- 语言切换 -->
+          <el-dropdown @command="switchLocale" trigger="click">
+            <span class="locale-switch">
+              <el-icon><DCaret /></el-icon>
+              {{ currentLocaleName }}
+            </span>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item command="zh-CN">中文</el-dropdown-item>
+                <el-dropdown-item command="en-US">English</el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
           <el-dropdown trigger="click" @command="handleUserCommand">
             <el-avatar :size="28" :src="userStore.user?.avatar" :style="{ background: '#3370ff', cursor: 'pointer' }">{{ userStore.user?.nickname?.[0] || 'U' }}</el-avatar>
             <template #dropdown>
               <el-dropdown-menu>
-                <el-dropdown-item command="settings">个人设置</el-dropdown-item>
-                <el-dropdown-item command="logout" divided>退出登录</el-dropdown-item>
+                <el-dropdown-item command="settings">{{ t('nav.profile') }}</el-dropdown-item>
+                <el-dropdown-item command="logout" divided>{{ t('nav.logout') }}</el-dropdown-item>
               </el-dropdown-menu>
             </template>
           </el-dropdown>
@@ -401,81 +417,44 @@
 
     <!-- Pinned doc context menu -->
     <div v-if="pinnedCtxMenu.visible" class="ctx-menu-global" :style="{ left: pinnedCtxMenu.x + 'px', top: pinnedCtxMenu.y + 'px' }">
-      <div class="ctx-item" @click="handlePinnedAction('open')"><el-icon><View /></el-icon>打开</div>
-      <div class="ctx-item" @click="handlePinnedAction('unpin')"><el-icon><Flag /></el-icon>取消置顶</div>
-      <div class="ctx-item" @click="handlePinnedAction('copyLink')"><el-icon><Link /></el-icon>复制链接</div>
+      <div class="ctx-item" @click="handlePinnedAction('open')"><el-icon><View /></el-icon>{{ t('contextMenu.open') }}</div>
+      <div class="ctx-item" @click="handlePinnedAction('unpin')"><el-icon><Flag /></el-icon>{{ t('contextMenu.unpin') }}</div>
+      <div class="ctx-item" @click="handlePinnedAction('copyLink')"><el-icon><Link /></el-icon>{{ t('contextMenu.copyLink') }}</div>
     </div>
 
     <!-- Drive folder context menu -->
     <div v-if="driveFolderCtx.visible" class="ctx-menu-global" :style="{ left: driveFolderCtx.x + 'px', top: driveFolderCtx.y + 'px' }">
-      <div class="ctx-item" @click="handleDriveFolderCtx('open')"><el-icon><View /></el-icon>打开</div>
-      <div class="ctx-item" @click="handleDriveFolderCtx('rename')"><el-icon><EditPen /></el-icon>重命名</div>
-      <div class="ctx-item" @click="handleDriveFolderCtx('share')"><el-icon><Share /></el-icon>分享</div>
+      <div class="ctx-item" @click="handleDriveFolderCtx('open')"><el-icon><View /></el-icon>{{ t('contextMenu.open') }}</div>
+      <div class="ctx-item" @click="handleDriveFolderCtx('rename')"><el-icon><EditPen /></el-icon>{{ t('contextMenu.rename') }}</div>
+      <div class="ctx-item" @click="handleDriveFolderCtx('share')"><el-icon><Share /></el-icon>{{ t('contextMenu.share') }}</div>
       <div class="ctx-sep-global" />
-      <div class="ctx-item danger" @click="handleDriveFolderCtx('delete')"><el-icon><Delete /></el-icon>删除</div>
+      <div class="ctx-item danger" @click="handleDriveFolderCtx('delete')"><el-icon><Delete /></el-icon>{{ t('contextMenu.delete') }}</div>
     </div>
 
-    <!-- Notification Drawer -->
-    <el-drawer v-model="showNotifications" title="通知中心" direction="rtl" size="400px" class="notification-drawer">
-      <template #header>
-        <div class="notification-drawer-header">
-          <span class="notification-title">通知中心</span>
-          <el-button v-if="unreadCount > 0" link type="primary" size="small" @click="handleMarkAllRead">
-            全部已读
-          </el-button>
-        </div>
-      </template>
-      <div class="notification-tabs">
-        <span class="notif-tab" :class="{ active: notifTab === 'all' }" @click="notifTab = 'all'">全部</span>
-        <span class="notif-tab" :class="{ active: notifTab === 'unread' }" @click="notifTab = 'unread'">未读 ({{ unreadCount }})</span>
-      </div>
-      <div class="notification-list" v-loading="notifLoading">
-        <div v-if="!filteredNotifications.length" class="notification-empty">
-          <el-icon :size="48" color="#c0c4cc"><Bell /></el-icon>
-          <p>暂无通知</p>
-        </div>
-        <div
-          v-for="n in filteredNotifications"
-          :key="n.id"
-          class="notification-item"
-          :class="{ unread: !n.isRead }"
-          @click="handleNotificationClick(n)"
-        >
-          <div class="notif-icon" :class="n.type">
-            <el-icon>
-              <component :is="getNotifIcon(n.type)" />
-            </el-icon>
-          </div>
-          <div class="notif-content">
-            <div class="notif-title">{{ n.title }}</div>
-            <div class="notif-text">{{ n.content }}</div>
-            <div class="notif-meta">
-              <span class="notif-time">{{ formatNotifTime(n.createdAt) }}</span>
-              <span v-if="n.docTitle" class="notif-doc">{{ n.docTitle }}</span>
-            </div>
-          </div>
-          <el-icon v-if="!n.isRead" class="unread-dot"><CircleCheck /></el-icon>
-        </div>
-      </div>
-      <div class="notification-footer" v-if="notifications.length >= 20">
-        <el-button link @click="ElMessage.info('查看更多通知')">查看更多</el-button>
-      </div>
-    </el-drawer>
+    <!-- Global Search -->
+    <GlobalSearch v-model:visible="showGlobalSearch" />
+
+    <!-- Keyboard Shortcuts Help -->
+    <KeyboardShortcuts v-model:visible="showShortcutsHelp" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onBeforeUnmount, provide } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount, provide, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useUserStore } from '@/store/modules/user'
 import { useDocumentStore } from '@/store/modules/document'
 import { createDocument, getDocumentTree, getPinnedDocuments, pinDocument, deleteDocument, updateDocument } from '@/api/modules/document'
 import { createKnowledgeBase, getKnowledgeBaseList, deleteKnowledgeBase } from '@/api/modules/knowledge'
-import { getNotifications, markNotificationRead, markAllNotificationsRead } from '@/api/modules/collaborate'
+
 import { listRemoteStorages } from '@/api/modules/admin'
 import DocumentTree from '@/components/document-tree/DocumentTree.vue'
 import FolderTreeNode from '@/components/FolderTreeNode.vue'
-import type { Document, DocumentType, Notification } from '@/types'
+import GlobalSearch from '@/components/common/GlobalSearch.vue'
+import KeyboardShortcuts from '@/components/common/KeyboardShortcuts.vue'
+import NotificationPanel from '@/components/common/NotificationPanel.vue'
+import type { Document, DocumentType } from '@/types'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 interface DriveFolderNode {
@@ -500,25 +479,71 @@ interface RemoteStorageItem {
 
 const route = useRoute()
 const router = useRouter()
+const { t, locale } = useI18n()
 const userStore = useUserStore()
+
+const currentLocaleName = computed(() =>
+  locale.value === 'zh-CN' ? '中文' : 'English'
+)
+
+function switchLocale(lang: string) {
+  locale.value = lang
+  localStorage.setItem('kx_locale', lang)
+}
 const documentStore = useDocumentStore()
 const docTreeRef = ref()
 
 const sidebarCollapsed = ref(false)
 const searchKeyword = ref('')
-const showNotifications = ref(false)
-const notifications = ref<Notification[]>([])
-const pinnedDocs = ref<Document[]>([])
-const notifTab = ref<'all' | 'unread'>('all')
-const notifLoading = ref(false)
-const unreadCount = computed(() => notifications.value.filter((n) => !n.isRead).length)
+const showGlobalSearch = ref(false)
+const showShortcutsHelp = ref(false)
 
-const filteredNotifications = computed(() => {
-  if (notifTab.value === 'unread') {
-    return notifications.value.filter(n => !n.isRead)
+function isInInput(e: KeyboardEvent): boolean {
+  const target = e.target as HTMLElement
+  return target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable
+}
+
+function isInEditor(e: KeyboardEvent): boolean {
+  const target = e.target as HTMLElement
+  return target.isContentEditable || !!target.closest('.tiptap')
+}
+
+function handleGlobalKeydown(e: KeyboardEvent) {
+  // Ctrl+K - 全局搜索
+  if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+    e.preventDefault()
+    showGlobalSearch.value = true
+    return
   }
-  return notifications.value
-})
+
+  // ? 键 - 显示帮助（不在输入框中时）
+  if (e.key === '?' && !isInInput(e)) {
+    showShortcutsHelp.value = true
+    return
+  }
+
+  // Ctrl+1 - 跳转首页
+  if (e.ctrlKey && e.key === '1') {
+    e.preventDefault()
+    router.push('/home')
+    return
+  }
+
+  // Ctrl+2 - 跳转知识库
+  if (e.ctrlKey && e.key === '2') {
+    e.preventDefault()
+    router.push('/knowledge')
+    return
+  }
+
+  // Ctrl+N - 新建文档（不在编辑器内时）
+  if (e.ctrlKey && e.key === 'n' && !isInEditor(e)) {
+    e.preventDefault()
+    handleDocLibCreate('doc')
+    return
+  }
+}
+const pinnedDocs = ref<Document[]>([])
 
 const isCloudDrivePage = computed(() => route.path.startsWith('/documents'))
 const isAdminPage = computed(() => route.path.startsWith('/admin'))
@@ -600,20 +625,20 @@ async function handleKbTreeAction(action: string) {
       window.open(`${window.location.origin}/knowledge/${kb.id}`, '_blank')
       break
     case 'share':
-      ElMessage.success('分享链接已复制')
+      ElMessage.success(t('layout.shareLinkCopied'))
       navigator.clipboard.writeText(`${window.location.origin}/knowledge/${kb.id}`)
       break
     case 'copyLink':
       navigator.clipboard.writeText(`${window.location.origin}/knowledge/${kb.id}`)
-      ElMessage.success('链接已复制')
+      ElMessage.success(t('common.linkCopied'))
       break
     case 'settings':
       router.push(`/knowledge/${kb.id}`)
       break
     case 'delete':
-      await ElMessageBox.confirm(`确定删除知识库"${kb.name}"？删除后不可恢复。`, '删除确认', { type: 'warning' })
+      await ElMessageBox.confirm(t('layout.deleteKbConfirm', { name: kb.name }), t('layout.deleteConfirmTitle'), { type: 'warning' })
       await deleteKnowledgeBase(kb.id)
-      ElMessage.success('已删除')
+      ElMessage.success(t('common.deleted'))
       fetchKbList()
       break
   }
@@ -621,14 +646,14 @@ async function handleKbTreeAction(action: string) {
 
 async function handleNewKb() {
   try {
-    const { value } = await ElMessageBox.prompt('请输入知识库名称', '新建知识库', {
-      confirmButtonText: '创建',
-      cancelButtonText: '取消',
-      inputPlaceholder: '输入知识库名称',
+    const { value } = await ElMessageBox.prompt(t('layout.inputKbName'), t('layout.newKnowledgeTitle'), {
+      confirmButtonText: t('layout.createBtn'),
+      cancelButtonText: t('common.cancel'),
+      inputPlaceholder: t('layout.inputKbNamePlaceholder'),
     })
     if (value?.trim()) {
       await createKnowledgeBase({ name: value.trim(), description: '' })
-      ElMessage.success('知识库已创建')
+      ElMessage.success(t('layout.kbCreated'))
       fetchKbList()
     }
   } catch { /* cancelled */ }
@@ -823,26 +848,26 @@ async function handleDriveFolderCtx(action: string) {
       selectDriveFolder(folder)
       break
     case 'rename': {
-      const { value } = await ElMessageBox.prompt('请输入新名称', '重命名', {
+      const { value } = await ElMessageBox.prompt(t('layout.inputNewName'), t('layout.renameTitle'), {
         inputValue: folder.title,
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+        confirmButtonText: t('common.confirm'),
+        cancelButtonText: t('common.cancel'),
       }).catch(() => ({ value: null }))
       if (value) {
         await updateDocument(folder.id, { title: value })
-        ElMessage.success('重命名成功')
+        ElMessage.success(t('layout.renameSuccess'))
         fetchDriveFolderTree()
       }
       break
     }
     case 'share':
-      ElMessage.success(`分享链接已复制: ${window.location.origin}/documents?folderId=${folder.id}`)
+      ElMessage.success(`${t('layout.shareLinkCopied')}: ${window.location.origin}/documents?folderId=${folder.id}`)
       navigator.clipboard.writeText(`${window.location.origin}/documents?folderId=${folder.id}`)
       break
     case 'delete':
-      await ElMessageBox.confirm(`确定将文件夹"${folder.title}"移至回收站？`, '删除确认')
+      await ElMessageBox.confirm(t('layout.deleteFolderConfirm', { name: folder.title }), t('layout.deleteConfirmTitle'))
       await deleteDocument(folder.id)
-      ElMessage.success('已移至回收站')
+      ElMessage.success(t('layout.movedToTrash'))
       fetchDriveFolderTree()
       break
   }
@@ -850,8 +875,8 @@ async function handleDriveFolderCtx(action: string) {
 
 async function handleNewDriveFolder() {
   try {
-    await createDocument({ title: '新建文件夹', type: 'folder', parentId: driveSelectedFolderId.value })
-    ElMessage.success('文件夹已创建')
+    await createDocument({ title: t('layout.newFolder'), type: 'folder', parentId: driveSelectedFolderId.value })
+    ElMessage.success(t('layout.folderCreated'))
     fetchDriveFolderTree()
   } catch { /* handled */ }
 }
@@ -907,8 +932,8 @@ async function handleKbNew(type: string) {
   showKbNewMenu.value = false
   if (type === 'blank') {
     try {
-      await createKnowledgeBase({ name: '未命名知识库', description: '' })
-      ElMessage.success('知识库已创建')
+      await createKnowledgeBase({ name: t('layout.untitledKb'), description: '' })
+      ElMessage.success(t('layout.kbCreated'))
       router.push('/knowledge')
     } catch { /* handled */ }
   } else if (type === 'existing') {
@@ -916,10 +941,10 @@ async function handleKbNew(type: string) {
   } else if (type === 'more') {
     router.push('/knowledge')
   } else {
-    const nameMap: Record<string, string> = { team: '团队项目', product: '产品部门', dev: '研发部门', design: '设计部门', marketing: '市场营销' }
+    const nameMap: Record<string, string> = { team: t('layout.teamProject'), product: t('layout.productDept'), dev: t('layout.devDept'), design: t('layout.designDept'), marketing: t('layout.marketing') }
     try {
-      await createKnowledgeBase({ name: nameMap[type] || '未命名知识库', description: `基于${nameMap[type] || '模板'}创建` })
-      ElMessage.success('知识库已创建')
+      await createKnowledgeBase({ name: nameMap[type] || t('layout.untitledKb'), description: t('layout.createdFromTemplate', { template: nameMap[type] || type }) })
+      ElMessage.success(t('layout.kbCreated'))
       router.push('/knowledge')
     } catch { /* handled */ }
   }
@@ -929,13 +954,13 @@ async function handleKbNew(type: string) {
 async function handleDocLibCreate(type: DocumentType | 'folder') {
   showDocLibMenu.value = false
   try {
-    const res: any = await createDocument({ title: type === 'folder' ? '新建文件夹' : '无标题文档', type, parentId: null })
+    const res: any = await createDocument({ title: type === 'folder' ? t('layout.newFolder') : t('layout.untitledDoc'), type, parentId: null })
     docTreeRef.value?.refreshTree()
     if (type !== 'folder') {
       // Open in new browser tab
       window.open(`/doc/${res.data.id}`, '_blank')
     } else {
-      ElMessage.success('文件夹已创建')
+      ElMessage.success(t('layout.folderCreated'))
     }
   } catch { /* handled */ }
 }
@@ -945,7 +970,7 @@ function openDocInNewTab(docId: number) {
 }
 
 function handleImportDocs() {
-  ElMessage.success('请使用上传功能导入文档')
+  ElMessage.success(t('layout.importDocsHint'))
 }
 
 function onTreeRefresh() {
@@ -968,11 +993,11 @@ async function handlePinnedAction(action: string) {
     window.open(`/doc/${doc.id}`, '_blank')
   } else if (action === 'unpin') {
     await pinDocument(doc.id, false)
-    ElMessage.success('已取消置顶')
+    ElMessage.success(t('layout.unpinned'))
     fetchPinnedDocs()
   } else if (action === 'copyLink') {
     navigator.clipboard.writeText(`${window.location.origin}/doc/${doc.id}`)
-    ElMessage.success('链接已复制')
+    ElMessage.success(t('common.linkCopied'))
   }
 }
 
@@ -983,65 +1008,6 @@ function closeAllMenus() {
   driveFolderCtx.value.visible = false
 }
 
-async function fetchNotifications() {
-  notifLoading.value = true
-  try {
-    const res: any = await getNotifications({ page: 1, pageSize: 50 })
-    notifications.value = res.data?.list || []
-  } catch { /* ignore */ }
-  finally { notifLoading.value = false }
-}
-
-async function handleNotificationClick(n: Notification) {
-  if (!n.isRead) {
-    try {
-      await markNotificationRead(n.id)
-      n.isRead = true
-    } catch { /* ignore */ }
-  }
-  showNotifications.value = false
-  if (n.documentId) {
-    window.open(`/doc/${n.documentId}`, '_blank')
-  }
-}
-
-async function handleMarkAllRead() {
-  try {
-    await markAllNotificationsRead()
-    notifications.value.forEach(n => n.isRead = true)
-    ElMessage.success('已全部标记为已读')
-  } catch {
-    ElMessage.error('操作失败')
-  }
-}
-
-function getNotifIcon(type: string): string {
-  const icons: Record<string, string> = {
-    comment: 'ChatDotSquare',
-    mention: 'User',
-    share: 'Share',
-    system: 'Bell',
-    approval: 'DocumentChecked',
-  }
-  return icons[type] || 'Bell'
-}
-
-function formatNotifTime(time: string): string {
-  if (!time) return ''
-  const date = new Date(time)
-  const now = new Date()
-  const diff = now.getTime() - date.getTime()
-  const minutes = Math.floor(diff / 60000)
-  const hours = Math.floor(diff / 3600000)
-  const days = Math.floor(diff / 86400000)
-  
-  if (minutes < 1) return '刚刚'
-  if (minutes < 60) return `${minutes}分钟前`
-  if (hours < 24) return `${hours}小时前`
-  if (days < 7) return `${days}天前`
-  return date.toLocaleDateString('zh-CN')
-}
-
 async function fetchPinnedDocs() {
   try {
     const res: any = await getPinnedDocuments()
@@ -1049,14 +1015,54 @@ async function fetchPinnedDocs() {
   } catch { /* ignore */ }
 }
 
+// ============= Theme =============
+const isDark = ref(false)
+
+function initTheme() {
+  const saved = localStorage.getItem('kx_theme')
+  if (saved === 'dark') {
+    isDark.value = true
+  } else if (saved === 'auto' || !saved) {
+    isDark.value = window.matchMedia('(prefers-color-scheme: dark)').matches
+  }
+  applyTheme()
+}
+
+function toggleTheme() {
+  isDark.value = !isDark.value
+  localStorage.setItem('kx_theme', isDark.value ? 'dark' : 'light')
+  applyTheme()
+}
+
+function applyTheme() {
+  document.documentElement.classList.add('theme-transition')
+  if (isDark.value) {
+    document.documentElement.classList.add('dark')
+  } else {
+    document.documentElement.classList.remove('dark')
+  }
+  setTimeout(() => {
+    document.documentElement.classList.remove('theme-transition')
+  }, 300)
+}
+
 onMounted(() => {
+  initTheme()
+  // 监听系统主题变化
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+    if (!localStorage.getItem('kx_theme') || localStorage.getItem('kx_theme') === 'auto') {
+      isDark.value = e.matches
+      applyTheme()
+    }
+  })
   userStore.fetchUserInfo()
-  fetchNotifications()
   fetchPinnedDocs()
   document.addEventListener('click', closeAllMenus)
+  document.addEventListener('keydown', handleGlobalKeydown)
 })
 onBeforeUnmount(() => {
   document.removeEventListener('click', closeAllMenus)
+  document.removeEventListener('keydown', handleGlobalKeydown)
 })
 </script>
 
@@ -1252,10 +1258,10 @@ onBeforeUnmount(() => {
   left: 8px;
   top: 28px;
   min-width: 200px;
-  background: #fff;
+  background: var(--bg-card);
   border: 1px solid var(--kx-border);
   border-radius: 8px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  box-shadow: 0 4px 16px var(--shadow-color);
   z-index: 200;
   padding: 4px 0;
   max-height: 400px;
@@ -1320,6 +1326,16 @@ onBeforeUnmount(() => {
   background: rgba(0,0,0,0.04);
   color: var(--kx-text-primary);
 }
+.bottom-hint {
+  padding: 6px 10px;
+  font-size: 11px;
+  color: var(--kx-text-placeholder);
+  cursor: pointer;
+  text-align: center;
+}
+.bottom-hint:hover {
+  color: var(--kx-primary);
+}
 
 /* Main Content */
 .main-content {
@@ -1335,7 +1351,7 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: space-between;
   padding: 0 24px;
-  background: #fff;
+  background: var(--bg-primary);
   border-bottom: 1px solid var(--kx-border);
   flex-shrink: 0;
 }
@@ -1365,11 +1381,27 @@ onBeforeUnmount(() => {
 .notification-badge {
   line-height: 1;
 }
+.locale-switch {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--kx-text-secondary);
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: all 0.15s;
+  user-select: none;
+}
+.locale-switch:hover {
+  color: var(--kx-primary);
+  background: rgba(51,112,255,0.06);
+}
 .page-content {
   flex: 1;
   overflow-y: auto;
   padding: 0 24px 24px;
-  background: #fff;
+  background: var(--bg-primary);
 }
 .page-content.no-padding {
   padding: 0;
@@ -1571,10 +1603,10 @@ onBeforeUnmount(() => {
 .ctx-menu-global {
   position: fixed;
   z-index: 999;
-  background: #fff;
+  background: var(--bg-card);
   border: 1px solid var(--kx-border);
   border-radius: 8px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  box-shadow: 0 4px 16px var(--shadow-color);
   padding: 4px 0;
   min-width: 160px;
 }
@@ -1591,160 +1623,72 @@ onBeforeUnmount(() => {
   background: var(--kx-sidebar-bg);
 }
 
-/* Notification Drawer */
-.notification-drawer-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
+
+/* ===== Responsive: 768px - Tablet ===== */
+@media (max-width: 768px) {
+  .sidebar {
+    width: 200px;
+  }
+  .topbar-title {
+    font-size: 15px;
+  }
+  .topbar-icon {
+    font-size: 16px;
+  }
+  .nav-label {
+    font-size: 13px;
+  }
 }
-.notification-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--kx-text-primary);
+
+/* ===== Responsive: 640px - Large Phone ===== */
+@media (max-width: 640px) {
+  .main-layout {
+    position: relative;
+  }
+  .sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 1000;
+    width: var(--kx-sidebar-width);
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    box-shadow: none;
+  }
+  .sidebar.mobile-open {
+    transform: translateX(0);
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
+  }
+  .main-content {
+    width: 100%;
+  }
+  .topbar {
+    padding: 0 12px;
+  }
+  .page-content {
+    padding: 12px !important;
+  }
 }
-.notification-tabs {
-  display: flex;
-  gap: 4px;
-  padding: 0 0 12px;
-  border-bottom: 1px solid var(--kx-border);
-  margin-bottom: 8px;
-}
-.notif-tab {
-  padding: 6px 16px;
-  border-radius: 16px;
-  font-size: 13px;
-  cursor: pointer;
-  color: var(--kx-text-secondary);
-  transition: all 0.2s;
-  user-select: none;
-}
-.notif-tab:hover {
-  background: rgba(0,0,0,0.04);
-}
-.notif-tab.active {
-  background: rgba(51,112,255,0.1);
-  color: var(--kx-primary);
-  font-weight: 500;
-}
-.notification-list {
-  flex: 1;
-  overflow-y: auto;
-  min-height: 200px;
-}
-.notification-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 60px 20px;
-  color: var(--kx-text-placeholder);
-}
-.notification-empty p {
-  margin-top: 12px;
-  font-size: 14px;
-}
-.notification-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 14px 12px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background 0.15s;
-  position: relative;
-}
-.notification-item:hover {
-  background: rgba(0,0,0,0.03);
-}
-.notification-item.unread {
-  background: rgba(51,112,255,0.04);
-}
-.notification-item.unread:hover {
-  background: rgba(51,112,255,0.08);
-}
-.notif-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  flex-shrink: 0;
-  font-size: 18px;
-  color: #fff;
-  background: #8592a6;
-}
-.notif-icon.comment {
-  background: #3370ff;
-}
-.notif-icon.mention {
-  background: #f5a623;
-}
-.notif-icon.share {
-  background: #36b37e;
-}
-.notif-icon.system {
-  background: #8592a6;
-}
-.notif-icon.approval {
-  background: #9254de;
-}
-.notif-content {
-  flex: 1;
-  min-width: 0;
-}
-.notif-title {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--kx-text-primary);
-  margin-bottom: 4px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.notif-text {
-  font-size: 13px;
-  color: var(--kx-text-secondary);
-  line-height: 1.5;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  margin-bottom: 6px;
-}
-.notif-meta {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12px;
-  color: var(--kx-text-placeholder);
-}
-.notif-time {
-  white-space: nowrap;
-}
-.notif-doc {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: var(--kx-primary);
-  max-width: 180px;
-}
-.notif-doc::before {
-  content: '·';
-  margin-right: 8px;
-  color: var(--kx-text-placeholder);
-}
-.unread-dot {
-  color: var(--kx-primary);
-  font-size: 14px;
-  flex-shrink: 0;
-  margin-top: 2px;
-}
-.notification-footer {
-  text-align: center;
-  padding: 12px 0;
-  border-top: 1px solid var(--kx-border);
-  margin-top: 8px;
+
+/* ===== Responsive: 480px - Small Phone ===== */
+@media (max-width: 480px) {
+  .topbar {
+    height: 44px;
+    padding: 0 8px;
+  }
+  .topbar-title {
+    font-size: 14px;
+  }
+  .topbar-right {
+    gap: 4px;
+  }
+  .topbar-icon {
+    font-size: 15px;
+    padding: 4px;
+  }
+  .page-content {
+    padding: 8px !important;
+  }
 }
 </style>

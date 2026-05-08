@@ -13,26 +13,39 @@
       </div>
 
       <div v-if="!sidebarCollapsed" class="kb-sidebar-body">
+        <!-- Sidebar Skeleton -->
+        <div v-if="loading" class="sidebar-tree-skeleton">
+          <el-skeleton v-for="i in 8" :key="i" animated :loading="true" style="padding: 4px 12px">
+            <template #template>
+              <div style="display: flex; align-items: center; gap: 8px; padding: 6px 0">
+                <el-skeleton-item variant="rect" :style="{ width: '14px', height: '14px', flexShrink: 0, marginLeft: (i % 3 === 0 ? '16px' : '0') }" />
+                <el-skeleton-item variant="text" :style="{ width: (40 + (i * 7) % 40) + '%', height: '14px' }" />
+              </div>
+            </template>
+          </el-skeleton>
+        </div>
+
+        <template v-else>
         <!-- Search -->
-        <el-input v-model="treeSearch" placeholder="搜索文档..." prefix-icon="Search" clearable size="small" class="tree-search" />
+        <el-input v-model="treeSearch" :placeholder="$t('knowledge.detail.searchDoc')" prefix-icon="Search" clearable size="small" class="tree-search" />
 
         <!-- New Document Dropdown -->
         <div class="tree-new-btn" @click.stop="showTreeNewMenu = !showTreeNewMenu">
-          <el-icon><Plus /></el-icon><span>新建</span>
+          <el-icon><Plus /></el-icon><span>{{ $t('common.create') }}</span>
           <div v-if="showTreeNewMenu" class="tree-new-dropdown" @click.stop>
-            <div class="tnd-item" @click="handleNewInKb('doc')"><el-icon color="#3370ff"><Document /></el-icon>文档</div>
-            <div class="tnd-item" @click="handleNewInKb('sheet')"><el-icon color="#36b37e"><Grid /></el-icon>表格</div>
-            <div class="tnd-item" @click="handleNewInKb('slide')"><el-icon color="#ff7d00"><Monitor /></el-icon>幻灯片</div>
-            <div class="tnd-item" @click="handleNewInKb('mindnote')"><el-icon color="#9254de"><Share /></el-icon>思维笔记</div>
+            <div class="tnd-item" @click="handleNewInKb('doc')"><el-icon color="#3370ff"><Document /></el-icon>{{ $t('home.doc') }}</div>
+            <div class="tnd-item" @click="handleNewInKb('sheet')"><el-icon color="#36b37e"><Grid /></el-icon>{{ $t('home.sheet') }}</div>
+            <div class="tnd-item" @click="handleNewInKb('slide')"><el-icon color="#ff7d00"><Monitor /></el-icon>{{ $t('home.slide') }}</div>
+            <div class="tnd-item" @click="handleNewInKb('mindnote')"><el-icon color="#9254de"><Share /></el-icon>{{ $t('home.mindNote') }}</div>
             <div class="tnd-sep" />
-            <div class="tnd-item" @click="handleNewCategory"><el-icon color="#f5a623"><Folder /></el-icon>分类目录</div>
+            <div class="tnd-item" @click="handleNewCategory"><el-icon color="#f5a623"><Folder /></el-icon>{{ $t('knowledge.detail.categoryDir') }}</div>
           </div>
         </div>
 
         <!-- Category Tree -->
         <div class="tree-section">
-          <div class="tree-section-label">目录</div>
-          <div v-if="!filteredTreeData.length" class="tree-empty">暂无文档</div>
+          <div class="tree-section-label">{{ $t('knowledge.detail.directory') }}</div>
+          <div v-if="!filteredTreeData.length" class="tree-empty">{{ $t('home.noDocument') }}</div>
           <div v-for="node in filteredTreeData" :key="node.id" class="tree-node-wrap">
             <div
               class="tree-node"
@@ -62,6 +75,7 @@
             </div>
           </div>
         </div>
+        </template>
       </div>
     </aside>
 
@@ -70,71 +84,91 @@
       <!-- Top Bar -->
       <div class="kb-topbar">
         <div class="kb-topbar-left">
-          <el-button text @click="$router.push('/knowledge')"><el-icon><ArrowLeft /></el-icon>返回列表</el-button>
+          <el-button text @click="$router.push('/knowledge')"><el-icon><ArrowLeft /></el-icon>{{ $t('knowledge.detail.backToList') }}</el-button>
           <span class="kb-topbar-name" v-if="kb">{{ kb.name }}</span>
-          <el-tag v-if="kb" size="small" type="info">{{ kb.docCount || 0 }} 篇文档</el-tag>
+          <el-tag v-if="kb" size="small" type="info">{{ $t('knowledge.detail.docCountTag', { count: kb.docCount || 0 }) }}</el-tag>
         </div>
         <div class="kb-topbar-right">
-          <el-input v-model="searchKey" placeholder="搜索知识库内文档..." prefix-icon="Search" clearable size="small" style="width: 240px" @keyup.enter="doSearch" />
-          <el-button size="small" @click="showMembers = true"><el-icon><User /></el-icon>成员</el-button>
-          <el-button size="small" @click="showSettings = true"><el-icon><Setting /></el-icon>设置</el-button>
+          <el-input v-model="searchKey" :placeholder="$t('knowledge.detail.searchInKb')" prefix-icon="Search" clearable size="small" style="width: 240px" @keyup.enter="doSearch" />
+          <el-button size="small" @click="showMembers = true"><el-icon><User /></el-icon>{{ $t('knowledge.members') }}</el-button>
+          <el-button size="small" @click="openGraphPanel"><el-icon><Share /></el-icon>{{ $t('knowledge.graph') }}</el-button>
+          <el-button size="small" @click="showSettings = true"><el-icon><Setting /></el-icon>{{ $t('knowledge.settings') }}</el-button>
         </div>
       </div>
 
       <!-- Tab Sections -->
       <div class="kb-content-tabs">
-        <span class="kc-tab" :class="{ active: contentTab === 'docs' }" @click="contentTab = 'docs'">全部文档</span>
-        <span class="kc-tab" :class="{ active: contentTab === 'published' }" @click="contentTab = 'published'">已发布</span>
-        <span class="kc-tab" :class="{ active: contentTab === 'draft' }" @click="contentTab = 'draft'">草稿</span>
-        <span class="kc-tab" :class="{ active: contentTab === 'review' }" @click="contentTab = 'review'">审核中</span>
+        <span class="kc-tab" :class="{ active: contentTab === 'docs' }" @click="contentTab = 'docs'">{{ $t('knowledge.detail.allDocs') }}</span>
+        <span class="kc-tab" :class="{ active: contentTab === 'published' }" @click="contentTab = 'published'">{{ $t('knowledge.detail.published') }}</span>
+        <span class="kc-tab" :class="{ active: contentTab === 'draft' }" @click="contentTab = 'draft'">{{ $t('knowledge.detail.draft') }}</span>
+        <span class="kc-tab" :class="{ active: contentTab === 'review' }" @click="contentTab = 'review'">{{ $t('knowledge.detail.inReview') }}</span>
       </div>
 
       <!-- Action bar -->
       <div class="kb-action-bar">
         <div class="kb-action-left">
           <el-dropdown trigger="click" @command="handleNewInKb">
-            <el-button type="primary" size="small"><el-icon><Plus /></el-icon>新建文档</el-button>
+            <el-button type="primary" size="small"><el-icon><Plus /></el-icon>{{ $t('document.newDocument') }}</el-button>
             <template #dropdown>
               <el-dropdown-menu>
-                <el-dropdown-item command="doc"><el-icon color="#3370ff"><Document /></el-icon>文档</el-dropdown-item>
-                <el-dropdown-item command="sheet"><el-icon color="#36b37e"><Grid /></el-icon>表格</el-dropdown-item>
-                <el-dropdown-item command="slide"><el-icon color="#ff7d00"><Monitor /></el-icon>幻灯片</el-dropdown-item>
-                <el-dropdown-item command="mindnote"><el-icon color="#9254de"><Share /></el-icon>思维笔记</el-dropdown-item>
+                <el-dropdown-item command="doc"><el-icon color="#3370ff"><Document /></el-icon>{{ $t('home.doc') }}</el-dropdown-item>
+                <el-dropdown-item command="sheet"><el-icon color="#36b37e"><Grid /></el-icon>{{ $t('home.sheet') }}</el-dropdown-item>
+                <el-dropdown-item command="slide"><el-icon color="#ff7d00"><Monitor /></el-icon>{{ $t('home.slide') }}</el-dropdown-item>
+                <el-dropdown-item command="mindnote"><el-icon color="#9254de"><Share /></el-icon>{{ $t('home.mindNote') }}</el-dropdown-item>
               </el-dropdown-menu>
             </template>
           </el-dropdown>
-          <el-button size="small" @click="showImportDialog = true"><el-icon><Upload /></el-icon>导入</el-button>
+          <el-button size="small" @click="showImportDialog = true"><el-icon><Upload /></el-icon>{{ $t('common.import') }}</el-button>
         </div>
         <div class="kb-action-right">
           <el-dropdown trigger="click" @command="handleSort">
-            <span class="action-link"><el-icon><Sort /></el-icon>排序</span>
+            <span class="action-link"><el-icon><Sort /></el-icon>{{ $t('knowledge.detail.sort') }}</span>
             <template #dropdown>
               <el-dropdown-menu>
-                <el-dropdown-item command="updated">修改时间</el-dropdown-item>
-                <el-dropdown-item command="created">创建时间</el-dropdown-item>
-                <el-dropdown-item command="title">名称</el-dropdown-item>
-                <el-dropdown-item command="status">状态</el-dropdown-item>
+                <el-dropdown-item command="updated">{{ $t('knowledge.detail.updatedTime') }}</el-dropdown-item>
+                <el-dropdown-item command="created">{{ $t('knowledge.detail.createdTime') }}</el-dropdown-item>
+                <el-dropdown-item command="title">{{ $t('common.name') }}</el-dropdown-item>
+                <el-dropdown-item command="status">{{ $t('knowledge.detail.status') }}</el-dropdown-item>
               </el-dropdown-menu>
             </template>
           </el-dropdown>
           <span class="action-link" @click="viewMode = viewMode === 'list' ? 'grid' : 'list'">
-            <el-icon><component :is="viewMode === 'list' ? 'Grid' : 'List'" /></el-icon>{{ viewMode === 'list' ? '网格' : '列表' }}
+            <el-icon><component :is="viewMode === 'list' ? 'Grid' : 'List'" /></el-icon>{{ viewMode === 'list' ? $t('knowledge.detail.grid') : $t('knowledge.detail.list') }}
           </span>
         </div>
       </div>
 
       <!-- Document List -->
-      <div v-loading="loading" class="kb-doc-list">
+      <div v-if="loadError" class="kb-error-state">
+        <el-icon :size="48" color="#f56c6c"><WarningFilled /></el-icon>
+        <p class="error-message">{{ loadError }}</p>
+        <el-button type="primary" @click="retryLoad">{{ $t('knowledge.detail.reload') }}</el-button>
+      </div>
+      <div v-else class="kb-doc-list">
+        <!-- Document List Skeleton -->
+        <div v-if="loading" class="kb-doc-skeleton">
+          <el-skeleton v-for="i in 5" :key="i" animated :loading="true" style="padding: 12px 16px; border-bottom: 1px solid var(--kx-border)">
+            <template #template>
+              <div style="display: flex; align-items: center; gap: 12px">
+                <el-skeleton-item variant="rect" style="width: 20px; height: 20px; flex-shrink: 0" />
+                <el-skeleton-item variant="text" style="width: 35%; height: 16px" />
+                <el-skeleton-item variant="text" style="width: 60px; height: 14px; margin-left: auto" />
+                <el-skeleton-item variant="text" style="width: 100px; height: 14px" />
+              </div>
+            </template>
+          </el-skeleton>
+        </div>
+
         <!-- Table/List View -->
         <el-table
-          v-if="viewMode === 'list'"
+          v-if="!loading && viewMode === 'list'"
           :data="displayedDocs"
           style="width: 100%"
           @row-click="handleDocClick"
           @selection-change="handleSelectionChange"
         >
           <el-table-column type="selection" width="40" />
-          <el-table-column label="标题" min-width="320" sortable>
+          <el-table-column :label="$t('knowledge.detail.title')" min-width="320" sortable>
             <template #default="{ row }">
               <div class="doc-name-cell">
                 <el-icon :color="getTypeColor(row.type)"><component :is="getTypeIcon(row.type)" /></el-icon>
@@ -142,13 +176,13 @@
               </div>
             </template>
           </el-table-column>
-          <el-table-column label="状态" width="100">
+          <el-table-column :label="$t('knowledge.detail.status')" width="100">
             <template #default="{ row }">
               <el-tag :type="statusTagType(row.status)" size="small">{{ statusLabel(row.status) }}</el-tag>
             </template>
           </el-table-column>
-          <el-table-column label="所有者" prop="ownerName" width="120" />
-          <el-table-column label="修改时间" width="180" sortable>
+          <el-table-column :label="$t('knowledge.detail.owner')" prop="ownerName" width="120" />
+          <el-table-column :label="$t('knowledge.detail.updatedTime')" width="180" sortable>
             <template #default="{ row }">{{ formatDate(row.updatedAt) }}</template>
           </el-table-column>
           <el-table-column width="50" align="center">
@@ -159,7 +193,7 @@
         </el-table>
 
         <!-- Grid View -->
-        <div v-else class="kb-doc-grid">
+        <div v-else-if="!loading" class="kb-doc-grid">
           <div
             v-for="doc in displayedDocs"
             :key="doc.id"
@@ -179,58 +213,58 @@
         </div>
 
         <div v-if="!loading && !displayedDocs.length" class="kb-empty">
-          <el-empty :description="contentTab === 'docs' ? '暂无文档，点击上方新建按钮创建' : '该分类下暂无文档'" />
+          <el-empty :description="contentTab === 'docs' ? $t('knowledge.detail.noDocHint') : $t('knowledge.detail.noDocInTab')" />
         </div>
       </div>
 
       <!-- Batch Bar -->
       <transition name="slide-up">
         <div v-if="selectedDocs.length" class="kb-batch-bar">
-          <span>已选 {{ selectedDocs.length }} 项</span>
-          <el-button size="small" @click="batchPublish"><el-icon><Upload /></el-icon>批量发布</el-button>
-          <el-button size="small" @click="batchMove"><el-icon><Rank /></el-icon>移动到</el-button>
-          <el-button size="small" type="danger" @click="batchDelete"><el-icon><Delete /></el-icon>删除</el-button>
-          <el-button size="small" text @click="selectedDocs = []">取消选择</el-button>
+          <span>{{ $t('common.selected', { count: selectedDocs.length }) }}</span>
+          <el-button size="small" @click="batchPublish"><el-icon><Upload /></el-icon>{{ $t('knowledge.detail.batchPublish') }}</el-button>
+          <el-button size="small" @click="batchMove"><el-icon><Rank /></el-icon>{{ $t('common.moveTo') }}</el-button>
+          <el-button size="small" type="danger" @click="batchDelete"><el-icon><Delete /></el-icon>{{ $t('common.delete') }}</el-button>
+          <el-button size="small" text @click="selectedDocs = []">{{ $t('home.cancelSelect') }}</el-button>
         </div>
       </transition>
     </div>
 
     <!-- Document Context Menu -->
     <div v-if="docCtxMenu.visible" class="context-menu" :style="{ left: docCtxMenu.x + 'px', top: docCtxMenu.y + 'px' }">
-      <div class="ctx-item" @click="handleDocAction('open')"><el-icon><View /></el-icon>打开</div>
-      <div class="ctx-item" @click="handleDocAction('openNew')"><el-icon><TopRight /></el-icon>在新标签页打开</div>
+      <div class="ctx-item" @click="handleDocAction('open')"><el-icon><View /></el-icon>{{ $t('knowledge.detail.openDoc') }}</div>
+      <div class="ctx-item" @click="handleDocAction('openNew')"><el-icon><TopRight /></el-icon>{{ $t('knowledge.detail.openInNewTab') }}</div>
       <div class="ctx-sep" />
-      <div class="ctx-item" @click="handleDocAction('publish')" v-if="docCtxMenu.doc?.status !== 'published'"><el-icon><Upload /></el-icon>发布</div>
-      <div class="ctx-item" @click="handleDocAction('unpublish')" v-if="docCtxMenu.doc?.status === 'published'"><el-icon><Download /></el-icon>取消发布</div>
-      <div class="ctx-item" @click="handleDocAction('submitReview')" v-if="docCtxMenu.doc?.status === 'draft'"><el-icon><Promotion /></el-icon>提交审核</div>
+      <div class="ctx-item" @click="handleDocAction('publish')" v-if="docCtxMenu.doc?.status !== 'published'"><el-icon><Upload /></el-icon>{{ $t('knowledge.detail.publish') }}</div>
+      <div class="ctx-item" @click="handleDocAction('unpublish')" v-if="docCtxMenu.doc?.status === 'published'"><el-icon><Download /></el-icon>{{ $t('knowledge.detail.unpublish') }}</div>
+      <div class="ctx-item" @click="handleDocAction('submitReview')" v-if="docCtxMenu.doc?.status === 'draft'"><el-icon><Promotion /></el-icon>{{ $t('knowledge.detail.submitReview') }}</div>
       <div class="ctx-sep" />
-      <div class="ctx-item" @click="handleDocAction('share')"><el-icon><Share /></el-icon>分享</div>
-      <div class="ctx-item" @click="handleDocAction('copyLink')"><el-icon><Link /></el-icon>复制链接</div>
-      <div class="ctx-item" @click="handleDocAction('copy')"><el-icon><DocumentCopy /></el-icon>创建副本</div>
+      <div class="ctx-item" @click="handleDocAction('share')"><el-icon><Share /></el-icon>{{ $t('common.share') }}</div>
+      <div class="ctx-item" @click="handleDocAction('copyLink')"><el-icon><Link /></el-icon>{{ $t('knowledge.detail.copyLink') }}</div>
+      <div class="ctx-item" @click="handleDocAction('copy')"><el-icon><DocumentCopy /></el-icon>{{ $t('knowledge.detail.createCopy') }}</div>
       <div class="ctx-sep" />
-      <div class="ctx-item" @click="handleDocAction('move')"><el-icon><Rank /></el-icon>移动到</div>
-      <div class="ctx-item" @click="handleDocAction('pin')"><el-icon><Flag /></el-icon>添加到"置顶"</div>
-      <div class="ctx-item" @click="handleDocAction('favorite')"><el-icon><Star /></el-icon>收藏</div>
-      <div class="ctx-item" @click="handleDocAction('versions')"><el-icon><Clock /></el-icon>版本历史</div>
+      <div class="ctx-item" @click="handleDocAction('move')"><el-icon><Rank /></el-icon>{{ $t('common.moveTo') }}</div>
+      <div class="ctx-item" @click="handleDocAction('pin')"><el-icon><Flag /></el-icon>{{ $t('knowledge.detail.addToTop') }}</div>
+      <div class="ctx-item" @click="handleDocAction('favorite')"><el-icon><Star /></el-icon>{{ $t('knowledge.detail.favorite') }}</div>
+      <div class="ctx-item" @click="handleDocAction('versions')"><el-icon><Clock /></el-icon>{{ $t('knowledge.detail.versionHistory') }}</div>
       <div class="ctx-sep" />
-      <div class="ctx-item" @click="handleDocAction('rename')"><el-icon><EditPen /></el-icon>重命名</div>
-      <div class="ctx-item danger" @click="handleDocAction('delete')"><el-icon><Delete /></el-icon>删除</div>
+      <div class="ctx-item" @click="handleDocAction('rename')"><el-icon><EditPen /></el-icon>{{ $t('common.rename') }}</div>
+      <div class="ctx-item danger" @click="handleDocAction('delete')"><el-icon><Delete /></el-icon>{{ $t('common.delete') }}</div>
     </div>
 
     <!-- Tree Node Context Menu -->
     <div v-if="treeCtxMenu.visible" class="context-menu" :style="{ left: treeCtxMenu.x + 'px', top: treeCtxMenu.y + 'px' }">
-      <div class="ctx-item" @click="handleTreeAction('open')"><el-icon><View /></el-icon>打开</div>
-      <div class="ctx-item" @click="handleTreeAction('rename')"><el-icon><EditPen /></el-icon>重命名</div>
-      <div class="ctx-item" @click="handleTreeAction('move')"><el-icon><Rank /></el-icon>移动到</div>
+      <div class="ctx-item" @click="handleTreeAction('open')"><el-icon><View /></el-icon>{{ $t('knowledge.detail.openDoc') }}</div>
+      <div class="ctx-item" @click="handleTreeAction('rename')"><el-icon><EditPen /></el-icon>{{ $t('common.rename') }}</div>
+      <div class="ctx-item" @click="handleTreeAction('move')"><el-icon><Rank /></el-icon>{{ $t('common.moveTo') }}</div>
       <div class="ctx-sep" />
-      <div class="ctx-item danger" @click="handleTreeAction('delete')"><el-icon><Delete /></el-icon>删除</div>
+      <div class="ctx-item danger" @click="handleTreeAction('delete')"><el-icon><Delete /></el-icon>{{ $t('common.delete') }}</div>
     </div>
 
     <!-- Members Drawer -->
-    <el-drawer v-model="showMembers" title="成员管理" direction="rtl" size="420px">
+    <el-drawer v-model="showMembers" :title="$t('knowledge.detail.memberManagement')" direction="rtl" size="420px">
       <div class="member-toolbar">
-        <el-input v-model="memberSearch" placeholder="搜索成员..." prefix-icon="Search" clearable size="small" style="flex:1" />
-        <el-button type="primary" size="small" @click="showAddMember = true"><el-icon><Plus /></el-icon>添加</el-button>
+        <el-input v-model="memberSearch" :placeholder="$t('knowledge.detail.searchMember')" prefix-icon="Search" clearable size="small" style="flex:1" />
+        <el-button type="primary" size="small" @click="showAddMember = true"><el-icon><Plus /></el-icon>{{ $t('knowledge.detail.add') }}</el-button>
       </div>
       <div class="member-list">
         <div v-for="m in filteredMembers" :key="m.userId" class="member-item">
@@ -243,10 +277,10 @@
             <el-tag :type="roleTagType(m.role)" size="small" class="role-tag">{{ roleLabel(m.role) }}<el-icon class="el-icon--right"><ArrowDown /></el-icon></el-tag>
             <template #dropdown>
               <el-dropdown-menu>
-                <el-dropdown-item command="admin">管理员</el-dropdown-item>
-                <el-dropdown-item command="editor">可编辑</el-dropdown-item>
-                <el-dropdown-item command="viewer">仅查看</el-dropdown-item>
-                <el-dropdown-item command="remove" divided><span style="color:var(--kx-danger)">移除</span></el-dropdown-item>
+                <el-dropdown-item command="admin">{{ $t('knowledge.detail.admin') }}</el-dropdown-item>
+                <el-dropdown-item command="editor">{{ $t('knowledge.detail.canEdit') }}</el-dropdown-item>
+                <el-dropdown-item command="viewer">{{ $t('knowledge.detail.viewOnly') }}</el-dropdown-item>
+                <el-dropdown-item command="remove" divided><span style="color:var(--kx-danger)">{{ $t('knowledge.detail.remove') }}</span></el-dropdown-item>
               </el-dropdown-menu>
             </template>
           </el-dropdown>
@@ -254,68 +288,68 @@
       </div>
 
       <!-- Add Member Sub Dialog -->
-      <el-dialog v-model="showAddMember" title="添加成员" width="400px" append-to-body destroy-on-close>
+      <el-dialog v-model="showAddMember" :title="$t('knowledge.detail.addMember')" width="400px" append-to-body destroy-on-close>
         <el-form label-position="top">
-          <el-form-item label="用户">
-            <el-input v-model="addMemberForm.keyword" placeholder="输入用户名或邮箱搜索" />
+          <el-form-item :label="$t('knowledge.detail.user')">
+            <el-input v-model="addMemberForm.keyword" :placeholder="$t('knowledge.detail.searchUserOrEmail')" />
           </el-form-item>
-          <el-form-item label="角色">
+          <el-form-item :label="$t('knowledge.detail.role')">
             <el-radio-group v-model="addMemberForm.role">
-              <el-radio value="admin">管理员</el-radio>
-              <el-radio value="editor">可编辑</el-radio>
-              <el-radio value="viewer">仅查看</el-radio>
+              <el-radio value="admin">{{ $t('knowledge.detail.admin') }}</el-radio>
+              <el-radio value="editor">{{ $t('knowledge.detail.canEdit') }}</el-radio>
+              <el-radio value="viewer">{{ $t('knowledge.detail.viewOnly') }}</el-radio>
             </el-radio-group>
           </el-form-item>
         </el-form>
         <template #footer>
-          <el-button @click="showAddMember = false">取消</el-button>
-          <el-button type="primary" @click="handleAddMember">添加</el-button>
+          <el-button @click="showAddMember = false">{{ $t('common.cancel') }}</el-button>
+          <el-button type="primary" @click="handleAddMember">{{ $t('knowledge.detail.add') }}</el-button>
         </template>
       </el-dialog>
     </el-drawer>
 
     <!-- Settings Drawer -->
-    <el-drawer v-model="showSettings" title="知识库设置" direction="rtl" size="480px">
+    <el-drawer v-model="showSettings" :title="$t('knowledge.detail.kbSettings')" direction="rtl" size="480px">
       <el-tabs v-model="settingsTab">
-        <el-tab-pane label="基本信息" name="basic">
+        <el-tab-pane :label="$t('knowledge.detail.basicInfo')" name="basic">
           <el-form label-position="top" style="max-width:400px">
-            <el-form-item label="名称">
+            <el-form-item :label="$t('common.name')">
               <el-input v-model="settingsForm.name" maxlength="50" show-word-limit />
             </el-form-item>
-            <el-form-item label="描述">
+            <el-form-item :label="$t('common.description')">
               <el-input v-model="settingsForm.description" type="textarea" :rows="3" maxlength="200" show-word-limit />
             </el-form-item>
-            <el-form-item label="可见范围">
+            <el-form-item :label="$t('knowledge.detail.visibility')">
               <el-radio-group v-model="settingsForm.visibility">
-                <el-radio value="private">仅成员可见</el-radio>
-                <el-radio value="team">团队内可见</el-radio>
-                <el-radio value="public">所有人可见</el-radio>
+                <el-radio value="private">{{ $t('knowledge.detail.memberOnly') }}</el-radio>
+                <el-radio value="team">{{ $t('knowledge.detail.teamVisible') }}</el-radio>
+                <el-radio value="public">{{ $t('knowledge.detail.publicVisible') }}</el-radio>
               </el-radio-group>
             </el-form-item>
             <el-form-item>
-              <el-button type="primary" :loading="savingSettings" @click="handleSaveSettings">保存</el-button>
+              <el-button type="primary" :loading="savingSettings" @click="handleSaveSettings">{{ $t('common.save') }}</el-button>
             </el-form-item>
           </el-form>
         </el-tab-pane>
-        <el-tab-pane label="分类管理" name="categories">
+        <el-tab-pane :label="$t('knowledge.detail.categoryManagement')" name="categories">
           <div class="cat-toolbar">
-            <el-button size="small" type="primary" @click="showNewCatDialog = true"><el-icon><Plus /></el-icon>新建分类</el-button>
+            <el-button size="small" type="primary" @click="showNewCatDialog = true"><el-icon><Plus /></el-icon>{{ $t('knowledge.detail.newCategory') }}</el-button>
           </div>
           <div class="cat-list">
             <div v-for="cat in categories" :key="cat.id" class="cat-item">
               <el-icon color="#f5a623"><Folder /></el-icon>
               <span class="cat-name">{{ cat.name }}</span>
-              <span class="cat-count">{{ cat.docCount || 0 }} 篇</span>
+              <span class="cat-count">{{ cat.docCount || 0 }} {{ $t('knowledge.detail.docCountUnit') }}</span>
               <el-icon class="cat-action" @click="handleDeleteCategory(cat)"><Delete /></el-icon>
             </div>
-            <div v-if="!categories.length" class="cat-empty">暂无分类，点击上方按钮创建</div>
+            <div v-if="!categories.length" class="cat-empty">{{ $t('knowledge.detail.noCategoryHint') }}</div>
           </div>
         </el-tab-pane>
-        <el-tab-pane label="数据来源" name="sources">
-          <div class="sources-tip">将云盘文件夹或我的文档库中的文档关联到此知识库，文档内容将被自动索引，支持 AI 问答检索。</div>
+        <el-tab-pane :label="$t('knowledge.detail.dataSources')" name="sources">
+          <div class="sources-tip">{{ $t('knowledge.detail.sourceTip') }}</div>
           <div class="sources-toolbar">
-            <el-button size="small" type="primary" @click="showAddSourceDialog = true"><el-icon><Link /></el-icon>添加来源</el-button>
-            <el-button size="small" :loading="syncingAll" @click="syncAllSources"><el-icon><Refresh /></el-icon>全量同步</el-button>
+            <el-button size="small" type="primary" @click="showAddSourceDialog = true"><el-icon><Link /></el-icon>{{ $t('knowledge.detail.addSource') }}</el-button>
+            <el-button size="small" :loading="syncingAll" @click="syncAllSources"><el-icon><Refresh /></el-icon>{{ $t('knowledge.detail.syncAll') }}</el-button>
           </div>
           <div v-loading="sourcesLoading" class="sources-list">
             <div v-for="src in kbSources" :key="src.id" class="source-item-row">
@@ -324,112 +358,112 @@
               </el-icon>
               <div class="source-info">
                 <div class="source-name">{{ src.sourceName }}</div>
-                <div class="source-meta">{{ src.sourceType === 'folder' ? '文件夹' : '文档' }} · {{ src.lastSyncAt ? '上次同步: ' + formatDate(src.lastSyncAt) : '未同步' }}</div>
+                <div class="source-meta">{{ src.sourceType === 'folder' ? $t('knowledge.detail.folder') : $t('knowledge.detail.document') }} · {{ src.lastSyncAt ? $t('knowledge.detail.lastSync', { time: formatDate(src.lastSyncAt) }) : $t('knowledge.detail.notSynced') }}</div>
               </div>
               <div class="source-actions">
-                <el-button size="small" text @click="syncSource(src.id)"><el-icon><Refresh /></el-icon>同步</el-button>
+                <el-button size="small" text @click="syncSource(src.id)"><el-icon><Refresh /></el-icon>{{ $t('knowledge.detail.sync') }}</el-button>
                 <el-button size="small" text type="danger" @click="removeSource(src.id)"><el-icon><Delete /></el-icon></el-button>
               </div>
             </div>
             <div v-if="!sourcesLoading && !kbSources.length" class="sources-empty">
-              <el-empty description="暂无数据来源，点击「添加来源」关联文件夹或文档" />
+              <el-empty :description="$t('knowledge.detail.noSourceHint')" />
             </div>
           </div>
         </el-tab-pane>
-        <el-tab-pane label="审核设置" name="approval">
+        <el-tab-pane :label="$t('knowledge.detail.approvalSettings')" name="approval">
           <el-form label-position="top" style="max-width:400px">
-            <el-form-item label="发布审核">
-              <el-switch v-model="settingsForm.requireApproval" active-text="开启" inactive-text="关闭" />
-              <div class="form-hint">开启后，文档发布需要审核通过</div>
+            <el-form-item :label="$t('knowledge.detail.publishApproval')">
+              <el-switch v-model="settingsForm.requireApproval" :active-text="$t('knowledge.detail.enabled')" :inactive-text="$t('knowledge.detail.disabled')" />
+              <div class="form-hint">{{ $t('knowledge.detail.approvalHint') }}</div>
             </el-form-item>
-            <el-form-item label="默认审核人" v-if="settingsForm.requireApproval">
-              <el-input v-model="settingsForm.defaultReviewer" placeholder="输入审核人用户名" />
+            <el-form-item :label="$t('knowledge.detail.defaultReviewer')" v-if="settingsForm.requireApproval">
+              <el-input v-model="settingsForm.defaultReviewer" :placeholder="$t('knowledge.detail.reviewerPlaceholder')" />
             </el-form-item>
             <el-form-item>
-              <el-button type="primary" :loading="savingSettings" @click="handleSaveSettings">保存</el-button>
+              <el-button type="primary" :loading="savingSettings" @click="handleSaveSettings">{{ $t('common.save') }}</el-button>
             </el-form-item>
           </el-form>
         </el-tab-pane>
-        <el-tab-pane label="向量化" name="vectorization">
+        <el-tab-pane :label="$t('knowledge.detail.vectorization')" name="vectorization">
           <div class="vector-section">
-            <h4 class="vs-title">向量嵌入状态</h4>
+            <h4 class="vs-title">{{ $t('knowledge.detail.embeddingStatus') }}</h4>
             <div v-loading="loadingEmbedding" class="embedding-status">
               <div v-if="embeddingStatus" class="status-grid">
                 <div class="status-item">
-                  <span class="status-label">总分块数</span>
+                  <span class="status-label">{{ $t('knowledge.detail.totalChunks') }}</span>
                   <span class="status-value">{{ embeddingStatus.totalChunks }}</span>
                 </div>
                 <div class="status-item">
-                  <span class="status-label">已向量化</span>
+                  <span class="status-label">{{ $t('knowledge.detail.embeddedChunks') }}</span>
                   <span class="status-value success">{{ embeddingStatus.embeddedChunks }}</span>
                 </div>
                 <div class="status-item">
-                  <span class="status-label">待处理</span>
+                  <span class="status-label">{{ $t('knowledge.detail.pendingChunks') }}</span>
                   <span class="status-value warning">{{ embeddingStatus.pendingChunks }}</span>
                 </div>
                 <div class="status-item">
-                  <span class="status-label">失败</span>
+                  <span class="status-label">{{ $t('knowledge.detail.failedChunks') }}</span>
                   <span class="status-value danger">{{ embeddingStatus.failedChunks }}</span>
                 </div>
               </div>
-              <div v-else class="status-empty">暂无数据</div>
+              <div v-else class="status-empty">{{ $t('common.noData') }}</div>
               <div class="status-actions">
                 <el-button size="small" :loading="rebuildingEmbeddings" @click="handleRebuildEmbeddings">
-                  <el-icon><Refresh /></el-icon>重建向量索引
+                  <el-icon><Refresh /></el-icon>{{ $t('knowledge.detail.rebuildIndex') }}
                 </el-button>
               </div>
             </div>
 
-            <h4 class="vs-title" style="margin-top:24px">RAPTOR 树状摘要</h4>
+            <h4 class="vs-title" style="margin-top:24px">{{ $t('knowledge.detail.raptorTitle') }}</h4>
             <div class="raptor-status">
               <div v-if="raptorStats" class="status-grid">
                 <div class="status-item">
-                  <span class="status-label">总节点数</span>
+                  <span class="status-label">{{ $t('knowledge.detail.totalNodes') }}</span>
                   <span class="status-value">{{ raptorStats.totalNodes }}</span>
                 </div>
                 <div class="status-item">
-                  <span class="status-label">叶子节点</span>
+                  <span class="status-label">{{ $t('knowledge.detail.leafNodes') }}</span>
                   <span class="status-value">{{ raptorStats.leafNodes }}</span>
                 </div>
                 <div class="status-item">
-                  <span class="status-label">聚类节点</span>
+                  <span class="status-label">{{ $t('knowledge.detail.clusterNodes') }}</span>
                   <span class="status-value">{{ raptorStats.clusterNodes }}</span>
                 </div>
                 <div class="status-item">
-                  <span class="status-label">最大层级</span>
+                  <span class="status-label">{{ $t('knowledge.detail.maxLevel') }}</span>
                   <span class="status-value">{{ raptorStats.maxLevel }}</span>
                 </div>
               </div>
-              <div v-else class="status-empty">尚未构建 RAPTOR 树</div>
+              <div v-else class="status-empty">{{ $t('knowledge.detail.noRaptorTree') }}</div>
               <div class="status-actions">
                 <el-button size="small" type="primary" :loading="buildingRaptor" @click="handleBuildRaptorTree">
-                  <el-icon><Share /></el-icon>构建 RAPTOR 树
+                  <el-icon><Share /></el-icon>{{ $t('knowledge.detail.buildRaptorTree') }}
                 </el-button>
               </div>
             </div>
 
             <div class="vector-tip">
               <el-icon color="#3370ff"><InfoFilled /></el-icon>
-              <span>RAPTOR（递归抽象处理树状检索）通过聚类相似文档并生成摘要，构建层级化的知识结构，提升 AI 检索的准确性和广度。</span>
+              <span>{{ $t('knowledge.detail.raptorTip') }}</span>
             </div>
           </div>
         </el-tab-pane>
-        <el-tab-pane label="高级" name="advanced">
+        <el-tab-pane :label="$t('knowledge.detail.advanced')" name="advanced">
           <div class="danger-zone">
-            <h4>危险操作</h4>
+            <h4>{{ $t('knowledge.detail.dangerZone') }}</h4>
             <div class="danger-item">
               <div>
-                <div class="danger-title">转移知识库</div>
-                <div class="danger-desc">将知识库所有权转移给其他成员</div>
+                <div class="danger-title">{{ $t('knowledge.detail.transferKb') }}</div>
+                <div class="danger-desc">{{ $t('knowledge.detail.transferKbDesc') }}</div>
               </div>
-              <el-button size="small" @click="handleTransferKb">转移</el-button>
+              <el-button size="small" @click="handleTransferKb">{{ $t('knowledge.detail.transfer') }}</el-button>
             </div>
             <div class="danger-item">
               <div>
-                <div class="danger-title">删除知识库</div>
-                <div class="danger-desc">删除后所有文档将永久丢失，不可恢复</div>
+                <div class="danger-title">{{ $t('knowledge.detail.deleteKb') }}</div>
+                <div class="danger-desc">{{ $t('knowledge.detail.deleteKbDesc') }}</div>
               </div>
-              <el-button size="small" type="danger" @click="handleDeleteKb">删除</el-button>
+              <el-button size="small" type="danger" @click="handleDeleteKb">{{ $t('common.delete') }}</el-button>
             </div>
           </div>
         </el-tab-pane>
@@ -437,81 +471,103 @@
     </el-drawer>
 
     <!-- Version History Dialog -->
-    <el-dialog v-model="showVersions" title="版本历史" width="600px" destroy-on-close>
+    <el-dialog v-model="showVersions" :title="$t('knowledge.detail.versionHistory')" width="600px" destroy-on-close>
       <div v-if="versionLoading" v-loading="true" style="min-height:200px" />
       <div v-else>
+        <div style="margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+          <el-button size="small" :type="diffCompareMode ? 'warning' : 'primary'" @click="toggleDiffMode">
+            {{ diffCompareMode ? $t('knowledge.detail.cancelCompare') : $t('knowledge.detail.versionCompare') }}
+          </el-button>
+          <el-button v-if="diffCompareMode && diffSelectedVersions.length === 2" size="small" type="success" @click="handleDiffCompare">
+            {{ $t('knowledge.detail.compareSelected') }}
+          </el-button>
+          <span v-if="diffCompareMode" style="font-size:12px;color:#909399;">{{ $t('knowledge.detail.selectTwoVersions') }}</span>
+        </div>
         <div v-for="ver in versions" :key="ver.id" class="version-item">
           <div class="ver-left">
+            <el-checkbox v-if="diffCompareMode" :model-value="diffSelectedVersions.includes(ver.version)" @change="(val: any) => toggleDiffVersion(ver.version, val)" :disabled="!diffSelectedVersions.includes(ver.version) && diffSelectedVersions.length >= 2" />
             <div class="ver-num">v{{ ver.version }}</div>
             <div class="ver-time">{{ formatDate(ver.createdAt) }}</div>
           </div>
           <div class="ver-editor">{{ ver.editorName }}</div>
-          <el-button size="small" text type="primary" @click="handleRollback(ver)">回滚到此版本</el-button>
+          <el-button size="small" text type="primary" @click="handleRollback(ver)">{{ $t('knowledge.detail.rollbackTo') }}</el-button>
         </div>
-        <div v-if="!versions.length" class="ver-empty">暂无版本记录</div>
+        <div v-if="!versions.length" class="ver-empty">{{ $t('knowledge.detail.noVersions') }}</div>
       </div>
     </el-dialog>
 
+    <!-- Version Diff Dialog -->
+    <el-dialog v-model="showDiffDialog" :title="$t('knowledge.detail.versionDiff')" width="800px" destroy-on-close>
+      <div v-if="diffLoading" v-loading="true" style="min-height:200px" />
+      <VersionDiff
+        v-else-if="diffResult"
+        :old-version="diffResult.old_version"
+        :new-version="diffResult.new_version"
+        :lines="diffResult.lines"
+        :stats="diffResult.stats"
+      />
+    </el-dialog>
+
     <!-- Rename Dialog -->
-    <el-dialog v-model="showRename" title="重命名" width="400px" destroy-on-close>
-      <el-input v-model="renameValue" maxlength="50" show-word-limit placeholder="请输入新名称" />
+    <el-dialog v-model="showRename" :title="$t('common.rename')" width="400px" destroy-on-close>
+      <el-input v-model="renameValue" maxlength="50" show-word-limit :placeholder="$t('knowledge.detail.inputNewName')" />
       <template #footer>
-        <el-button @click="showRename = false">取消</el-button>
-        <el-button type="primary" @click="confirmRename">确认</el-button>
+        <el-button @click="showRename = false">{{ $t('common.cancel') }}</el-button>
+        <el-button type="primary" @click="confirmRename">{{ $t('common.confirm') }}</el-button>
       </template>
     </el-dialog>
 
     <!-- Move Dialog -->
-    <el-dialog v-model="showMoveDialog" title="移动到" width="400px">
-      <p style="margin-bottom:8px;color:var(--kx-text-secondary);font-size:13px">选择目标分类</p>
+    <el-dialog v-model="showMoveDialog" :title="$t('common.moveTo')" width="400px">
+      <p style="margin-bottom:8px;color:var(--kx-text-secondary);font-size:13px">{{ $t('knowledge.detail.selectCategory') }}</p>
       <div class="move-list">
         <div class="move-item" :class="{ active: moveTargetId === null }" @click="moveTargetId = null">
-          <el-icon color="#3370ff"><Collection /></el-icon><span>知识库根目录</span>
+          <el-icon color="#3370ff"><Collection /></el-icon><span>{{ $t('knowledge.detail.kbRootDir') }}</span>
         </div>
         <div v-for="cat in categories" :key="cat.id" class="move-item" :class="{ active: moveTargetId === cat.id }" @click="moveTargetId = cat.id">
           <el-icon color="#f5a623"><Folder /></el-icon><span>{{ cat.name }}</span>
         </div>
       </div>
       <template #footer>
-        <el-button @click="showMoveDialog = false">取消</el-button>
-        <el-button type="primary" @click="confirmMove">确认移动</el-button>
+        <el-button @click="showMoveDialog = false">{{ $t('common.cancel') }}</el-button>
+        <el-button type="primary" @click="confirmMove">{{ $t('knowledge.detail.confirmMove') }}</el-button>
       </template>
     </el-dialog>
 
     <!-- New Category Dialog -->
-    <el-dialog v-model="showNewCatDialog" title="新建分类" width="400px" destroy-on-close>
-      <el-input v-model="newCatName" placeholder="分类名称" maxlength="30" show-word-limit />
+    <el-dialog v-model="showNewCatDialog" :title="$t('knowledge.detail.newCategory')" width="400px" destroy-on-close>
+      <el-input v-model="newCatName" :placeholder="$t('knowledge.detail.categoryName')" maxlength="30" show-word-limit />
       <template #footer>
-        <el-button @click="showNewCatDialog = false">取消</el-button>
-        <el-button type="primary" @click="handleCreateCategory">创建</el-button>
+        <el-button @click="showNewCatDialog = false">{{ $t('common.cancel') }}</el-button>
+        <el-button type="primary" @click="handleCreateCategory">{{ $t('common.create') }}</el-button>
       </template>
     </el-dialog>
 
     <!-- Import Dialog -->
-    <el-dialog v-model="showImportDialog" title="导入文档到知识库" width="480px" destroy-on-close>
+    <el-dialog v-model="showImportDialog" :title="$t('knowledge.detail.importToKb')" width="480px" destroy-on-close>
       <el-upload drag :auto-upload="false" :limit="5" accept=".md,.json,.txt,.html,.docx" :on-change="handleImportFileChange">
         <el-icon class="el-icon--upload"><UploadFilled /></el-icon>
-        <div class="el-upload__text">拖拽文件到此处，或 <em>点击上传</em></div>
-        <template #tip><div class="el-upload__tip">支持 .md .json .txt .html .docx 格式，最多5个文件</div></template>
+        <div class="el-upload__text">{{ $t('knowledge.detail.dragOrClick') }} <em>{{ $t('knowledge.detail.clickUpload') }}</em></div>
+        <template #tip><div class="el-upload__tip">{{ $t('knowledge.detail.importTip') }}</div></template>
       </el-upload>
       <template #footer>
-        <el-button @click="showImportDialog = false">取消</el-button>
-        <el-button type="primary" :disabled="!importFiles.length" @click="handleImport">导入</el-button>
+        <el-button @click="showImportDialog = false">{{ $t('common.cancel') }}</el-button>
+        <el-button type="primary" :disabled="!importFiles.length" @click="handleImport">{{ $t('common.import') }}</el-button>
       </template>
     </el-dialog>
 
     <!-- Add Source Dialog -->
-    <el-dialog v-model="showAddSourceDialog" title="添加数据来源" width="500px" destroy-on-close>
-      <div class="add-source-desc">选择云盘文件夹或我的文档库中的文档，添加为知识库数据来源。来源中的文档内容将被自动索引，可通过 AI 问答检索。</div>
+    <el-dialog v-model="showAddSourceDialog" :title="$t('knowledge.detail.addSourceTitle')" width="500px" destroy-on-close>
+      <div class="add-source-desc">{{ $t('knowledge.detail.addSourceDesc') }}</div>
       <el-form label-position="top" style="margin-top:16px">
-        <el-form-item label="来源类型">
+        <el-form-item :label="$t('knowledge.detail.sourceType')">
           <el-radio-group v-model="addSourceForm.type">
-            <el-radio value="folder">文件夹（批量导入文件夹内全部文档）</el-radio>
-            <el-radio value="document">单篇文档</el-radio>
+            <el-radio value="folder">{{ $t('knowledge.detail.folderBatch') }}</el-radio>
+            <el-radio value="document">{{ $t('knowledge.detail.singleDoc') }}</el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-form-item label="选择文档/文件夹">
-          <el-select v-model="addSourceForm.sourceId" placeholder="请选择" filterable style="width:100%">
+        <el-form-item :label="$t('knowledge.detail.selectDocOrFolder')">
+          <el-select v-model="addSourceForm.sourceId" :placeholder="$t('knowledge.detail.pleaseSelect')" filterable style="width:100%">
             <el-option
               v-for="item in addSourceForm.type === 'folder' ? allFolders : allDocs"
               :key="item.id"
@@ -527,9 +583,62 @@
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="showAddSourceDialog = false">取消</el-button>
-        <el-button type="primary" :loading="addingSource" :disabled="!addSourceForm.sourceId" @click="confirmAddSource">添加并同步</el-button>
+        <el-button @click="showAddSourceDialog = false">{{ $t('common.cancel') }}</el-button>
+        <el-button type="primary" :loading="addingSource" :disabled="!addSourceForm.sourceId" @click="confirmAddSource">{{ $t('knowledge.detail.addAndSync') }}</el-button>
       </template>
+    </el-dialog>
+
+    <!-- Knowledge Graph Dialog -->
+    <el-dialog v-model="showGraphPanel" :title="$t('knowledge.detail.graphTitle')" fullscreen destroy-on-close>
+      <div class="graph-panel">
+        <!-- 构建控制区 -->
+        <div class="graph-toolbar">
+          <div class="graph-status">
+            <el-tag v-if="graphStatus?.status === 'ready'" type="success">{{ $t('knowledge.detail.graphReady') }}</el-tag>
+            <el-tag v-else-if="graphStatus?.status === 'building'" type="warning">{{ $t('knowledge.detail.graphBuilding') }}</el-tag>
+            <el-tag v-else-if="graphStatus?.status === 'failed'" type="danger">{{ $t('knowledge.detail.graphFailed') }}</el-tag>
+            <el-tag v-else type="info">{{ $t('knowledge.detail.graphIdle') }}</el-tag>
+            <span v-if="graphStatus?.status === 'ready'" class="graph-stats">
+              {{ $t('knowledge.detail.graphStats', { nodes: graphStatus.nodeCount, edges: graphStatus.edgeCount, communities: graphStatus.communityCount }) }}
+            </span>
+          </div>
+          <div class="graph-actions">
+            <el-button type="primary" @click="handleBuildGraph"
+                       :loading="graphStatus?.status === 'building'"
+                       :disabled="graphStatus?.status === 'building'">
+              {{ graphStatus?.status === 'ready' ? $t('knowledge.detail.rebuildGraph') : $t('knowledge.detail.buildGraph') }}
+            </el-button>
+          </div>
+        </div>
+
+        <!-- 构建中状态 -->
+        <div v-if="graphStatus?.status === 'building'" class="graph-building">
+          <el-icon class="is-loading" :size="48"><Loading /></el-icon>
+          <p>{{ $t('knowledge.detail.graphBuildingMsg') }}</p>
+          <p class="graph-building-tip">{{ $t('knowledge.detail.graphBuildingTip') }}</p>
+        </div>
+
+        <!-- 失败状态 -->
+        <div v-else-if="graphStatus?.status === 'failed'" class="graph-error">
+          <el-result icon="error" :title="$t('knowledge.detail.graphBuildFailed')" :sub-title="graphStatus?.errorMessage">
+            <template #extra>
+              <el-button type="primary" @click="handleBuildGraph">{{ $t('knowledge.detail.rebuildGraph') }}</el-button>
+            </template>
+          </el-result>
+        </div>
+
+        <!-- 未构建状态 -->
+        <div v-else-if="!graphStatus || graphStatus?.status === 'idle'" class="graph-empty">
+          <el-empty :description="$t('knowledge.detail.graphNotBuilt')">
+            <el-button type="primary" @click="handleBuildGraph">{{ $t('knowledge.detail.buildKnowledgeGraph') }}</el-button>
+          </el-empty>
+          <p class="graph-empty-tip">{{ $t('knowledge.detail.graphEmptyTip') }}</p>
+        </div>
+
+        <!-- 图谱展示 -->
+        <KnowledgeGraphView v-else :graph-data="graphData" :loading="graphLoading"
+                            style="height: calc(100vh - 130px)" />
+      </div>
     </el-dialog>
 
     <!-- AI Chat Button -->
@@ -550,13 +659,18 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, onBeforeUnmount, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
-import { getKnowledgeBaseDetail, getKnowledgeBaseTree, getKnowledgeMembers, deleteKnowledgeBase, updateKnowledgeBase, removeKnowledgeMember, publishDocument, searchKnowledge, getKnowledgeSources, addKnowledgeSource, removeKnowledgeSource, syncKnowledgeSource, getEmbeddingStatus, buildRaptorTree, getRaptorTreeStats, rebuildEmbeddings } from '@/api/modules/knowledge'
-import { createDocument, updateDocument, deleteDocument, copyDocument, moveDocument, pinDocument, favoriteDocument, getDocumentVersions, rollbackVersion, importDocument, getDocumentTree } from '@/api/modules/document'
+import { getKnowledgeBaseDetail, getKnowledgeBaseTree, getKnowledgeMembers, deleteKnowledgeBase, updateKnowledgeBase, removeKnowledgeMember, publishDocument, searchKnowledge, getKnowledgeSources, addKnowledgeSource, removeKnowledgeSource, syncKnowledgeSource, getEmbeddingStatus, buildRaptorTree, getRaptorTreeStats, rebuildEmbeddings, buildKnowledgeGraph, getKnowledgeGraph, getKnowledgeGraphStatus, transferKnowledgeBase } from '@/api/modules/knowledge'
+import { createDocument, updateDocument, deleteDocument, copyDocument, moveDocument, pinDocument, favoriteDocument, getDocumentVersions, rollbackVersion, importDocument, getDocumentTree, getVersionDiff } from '@/api/modules/document'
 import type { KnowledgeBase, DocumentVersion } from '@/types'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import type { DiffLine, VersionDiffResult } from '@/api/modules/document'
+import { ElMessage, ElMessageBox, ElLoading } from 'element-plus'
 import type { UploadFile } from 'element-plus'
+import { WarningFilled } from '@element-plus/icons-vue'
 import KbChatPanel from '@/components/knowledge/KbChatPanel.vue'
+import KnowledgeGraphView from '@/components/knowledge/KnowledgeGraphView.vue'
+import VersionDiff from '@/components/document/VersionDiff.vue'
 
 interface KbDoc {
   id: number
@@ -587,18 +701,28 @@ interface Member {
   role: string
 }
 
+const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
-const kbId = Number(route.params.id)
+const kbId = computed(() => Number(route.params.id))
 
 // Core state
 const kb = ref<KnowledgeBase | null>(null)
 const loading = ref(false)
+const loadError = ref<string | null>(null)
 const documents = ref<KbDoc[]>([])
 const members = ref<Member[]>([])
 const categories = ref<Category[]>([])
 const versions = ref<DocumentVersion[]>([])
 const versionLoading = ref(false)
+
+// Version diff state
+const diffCompareMode = ref(false)
+const diffSelectedVersions = ref<number[]>([])
+const showDiffDialog = ref(false)
+const diffLoading = ref(false)
+const diffResult = ref<VersionDiffResult | null>(null)
+const versionDocId = ref<number | null>(null)
 
 // UI state
 const sidebarCollapsed = ref(false)
@@ -649,6 +773,13 @@ const moveTargetDoc = ref<KbDoc | null>(null)
 const newCatName = ref('')
 const importFiles = ref<File[]>([])
 
+// 知识图谱
+const showGraphPanel = ref(false)
+const graphData = ref<any>(null)
+const graphLoading = ref(false)
+const graphStatus = ref<any>(null)
+const graphPollingTimer = ref<any>(null)
+
 // Vectorization state
 const embeddingStatus = ref<{ totalChunks: number; embeddedChunks: number; pendingChunks: number; failedChunks: number; progress: number } | null>(null)
 const raptorStats = ref<{ totalNodes: number; leafNodes: number; clusterNodes: number; rootNodes: number; maxLevel: number } | null>(null)
@@ -674,9 +805,9 @@ function getTypeIcon(type: string) { return typeMap[type]?.icon || 'Document' }
 function getTypeColor(type: string) { return typeMap[type]?.color || '#3370ff' }
 
 function statusLabel(s?: string) {
-  if (s === 'published') return '已发布'
-  if (s === 'review') return '审核中'
-  return '草稿'
+  if (s === 'published') return t('knowledge.detail.statusPublished')
+  if (s === 'review') return t('knowledge.detail.statusReview')
+  return t('knowledge.detail.statusDraft')
 }
 function statusTagType(s?: string): '' | 'success' | 'warning' | 'info' {
   if (s === 'published') return 'success'
@@ -684,9 +815,9 @@ function statusTagType(s?: string): '' | 'success' | 'warning' | 'info' {
   return 'info'
 }
 function roleLabel(r: string) {
-  if (r === 'admin' || r === 'owner') return '管理员'
-  if (r === 'editor') return '可编辑'
-  return '仅查看'
+  if (r === 'admin' || r === 'owner') return t('knowledge.detail.admin')
+  if (r === 'editor') return t('knowledge.detail.canEdit')
+  return t('knowledge.detail.viewOnly')
 }
 function roleTagType(r: string): '' | 'success' | 'warning' | 'info' {
   if (r === 'admin' || r === 'owner') return ''
@@ -697,7 +828,7 @@ function roleTagType(r: string): '' | 'success' | 'warning' | 'info' {
 function formatDate(t: string) {
   if (!t) return ''
   const d = new Date(t)
-  return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`
+  return `${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()}`
 }
 
 // Computed
@@ -739,19 +870,28 @@ const filteredMembers = computed(() => {
 // Data fetching
 async function fetchDetail() {
   try {
-    const res: any = await getKnowledgeBaseDetail(kbId)
+    const res: any = await getKnowledgeBaseDetail(kbId.value)
     kb.value = res.data
     if (kb.value) {
       settingsForm.name = kb.value.name
       settingsForm.description = kb.value.description
     }
-  } catch { /* ignore */ }
+    loadError.value = null
+  } catch (e: any) {
+    loadError.value = e?.response?.data?.message || t('knowledge.detail.kbLoadFailed')
+    console.error('[KnowledgeDetail] fetchDetail failed:', e)
+  }
+}
+
+function retryLoad() {
+  loadError.value = null
+  initKbData()
 }
 
 async function fetchDocs() {
   loading.value = true
   try {
-    const res: any = await getKnowledgeBaseTree(kbId)
+    const res: any = await getKnowledgeBaseTree(kbId.value)
     const rawDocs = res.data || []
     documents.value = rawDocs.map((d: any) => ({
       ...d,
@@ -768,16 +908,18 @@ async function fetchDocs() {
 
 async function fetchMembers() {
   try {
-    const res: any = await getKnowledgeMembers(kbId)
+    const res: any = await getKnowledgeMembers(kbId.value)
     members.value = res.data || []
-  } catch { /* ignore */ }
+  } catch (e: any) {
+    console.error('[KnowledgeDetail] fetchMembers failed:', e)
+  }
 }
 
 async function doSearch() {
   if (!searchKey.value.trim()) { fetchDocs(); return }
   loading.value = true
   try {
-    const res: any = await searchKnowledge({ keyword: searchKey.value, knowledgeBaseId: kbId, page: 1, pageSize: 50 })
+    const res: any = await searchKnowledge({ keyword: searchKey.value, knowledgeBaseId: kbId.value, page: 1, pageSize: 50 })
     const list = res.data?.list || []
     documents.value = list.map((d: any) => ({ ...d, status: d.status || 'draft', isExpanded: false, children: [] }))
   } finally { loading.value = false }
@@ -802,19 +944,21 @@ function handleDocClick(doc: any) {
 async function handleNewInKb(type: string) {
   showTreeNewMenu.value = false
   try {
-    const res: any = await createDocument({ title: '无标题文档', type: type as any, parentId: null })
+    const res: any = await createDocument({ title: t('document.untitled'), type: type as any, parentId: null })
     if (res.data?.id) {
       // Auto-add to knowledge base as source
       try {
-        await addKnowledgeSource(kbId, { sourceType: 'document', sourceId: res.data.id })
-      } catch { /* ignore if already added */ }
-      ElMessage.success('已创建并添加到知识库')
+        await addKnowledgeSource(kbId.value, { sourceType: 'document', sourceId: res.data.id })
+      } catch (e: any) {
+        console.error('[KnowledgeDetail] addKnowledgeSource after create failed:', e)
+      }
+      ElMessage.success(t('knowledge.detail.createdAndAdded'))
       fetchDocs()
       loadSources()
       // Open in new browser tab
       window.open(`/doc/${res.data.id}`, '_blank')
     }
-  } catch { ElMessage.error('创建失败') }
+  } catch { ElMessage.error(t('knowledge.detail.createFailed')) }
 }
 
 async function handleNewCategory() {
@@ -823,23 +967,25 @@ async function handleNewCategory() {
 }
 
 async function handleCreateCategory() {
-  if (!newCatName.value.trim()) { ElMessage.warning('请输入分类名称'); return }
+  if (!newCatName.value.trim()) { ElMessage.warning(t('knowledge.detail.categoryNameRequired')); return }
   try {
     await createDocument({ title: newCatName.value.trim(), type: 'folder', parentId: null })
-    ElMessage.success('分类已创建')
+    ElMessage.success(t('knowledge.detail.categoryCreated'))
     showNewCatDialog.value = false
     newCatName.value = ''
     fetchDocs()
-  } catch { ElMessage.error('创建失败') }
+  } catch { ElMessage.error(t('knowledge.detail.createFailed')) }
 }
 
 async function handleDeleteCategory(cat: Category) {
-  await ElMessageBox.confirm(`确定删除分类"${cat.name}"？`, '删除确认')
+  await ElMessageBox.confirm(t('knowledge.detail.deleteCategoryConfirm', { name: cat.name }), t('knowledge.detail.deleteConfirmTitle'))
   try {
     await deleteDocument(cat.id)
-    ElMessage.success('已删除')
+    ElMessage.success(t('knowledge.detail.removed'))
     fetchDocs()
-  } catch { /* ignore */ }
+  } catch (e: any) {
+    ElMessage.error(e?.response?.data?.message || t('knowledge.detail.deleteCategoryFailed'))
+  }
 }
 
 function handleSort(cmd: string) {
@@ -889,19 +1035,19 @@ async function handleDocAction(action: string) {
       break
     case 'publish':
       try {
-        await publishDocument(kbId, doc.id)
-        ElMessage.success('已发布')
+        await publishDocument(kbId.value, doc.id)
+        ElMessage.success(t('knowledge.detail.publishSuccess'))
         fetchDocs()
-      } catch { ElMessage.error('发布失败') }
+      } catch { ElMessage.error(t('knowledge.detail.publishFailed')) }
       break
     case 'unpublish':
       doc.status = 'draft'
-      ElMessage.success('已取消发布')
+      ElMessage.success(t('knowledge.detail.unpublished'))
       fetchDocs()
       break
     case 'submitReview':
       doc.status = 'review'
-      ElMessage.success('已提交审核')
+      ElMessage.success(t('knowledge.detail.reviewSubmitted'))
       fetchDocs()
       break
     case 'share':
@@ -911,15 +1057,15 @@ async function handleDocAction(action: string) {
     case 'copyLink': {
       const link = `${window.location.origin}/doc/${doc.id}`
       navigator.clipboard.writeText(link)
-      ElMessage.success('链接已复制')
+      ElMessage.success(t('common.linkCopied'))
       break
     }
     case 'copy':
       try {
         await copyDocument(doc.id, false)
-        ElMessage.success('副本已创建')
+        ElMessage.success(t('knowledge.detail.copyCreated'))
         fetchDocs()
-      } catch { ElMessage.error('创建副本失败') }
+      } catch { ElMessage.error(t('knowledge.detail.copyFailed')) }
       break
     case 'move':
       moveTargetDoc.value = doc
@@ -928,17 +1074,20 @@ async function handleDocAction(action: string) {
       break
     case 'pin':
       await pinDocument(doc.id, !doc.isPinned)
-      ElMessage.success(doc.isPinned ? '已从置顶移除' : '已添加到置顶')
+      ElMessage.success(doc.isPinned ? t('knowledge.detail.unpinned') : t('knowledge.detail.pinned'))
       fetchDocs()
       break
     case 'favorite':
       await favoriteDocument(doc.id, !doc.isFavorite)
-      ElMessage.success(doc.isFavorite ? '已取消收藏' : '已收藏')
+      ElMessage.success(doc.isFavorite ? t('knowledge.detail.unfavorited') : t('knowledge.detail.favorited'))
       fetchDocs()
       break
     case 'versions':
       showVersions.value = true
       versionLoading.value = true
+      versionDocId.value = doc.id
+      diffCompareMode.value = false
+      diffSelectedVersions.value = []
       try {
         const res: any = await getDocumentVersions(doc.id)
         versions.value = res.data || []
@@ -950,9 +1099,9 @@ async function handleDocAction(action: string) {
       showRename.value = true
       break
     case 'delete':
-      await ElMessageBox.confirm(`确定删除"${doc.title}"？`, '删除确认')
+      await ElMessageBox.confirm(t('knowledge.detail.deleteDocConfirm', { title: doc.title }), t('knowledge.detail.deleteConfirmTitle'))
       await deleteDocument(doc.id)
-      ElMessage.success('已删除')
+      ElMessage.success(t('knowledge.detail.removed'))
       fetchDocs()
       break
   }
@@ -978,49 +1127,103 @@ async function handleTreeAction(action: string) {
       showMoveDialog.value = true
       break
     case 'delete':
-      await ElMessageBox.confirm(`确定删除"${node.title}"？`, '删除确认')
+      await ElMessageBox.confirm(t('knowledge.detail.deleteDocConfirm', { title: node.title }), t('knowledge.detail.deleteConfirmTitle'))
       await deleteDocument(node.id)
-      ElMessage.success('已删除')
+      ElMessage.success(t('knowledge.detail.removed'))
       fetchDocs()
       break
   }
 }
 
 async function confirmRename() {
-  if (!renameTarget.value || !renameValue.value.trim()) { ElMessage.warning('名称不能为空'); return }
+  if (!renameTarget.value || !renameValue.value.trim()) { ElMessage.warning(t('knowledge.detail.nameRequired')); return }
   try {
     await updateDocument(renameTarget.value.id, { title: renameValue.value.trim() })
-    ElMessage.success('重命名成功')
+    ElMessage.success(t('knowledge.detail.renameSuccess'))
     showRename.value = false
     fetchDocs()
-  } catch { ElMessage.error('重命名失败') }
+  } catch { ElMessage.error(t('knowledge.detail.renameFailed')) }
 }
 
 async function confirmMove() {
   if (!moveTargetDoc.value) return
   try {
     await moveDocument(moveTargetDoc.value.id, moveTargetId.value)
-    ElMessage.success('已移动')
+    ElMessage.success(t('knowledge.detail.moved'))
     showMoveDialog.value = false
     fetchDocs()
-  } catch { ElMessage.error('移动失败') }
+  } catch { ElMessage.error(t('knowledge.detail.moveFailed')) }
 }
 
 async function handleRollback(ver: DocumentVersion) {
-  await ElMessageBox.confirm(`确定回滚到 v${ver.version}？`, '版本回滚')
+  await ElMessageBox.confirm(t('knowledge.detail.rollbackConfirm', { version: ver.version }), t('knowledge.detail.rollbackTitle'))
   try {
     await rollbackVersion(ver.documentId, ver.version)
-    ElMessage.success('已回滚')
+    ElMessage.success(t('knowledge.detail.rolledBack'))
     showVersions.value = false
-  } catch { ElMessage.error('回滚失败') }
+  } catch { ElMessage.error(t('knowledge.detail.rollbackFailed')) }
+}
+
+function toggleDiffMode() {
+  diffCompareMode.value = !diffCompareMode.value
+  diffSelectedVersions.value = []
+}
+
+function toggleDiffVersion(version: number, checked: any) {
+  if (checked) {
+    if (diffSelectedVersions.value.length < 2) {
+      diffSelectedVersions.value.push(version)
+    }
+  } else {
+    diffSelectedVersions.value = diffSelectedVersions.value.filter(v => v !== version)
+  }
+}
+
+async function handleDiffCompare() {
+  if (diffSelectedVersions.value.length !== 2) return
+  const sorted = [...diffSelectedVersions.value].sort((a, b) => a - b)
+  const docId = versionDocId.value
+  if (!docId) return
+  diffLoading.value = true
+  showDiffDialog.value = true
+  diffResult.value = null
+  try {
+    const res: any = await getVersionDiff(docId, String(sorted[0]), String(sorted[1]))
+    diffResult.value = res.data || null
+  } catch {
+    ElMessage.error(t('knowledge.detail.diffFailed'))
+    showDiffDialog.value = false
+  } finally {
+    diffLoading.value = false
+  }
 }
 
 // Batch operations
 async function batchPublish() {
+  const total = selectedDocs.value.length
+  let completed = 0
+  let failed = 0
+
+  const loadingInstance = ElLoading.service({ text: t('knowledge.detail.publishing', { current: 0, total }) })
+
   for (const doc of selectedDocs.value) {
-    try { await publishDocument(kbId, doc.id) } catch { /* continue */ }
+    try {
+      await publishDocument(kbId.value, doc.id)
+      completed++
+    } catch {
+      failed++
+    }
+    loadingInstance.setText(t('knowledge.detail.publishing', { current: completed + failed, total }))
   }
-  ElMessage.success('批量发布完成')
+
+  loadingInstance.close()
+
+  if (failed > 0) {
+    ElMessage.warning(t('knowledge.detail.publishDone', { success: completed, fail: failed }))
+  } else {
+    ElMessage.success(t('knowledge.detail.publishAllSuccess', { count: completed }))
+  }
+
   selectedDocs.value = []
   fetchDocs()
 }
@@ -1034,11 +1237,31 @@ async function batchMove() {
 }
 
 async function batchDelete() {
-  await ElMessageBox.confirm(`确定删除选中的 ${selectedDocs.value.length} 项？`, '批量删除')
+  await ElMessageBox.confirm(t('knowledge.detail.batchDeleteConfirm', { count: selectedDocs.value.length }), t('knowledge.detail.batchDeleteTitle'))
+  const total = selectedDocs.value.length
+  let completed = 0
+  let failed = 0
+
+  const loadingInstance = ElLoading.service({ text: t('knowledge.detail.deleting', { current: 0, total }) })
+
   for (const doc of selectedDocs.value) {
-    try { await deleteDocument(doc.id) } catch { /* continue */ }
+    try {
+      await deleteDocument(doc.id)
+      completed++
+    } catch {
+      failed++
+    }
+    loadingInstance.setText(t('knowledge.detail.deleting', { current: completed + failed, total }))
   }
-  ElMessage.success('删除完成')
+
+  loadingInstance.close()
+
+  if (failed > 0) {
+    ElMessage.warning(t('knowledge.detail.deleteDone', { success: completed, fail: failed }))
+  } else {
+    ElMessage.success(t('knowledge.detail.deleteSuccess', { count: completed }))
+  }
+
   selectedDocs.value = []
   fetchDocs()
 }
@@ -1047,44 +1270,50 @@ async function batchDelete() {
 async function handleSaveSettings() {
   savingSettings.value = true
   try {
-    await updateKnowledgeBase(kbId, { name: settingsForm.name, description: settingsForm.description })
-    ElMessage.success('设置已保存')
+    await updateKnowledgeBase(kbId.value, { name: settingsForm.name, description: settingsForm.description })
+    ElMessage.success(t('knowledge.detail.settingsSaved'))
     fetchDetail()
   } finally { savingSettings.value = false }
 }
 
 async function handleDeleteKb() {
-  await ElMessageBox.confirm('确定删除该知识库？删除后所有文档将永久丢失！', '删除确认', { type: 'warning' })
-  await deleteKnowledgeBase(kbId)
-  ElMessage.success('已删除')
+  await ElMessageBox.confirm(t('knowledge.detail.deleteKbConfirm'), t('knowledge.detail.deleteConfirmTitle'), { type: 'warning' })
+  await deleteKnowledgeBase(kbId.value)
+  ElMessage.success(t('knowledge.detail.removed'))
   router.push('/knowledge')
 }
 
 async function handleTransferKb() {
-  const { value } = await ElMessageBox.prompt('请输入新所有者的邮箱或用户名', '转移知识库所有权', {
-    confirmButtonText: '转移',
-    cancelButtonText: '取消',
-    inputPlaceholder: '输入用户邮箱',
+  const { value } = await ElMessageBox.prompt(t('knowledge.detail.transferPrompt'), t('knowledge.detail.transferTitle'), {
+    confirmButtonText: t('knowledge.detail.transferBtn'),
+    cancelButtonText: t('common.cancel'),
+    inputPlaceholder: t('knowledge.detail.emailPlaceholder'),
   }).catch(() => ({ value: null }))
   if (value) {
-    ElMessage.success(`知识库所有权已转移给 ${value}`)
+    try {
+      await transferKnowledgeBase(kbId.value, value)
+      ElMessage.success(t('knowledge.detail.transferSuccess', { user: value }))
+      fetchDetail()
+    } catch (e: any) {
+      ElMessage.error(e?.response?.data?.message || t('knowledge.detail.transferFailed'))
+    }
   }
 }
 
 // Members
 async function handleMemberRole(m: Member, cmd: string) {
   if (cmd === 'remove') {
-    await ElMessageBox.confirm(`确定移除成员"${m.userName}"？`, '移除确认')
-    await removeKnowledgeMember(kbId, m.userId)
-    ElMessage.success('已移除')
+    await ElMessageBox.confirm(t('knowledge.detail.removeMemberConfirm', { name: m.userName }), t('knowledge.detail.removeConfirmTitle'))
+    await removeKnowledgeMember(kbId.value, m.userId)
+    ElMessage.success(t('knowledge.detail.removed'))
     fetchMembers()
   } else {
-    ElMessage.success(`已将 ${m.userName} 设为${roleLabel(cmd)}`)
+    ElMessage.success(t('knowledge.detail.roleChanged', { name: m.userName, role: roleLabel(cmd) }))
   }
 }
 
 async function handleAddMember() {
-  if (!addMemberForm.keyword.trim()) { ElMessage.warning('请输入用户名'); return }
+  if (!addMemberForm.keyword.trim()) { ElMessage.warning(t('knowledge.detail.usernameRequired')); return }
   // Add member to knowledge base
   members.value.push({
     userId: Date.now(),
@@ -1092,7 +1321,7 @@ async function handleAddMember() {
     userAvatar: '',
     role: addMemberForm.role,
   })
-  ElMessage.success(`已添加成员 "${addMemberForm.keyword}"`)
+  ElMessage.success(t('knowledge.detail.memberAdded', { name: addMemberForm.keyword }))
   showAddMember.value = false
   addMemberForm.keyword = ''
   addMemberForm.role = 'view'
@@ -1111,13 +1340,17 @@ async function handleImport() {
       if (res.data?.id) {
         // Auto-add to knowledge base as source
         try {
-          await addKnowledgeSource(kbId, { sourceType: 'document', sourceId: res.data.id })
-        } catch { /* ignore if already added */ }
+          await addKnowledgeSource(kbId.value, { sourceType: 'document', sourceId: res.data.id })
+        } catch (e: any) {
+          console.error('[KnowledgeDetail] addKnowledgeSource after import failed:', e)
+        }
         importedCount++
       }
-    } catch { /* continue */ }
+    } catch (e: any) {
+      console.error('[KnowledgeDetail] importDocument failed:', e)
+    }
   }
-  ElMessage.success(`已导入 ${importedCount} 个文档到知识库`)
+  ElMessage.success(t('knowledge.detail.importedCount', { count: importedCount }))
   showImportDialog.value = false
   importFiles.value = []
   fetchDocs()
@@ -1135,9 +1368,11 @@ function closeMenus() {
 async function loadSources() {
   sourcesLoading.value = true
   try {
-    const res: any = await getKnowledgeSources(kbId)
+    const res: any = await getKnowledgeSources(kbId.value)
     kbSources.value = res.data || []
-  } catch { /* ignore */ } finally {
+  } catch (e: any) {
+    console.error('[KnowledgeDetail] loadSources failed:', e)
+  } finally {
     sourcesLoading.value = false
   }
 }
@@ -1148,49 +1383,51 @@ async function loadAllDocsFolders() {
     const items = res.data || []
     allFolders.value = items.filter((d: any) => d.type === 'folder')
     allDocs.value = items.filter((d: any) => d.type !== 'folder')
-  } catch { /* ignore */ }
+  } catch (e: any) {
+    console.error('[KnowledgeDetail] loadAllDocsFolders failed:', e)
+  }
 }
 
 async function syncSource(srcId: number) {
   try {
-    await syncKnowledgeSource(kbId, srcId)
-    ElMessage.success('同步完成')
+    await syncKnowledgeSource(kbId.value, srcId)
+    ElMessage.success(t('knowledge.detail.syncSuccess'))
     loadSources()
-  } catch { ElMessage.error('同步失败') }
+  } catch { ElMessage.error(t('knowledge.detail.syncFailed')) }
 }
 
 async function removeSource(srcId: number) {
-  await ElMessageBox.confirm('确定移除该数据来源？移除后相关索引将被清除。', '移除确认')
+  await ElMessageBox.confirm(t('knowledge.detail.removeSourceConfirm'), t('knowledge.detail.removeSourceTitle'))
   try {
-    await removeKnowledgeSource(kbId, srcId)
-    ElMessage.success('已移除')
+    await removeKnowledgeSource(kbId.value, srcId)
+    ElMessage.success(t('knowledge.detail.removed'))
     loadSources()
-  } catch { ElMessage.error('移除失败') }
+  } catch { ElMessage.error(t('knowledge.detail.removeFailed')) }
 }
 
 async function syncAllSources() {
-  if (!kbSources.value.length) { ElMessage.info('暂无数据来源'); return }
+  if (!kbSources.value.length) { ElMessage.info(t('knowledge.detail.noSources')); return }
   syncingAll.value = true
   try {
     for (const src of kbSources.value) {
-      try { await syncKnowledgeSource(kbId, src.id) } catch { /* continue */ }
+      try { await syncKnowledgeSource(kbId.value, src.id) } catch (e: any) { console.error('[KnowledgeDetail] syncSource failed for id:', src.id, e) }
     }
-    ElMessage.success('全量同步完成')
+    ElMessage.success(t('knowledge.detail.syncAllSuccess'))
     loadSources()
   } finally { syncingAll.value = false }
 }
 
 async function confirmAddSource() {
-  if (!addSourceForm.sourceId) { ElMessage.warning('请选择文档或文件夹'); return }
+  if (!addSourceForm.sourceId) { ElMessage.warning(t('knowledge.detail.selectDocOrFolderRequired')); return }
   addingSource.value = true
   try {
-    await addKnowledgeSource(kbId, { sourceType: addSourceForm.type, sourceId: addSourceForm.sourceId })
-    ElMessage.success('已添加并开始同步')
+    await addKnowledgeSource(kbId.value, { sourceType: addSourceForm.type, sourceId: addSourceForm.sourceId })
+    ElMessage.success(t('knowledge.detail.sourceAdded'))
     showAddSourceDialog.value = false
     addSourceForm.sourceId = undefined
     loadSources()
   } catch (e: any) {
-    ElMessage.error(e?.response?.data?.message || '添加失败')
+    ElMessage.error(e?.response?.data?.message || t('knowledge.detail.addFailed'))
   } finally { addingSource.value = false }
 }
 
@@ -1200,7 +1437,7 @@ watch(() => addSourceForm.type, () => { addSourceForm.sourceId = undefined })
 async function loadEmbeddingStatus() {
   loadingEmbedding.value = true
   try {
-    const res: any = await getEmbeddingStatus(kbId)
+    const res: any = await getEmbeddingStatus(kbId.value)
     embeddingStatus.value = res.data
   } catch (e: any) {
     console.error('Failed to load embedding status:', e)
@@ -1211,7 +1448,7 @@ async function loadEmbeddingStatus() {
 
 async function loadRaptorStats() {
   try {
-    const res: any = await getRaptorTreeStats(kbId)
+    const res: any = await getRaptorTreeStats(kbId.value)
     raptorStats.value = res.data
   } catch (e: any) {
     console.error('Failed to load raptor stats:', e)
@@ -1220,14 +1457,14 @@ async function loadRaptorStats() {
 
 async function handleBuildRaptorTree() {
   try {
-    await ElMessageBox.confirm('构建 RAPTOR 树需要一定时间，确定开始构建？', '构建确认')
+    await ElMessageBox.confirm(t('knowledge.detail.raptorBuildConfirm'), t('knowledge.detail.buildConfirmTitle'))
   } catch {
     return
   }
   buildingRaptor.value = true
   try {
-    await buildRaptorTree(kbId, { clusterCount: 10, maxLevel: 3 })
-    ElMessage.success('RAPTOR 树构建已启动，请稍后刷新查看结果')
+    await buildRaptorTree(kbId.value, { clusterCount: 10, maxLevel: 3 })
+    ElMessage.success(t('knowledge.detail.raptorStarted'))
     // 轮询机制：每2秒查询一次，最多30次（60秒）
     let retryCount = 0
     const maxRetries = 30
@@ -1238,12 +1475,12 @@ async function handleBuildRaptorTree() {
       if ((raptorStats.value && raptorStats.value.totalNodes > 0) || retryCount >= maxRetries) {
         clearInterval(pollTimer)
         if (retryCount >= maxRetries) {
-          ElMessage.info('构建可能仍在进行中，请稍后手动刷新')
+          ElMessage.info(t('knowledge.detail.buildStillRunning'))
         }
       }
     }, 2000)
   } catch (e: any) {
-    const msg = e?.response?.data?.message || e?.message || '构建失败'
+    const msg = e?.response?.data?.message || e?.message || t('knowledge.detail.buildFailed')
     ElMessage.error(msg)
   } finally {
     buildingRaptor.value = false
@@ -1252,26 +1489,90 @@ async function handleBuildRaptorTree() {
 
 async function handleRebuildEmbeddings() {
   try {
-    await ElMessageBox.confirm('重建向量索引需要一定时间，确定开始？', '重建确认')
+    await ElMessageBox.confirm(t('knowledge.detail.rebuildConfirm'), t('knowledge.detail.rebuildTitle'))
   } catch {
     return
   }
   rebuildingEmbeddings.value = true
   try {
-    await rebuildEmbeddings(kbId)
-    ElMessage.success('向量索引重建已启动')
+    await rebuildEmbeddings(kbId.value)
+    ElMessage.success(t('knowledge.detail.rebuildStarted'))
     setTimeout(() => {
       loadEmbeddingStatus()
     }, 2000)
   } catch (e: any) {
-    const msg = e?.response?.data?.message || e?.message || '重建失败'
+    const msg = e?.response?.data?.message || e?.message || t('knowledge.detail.rebuildFailed')
     ElMessage.error(msg)
   } finally {
     rebuildingEmbeddings.value = false
   }
 }
 
-onMounted(() => {
+// 知识图谱功能
+async function openGraphPanel() {
+  showGraphPanel.value = true
+  await loadGraphStatus()
+  if (graphStatus.value?.status === 'ready') {
+    await loadGraphData()
+  }
+}
+
+async function loadGraphStatus() {
+  try {
+    const res = await getKnowledgeGraphStatus(kbId.value) as any
+    graphStatus.value = res.data
+  } catch (e) {
+    graphStatus.value = null
+  }
+}
+
+async function loadGraphData() {
+  graphLoading.value = true
+  try {
+    const res = await getKnowledgeGraph(kbId.value) as any
+    graphData.value = res.data
+  } catch (e) {
+    graphData.value = null
+  } finally {
+    graphLoading.value = false
+  }
+}
+
+async function handleBuildGraph() {
+  try {
+    await buildKnowledgeGraph(kbId.value)
+    ElMessage.success(t('knowledge.detail.graphBuildStarted'))
+    graphStatus.value = { status: 'building' }
+    startGraphPolling()
+  } catch (e) {
+    ElMessage.error(t('knowledge.detail.graphBuildStartFailed'))
+  }
+}
+
+function startGraphPolling() {
+  stopGraphPolling()
+  graphPollingTimer.value = setInterval(async () => {
+    await loadGraphStatus()
+    if (graphStatus.value?.status === 'ready') {
+      stopGraphPolling()
+      await loadGraphData()
+      ElMessage.success(t('knowledge.detail.graphBuildComplete'))
+    } else if (graphStatus.value?.status === 'failed') {
+      stopGraphPolling()
+      ElMessage.error(t('knowledge.detail.graphBuildError', { msg: graphStatus.value?.errorMessage || t('common.unknown') }))
+    }
+  }, 5000)
+}
+
+function stopGraphPolling() {
+  if (graphPollingTimer.value) {
+    clearInterval(graphPollingTimer.value)
+    graphPollingTimer.value = null
+  }
+}
+
+// 初始化：加载所有知识库相关数据
+function initKbData() {
   fetchDetail()
   fetchDocs()
   fetchMembers()
@@ -1279,9 +1580,46 @@ onMounted(() => {
   loadAllDocsFolders()
   loadEmbeddingStatus()
   loadRaptorStats()
+}
+
+// 重置所有 UI 状态（路由切换时调用）
+function resetState() {
+  kb.value = null
+  documents.value = []
+  members.value = []
+  categories.value = []
+  versions.value = []
+  selectedDocId.value = null
+  searchKey.value = ''
+  treeSearch.value = ''
+  contentTab.value = 'docs'
+  selectedDocs.value = []
+  kbSources.value = []
+  embeddingStatus.value = null
+  raptorStats.value = null
+  graphData.value = null
+  graphStatus.value = null
+  showMembers.value = false
+  showSettings.value = false
+  showGraphPanel.value = false
+  showChatPanel.value = false
+  stopGraphPolling()
+}
+
+// 监听路由参数变化（同组件内 kbId 切换）
+watch(kbId, (newId, oldId) => {
+  if (newId && newId !== oldId) {
+    resetState()
+    initKbData()
+  }
+})
+
+onMounted(() => {
+  initKbData()
   document.addEventListener('click', closeMenus)
 })
 onBeforeUnmount(() => {
+  stopGraphPolling()
   document.removeEventListener('click', closeMenus)
 })
 </script>
@@ -1612,6 +1950,23 @@ onBeforeUnmount(() => {
 }
 
 .kb-empty { padding: 40px 0; }
+
+/* Error State */
+.kb-error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 80px 20px;
+  flex: 1;
+}
+.kb-error-state .error-message {
+  font-size: 15px;
+  color: var(--kx-text-secondary);
+  text-align: center;
+  max-width: 400px;
+}
 
 /* Batch Bar */
 .kb-batch-bar {
@@ -1963,5 +2318,97 @@ onBeforeUnmount(() => {
   font-size: 12px;
   color: var(--kx-text-secondary);
   line-height: 1.6;
+}
+
+/* Knowledge Graph Panel */
+.graph-panel { height: 100%; display: flex; flex-direction: column; }
+.graph-toolbar { display: flex; justify-content: space-between; align-items: center; padding: 0 0 12px; }
+.graph-status { display: flex; align-items: center; gap: 12px; }
+.graph-stats { color: #909399; font-size: 13px; }
+.graph-building, .graph-empty, .graph-error {
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.graph-building p { margin-top: 16px; color: #606266; }
+.graph-building-tip, .graph-empty-tip { color: #909399; font-size: 13px; margin-top: 8px; }
+
+/* ===== Responsive: 768px - Tablet ===== */
+@media (max-width: 768px) {
+  .kb-sidebar {
+    width: 200px;
+    min-width: 200px;
+  }
+  .kb-topbar {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 8px 12px;
+  }
+  .kb-topbar-right {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .kb-topbar-right .el-input {
+    width: 180px !important;
+  }
+  .kb-action-bar {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .kb-doc-grid {
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  }
+}
+
+/* ===== Responsive: 640px - Large Phone ===== */
+@media (max-width: 640px) {
+  .kb-detail {
+    flex-direction: column;
+  }
+  .kb-sidebar {
+    width: 100%;
+    min-width: 100%;
+    height: auto;
+    max-height: 50vh;
+    border-right: none;
+    border-bottom: 1px solid var(--kx-border);
+  }
+  .kb-sidebar.collapsed {
+    width: 100%;
+    min-width: 100%;
+    height: 48px;
+  }
+  .kb-topbar-right {
+    width: 100%;
+  }
+  .kb-topbar-right .el-input {
+    width: 100% !important;
+  }
+  .kb-doc-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 10px;
+  }
+  .kb-batch-bar {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+}
+
+/* ===== Responsive: 480px - Small Phone ===== */
+@media (max-width: 480px) {
+  .kb-topbar {
+    padding: 6px 8px;
+  }
+  .kb-topbar-left .el-tag {
+    display: none;
+  }
+  .kb-content-tabs {
+    overflow-x: auto;
+  }
+  .kb-doc-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .kdc-meta span {
+    display: none;
+  }
 }
 </style>

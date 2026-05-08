@@ -2,13 +2,13 @@
   <div class="file-preview-editor">
     <div v-if="loading" class="file-preview-loading">
       <el-icon class="is-loading" :size="32"><Loading /></el-icon>
-      <p>正在加载文件预览...</p>
+      <p>{{ $t('editor.filePreview.loading') }}</p>
     </div>
     <div v-else-if="error" class="file-preview-error">
       <el-icon :size="48" color="#f54a45"><WarningFilled /></el-icon>
       <p>{{ error }}</p>
-      <el-button type="primary" @click="loadPreview">重试</el-button>
-      <el-button @click="downloadFile">下载原文件</el-button>
+      <el-button type="primary" @click="loadPreview">{{ $t('editor.filePreview.retry') }}</el-button>
+      <el-button @click="downloadFile">{{ $t('editor.filePreview.downloadOriginal') }}</el-button>
     </div>
     <div v-else class="file-preview-content">
       <div class="file-preview-frame">
@@ -28,8 +28,8 @@
         <!-- Fallback for unsupported types -->
         <div v-else class="unsupported-file">
           <el-icon :size="64" color="#c0c4cc"><Document /></el-icon>
-          <p>此文件类型暂不支持在线预览</p>
-          <el-button type="primary" @click="downloadFile">下载文件</el-button>
+          <p>{{ $t('editor.filePreview.unsupported') }}</p>
+          <el-button type="primary" @click="downloadFile">{{ $t('editor.filePreview.downloadFile') }}</el-button>
         </div>
       </div>
     </div>
@@ -38,6 +38,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { getDocumentFilePreview } from '@/api/modules/document'
 import OnlyOfficeEditor from '@/components/onlyoffice/OnlyOfficeEditor.vue'
 
@@ -45,6 +46,8 @@ const props = defineProps<{
   documentId: number
   content: string
 }>()
+
+const { t } = useI18n()
 
 const loading = ref(true)
 const error = ref('')
@@ -66,18 +69,20 @@ const fileTypeColor = computed(() => {
 
 const fileTypeLabel = computed(() => {
   const map: Record<string, string> = { pdf: 'PDF', word: 'Word', excel: 'Excel', ppt: 'PPT' }
-  return map[fileType.value] || '文件'
+  return map[fileType.value] || t('editor.filePreview.file')
 })
-
-// const fileTypeTagType = computed(() => {
-//   const map: Record<string, string> = { pdf: 'danger', word: '', excel: 'success', ppt: 'warning' }
-//   return (map[fileType.value] || 'info') as any
-// })
 
 // Check if file type can be edited with OnlyOffice
 const canEdit = computed(() => {
   return ['word', 'excel', 'ppt'].includes(fileType.value)
 })
+
+/** Build a direct file-content streaming URL with token for iframe embedding */
+function buildFileContentUrl(docId: number): string {
+  const token = localStorage.getItem('kx_token') || ''
+  const base = import.meta.env.VITE_API_BASE_URL || ''
+  return `${base}/api/v1/document/${docId}/file-content?token=${encodeURIComponent(token)}`
+}
 
 function toggleEditMode() {
   isEditMode.value = !isEditMode.value
@@ -97,7 +102,7 @@ function downloadFile() {
 
 function handleEditorError(err: string) {
   console.error('OnlyOffice editor error:', err)
-  error.value = '编辑器加载失败: ' + err
+  error.value = t('editor.filePreview.editorLoadFailed', { error: err })
 }
 
 async function loadPreview() {
@@ -121,15 +126,31 @@ async function loadPreview() {
       if (res.data.fileName) fileName.value = res.data.fileName
       if (res.data.fileType) fileType.value = res.data.fileType
 
+      // For PDF: use the backend streaming endpoint instead of the presigned URL
+      // This avoids issues where MinIO/presigned URLs are not reachable from the client
+      if (fileType.value === 'pdf') {
+        previewUrl.value = buildFileContentUrl(props.documentId)
+      }
+
       // Use OnlyOffice for Word/Excel/PPT files
       if (['word', 'excel', 'ppt'].includes(fileType.value)) {
         showOnlyOffice.value = true
       }
     } else {
-      error.value = '无法获取文件预览'
+      // If file-preview API didn't return a url but we know the file type, try streaming directly
+      if (fileType.value === 'pdf') {
+        previewUrl.value = buildFileContentUrl(props.documentId)
+      } else {
+        error.value = t('editor.filePreview.cannotGetPreview')
+      }
     }
   } catch (e: any) {
-    error.value = e.message || '加载预览失败'
+    // If the preview API fails but we know it's a PDF, still try the streaming endpoint
+    if (fileType.value === 'pdf') {
+      previewUrl.value = buildFileContentUrl(props.documentId)
+    } else {
+      error.value = e.message || t('editor.filePreview.loadPreviewFailed')
+    }
   } finally {
     loading.value = false
   }

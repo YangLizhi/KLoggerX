@@ -2,27 +2,27 @@
   <div class="login-page">
     <div class="register-container">
       <div class="register-form-wrap">
-        <h2>注册 KLoggerX</h2>
+        <h2>{{ $t('auth.registerKLoggerX') }}</h2>
         <el-form ref="formRef" :model="form" :rules="rules" label-position="top" @submit.prevent="handleRegister">
-          <el-form-item label="用户名" prop="username">
-            <el-input v-model="form.username" placeholder="请输入用户名" prefix-icon="User" size="large" />
+          <el-form-item :label="$t('auth.username')" prop="username">
+            <el-input v-model="form.username" :placeholder="$t('auth.usernamePlaceholder')" prefix-icon="User" size="large" />
           </el-form-item>
-          <el-form-item label="邮箱" prop="email">
-            <el-input v-model="form.email" placeholder="请输入邮箱" prefix-icon="Message" size="large" />
+          <el-form-item :label="$t('auth.email')" prop="email">
+            <el-input v-model="form.email" :placeholder="$t('auth.emailPlaceholder')" prefix-icon="Message" size="large" />
           </el-form-item>
-          <el-form-item label="密码" prop="password">
-            <el-input v-model="form.password" type="password" placeholder="请输入密码" prefix-icon="Lock" show-password size="large" />
+          <el-form-item :label="$t('auth.password')" prop="password">
+            <el-input v-model="form.password" type="password" :placeholder="$t('auth.passwordPlaceholder')" prefix-icon="Lock" show-password size="large" />
           </el-form-item>
-          <el-form-item label="确认密码" prop="confirmPassword">
-            <el-input v-model="form.confirmPassword" type="password" placeholder="请再次输入密码" prefix-icon="Lock" show-password size="large" />
+          <el-form-item :label="$t('auth.confirmPassword')" prop="confirmPassword">
+            <el-input v-model="form.confirmPassword" type="password" :placeholder="$t('auth.confirmPasswordPlaceholder')" prefix-icon="Lock" show-password size="large" />
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" size="large" class="register-btn" :loading="loading" @click="handleRegister">注 册</el-button>
+            <el-button type="primary" size="large" class="register-btn" :loading="loading" @click="handleRegister">{{ $t('auth.registerBtn') }}</el-button>
           </el-form-item>
         </el-form>
         <div class="login-footer">
-          <span>已有账号？</span>
-          <router-link to="/login">去登录</router-link>
+          <span>{{ $t('auth.hasAccount') }}</span>
+          <router-link to="/login">{{ $t('auth.goLogin') }}</router-link>
         </div>
       </div>
     </div>
@@ -34,6 +34,9 @@ import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { register } from '@/api/modules/user'
 import { ElMessage, type FormInstance } from 'element-plus'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const router = useRouter()
 const formRef = ref<FormInstance>()
@@ -42,22 +45,22 @@ const loading = ref(false)
 const form = reactive({ username: '', email: '', password: '', confirmPassword: '' })
 const rules = {
   username: [
-    { required: true, message: '请输入用户名', trigger: 'blur' },
-    { min: 2, max: 20, message: '用户名2-20个字符', trigger: 'blur' },
+    { required: true, message: t('auth.usernameRequired'), trigger: 'blur' },
+    { min: 2, max: 20, message: t('auth.usernameLength'), trigger: 'blur' },
   ],
   email: [
-    { required: true, message: '请输入邮箱', trigger: 'blur' },
-    { type: 'email' as const, message: '邮箱格式不正确', trigger: 'blur' },
+    { required: true, message: t('auth.emailRequired'), trigger: 'blur' },
+    { type: 'email' as const, message: t('auth.emailInvalid'), trigger: 'blur' },
   ],
   password: [
-    { required: true, message: '请输入密码', trigger: 'blur' },
-    { min: 6, message: '密码至少6位', trigger: 'blur' },
+    { required: true, message: t('auth.passwordRequired'), trigger: 'blur' },
+    { min: 6, message: t('auth.passwordMin'), trigger: 'blur' },
   ],
   confirmPassword: [
-    { required: true, message: '请确认密码', trigger: 'blur' },
+    { required: true, message: t('auth.confirmPasswordRequired'), trigger: 'blur' },
     {
       validator: (_rule: any, value: string, callback: (e?: Error) => void) => {
-        if (value !== form.password) callback(new Error('两次密码不一致'))
+        if (value !== form.password) callback(new Error(t('auth.passwordMismatch')))
         else callback()
       },
       trigger: 'blur',
@@ -71,7 +74,7 @@ async function handleRegister() {
   loading.value = true
   try {
     await register(form)
-    ElMessage.success('注册成功，请登录')
+    ElMessage.success(t('auth.registerSuccess'))
     router.push('/login')
   } finally {
     loading.value = false

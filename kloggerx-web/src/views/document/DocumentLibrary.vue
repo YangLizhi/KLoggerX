@@ -5,11 +5,11 @@
       <div class="panel-section">
         <div class="panel-section-header" @click="myFoldersExpanded = !myFoldersExpanded">
           <el-icon class="expand-arrow" :class="{ expanded: myFoldersExpanded }"><ArrowRight /></el-icon>
-          <span class="panel-section-title">我的文件夹</span>
-          <el-icon class="panel-add-btn" @click.stop="openCreateFolderDialog(null)" title="新建文件夹"><Plus /></el-icon>
+          <span class="panel-section-title">{{ $t('cloudDrive.myFolders') }}</span>
+          <el-icon class="panel-add-btn" @click.stop="openCreateFolderDialog(null)" :title="$t('document.newFolder')"><Plus /></el-icon>
         </div>
         <div v-show="myFoldersExpanded" class="panel-section-body">
-          <div v-if="!folderTree.length" class="panel-empty">暂无文件夹</div>
+          <div v-if="!folderTree.length" class="panel-empty">{{ $t('cloudDrive.noFolders') }}</div>
           <FolderTreeNode
             v-for="node in folderTree"
             :key="node.id"
@@ -25,10 +25,10 @@
       <div class="panel-section">
         <div class="panel-section-header" @click="sharedFoldersExpanded = !sharedFoldersExpanded">
           <el-icon class="expand-arrow" :class="{ expanded: sharedFoldersExpanded }"><ArrowRight /></el-icon>
-          <span class="panel-section-title">共享文件夹</span>
+          <span class="panel-section-title">{{ $t('cloudDrive.sharedFolders') }}</span>
         </div>
         <div v-show="sharedFoldersExpanded" class="panel-section-body">
-          <div v-if="!sharedFolderTree.length" class="panel-empty">暂无共享文件夹</div>
+          <div v-if="!sharedFolderTree.length" class="panel-empty">{{ $t('cloudDrive.noSharedFolders') }}</div>
           <FolderTreeNode
             v-for="node in sharedFolderTree"
             :key="node.id"
@@ -45,7 +45,7 @@
       <div class="panel-section" v-if="remoteStorages.length > 0">
         <div class="panel-section-header" @click="remoteStoragesExpanded = !remoteStoragesExpanded">
           <el-icon class="expand-arrow" :class="{ expanded: remoteStoragesExpanded }"><ArrowRight /></el-icon>
-          <span class="panel-section-title">远程存储</span>
+          <span class="panel-section-title">{{ $t('cloudDrive.remoteStorage') }}</span>
         </div>
         <div v-show="remoteStoragesExpanded" class="panel-section-body">
           <div
@@ -57,18 +57,18 @@
           >
             <el-icon color="#9254de" :size="16"><Connection /></el-icon>
             <span class="folder-tree-name">{{ storage.name }}</span>
-            <el-tag v-if="storage.status === 'connected'" size="small" type="success" style="margin-left: auto">已连接</el-tag>
-            <el-tag v-else size="small" type="info" style="margin-left: auto">未连接</el-tag>
+            <el-tag v-if="storage.status === 'connected'" size="small" type="success" style="margin-left: auto">{{ $t('admin.storage.connected') }}</el-tag>
+            <el-tag v-else size="small" type="info" style="margin-left: auto">{{ $t('admin.storage.disconnected') }}</el-tag>
           </div>
         </div>
       </div>
       <div class="panel-section">
         <div class="panel-section-header panel-quick-access">
           <el-icon :size="14" color="#3370ff"><Star /></el-icon>
-          <span class="panel-section-title">快速访问</span>
+          <span class="panel-section-title">{{ $t('cloudDrive.quickAccess') }}</span>
         </div>
         <div class="panel-section-body">
-          <div v-if="!quickAccessFolders.length" class="panel-empty">暂无快速访问</div>
+          <div v-if="!quickAccessFolders.length" class="panel-empty">{{ $t('cloudDrive.noQuickAccess') }}</div>
           <div
             v-for="f in quickAccessFolders"
             :key="f.id"
@@ -90,64 +90,69 @@
         <div class="action-card" @click.stop="showNewMenu = !showNewMenu; showUploadMenu = false">
           <div class="action-icon" style="background: #e8f0fe"><el-icon :size="20" color="#3370ff"><Document /></el-icon></div>
           <div class="action-info">
-            <div class="action-label">新建</div>
-            <div class="action-desc">新建文档开始协作</div>
+            <div class="action-label">{{ $t('home.new') }}</div>
+            <div class="action-desc">{{ $t('home.newDesc') }}</div>
           </div>
           <el-icon class="action-arrow"><ArrowDown /></el-icon>
           <div v-if="showNewMenu" class="action-dropdown action-dropdown-large" @click.stop>
-            <div class="dropdown-item" @click="handleCreate('doc')"><el-icon color="#3370ff"><Document /></el-icon>文档</div>
-            <div class="dropdown-item" @click="handleCreate('sheet')"><el-icon color="#36b37e"><Grid /></el-icon>表格</div>
-            <div class="dropdown-item" @click="handleCreate('slide')"><el-icon color="#ff7d00"><Monitor /></el-icon>幻灯片</div>
-            <div class="dropdown-item" @click="handleCreate('bitable')"><el-icon color="#00b8d9"><Tickets /></el-icon>多维表格</div>
-            <div class="dropdown-item" @click="handleCreate('survey')"><el-icon color="#f54a45"><Notebook /></el-icon>问卷</div>
-            <div class="dropdown-item" @click="handleCreate('mindnote')"><el-icon color="#9254de"><Share /></el-icon>思维笔记</div>
-            <div class="dropdown-item dropdown-item-arrow" @click.stop="showMoreTypes = !showMoreTypes"><el-icon color="#36b37e"><Grid /></el-icon>更多类型<el-icon class="arrow-right"><ArrowRight /></el-icon>
+            <div class="dropdown-item" @click="handleCreate('doc')"><el-icon color="#3370ff"><Document /></el-icon>{{ $t('home.doc') }}</div>
+            <div class="dropdown-item" @click="handleCreate('sheet')"><el-icon color="#36b37e"><Grid /></el-icon>{{ $t('home.sheet') }}</div>
+            <div class="dropdown-item" @click="handleCreate('slide')"><el-icon color="#ff7d00"><Monitor /></el-icon>{{ $t('home.slide') }}</div>
+            <div class="dropdown-item" @click="handleCreate('bitable')"><el-icon color="#00b8d9"><Tickets /></el-icon>{{ $t('home.bitable') }}</div>
+            <div class="dropdown-item" @click="handleCreate('survey')"><el-icon color="#f54a45"><Notebook /></el-icon>{{ $t('home.survey') }}</div>
+            <div class="dropdown-item" @click="handleCreate('mindnote')"><el-icon color="#9254de"><Share /></el-icon>{{ $t('home.mindNote') }}</div>
+            <div class="dropdown-item dropdown-item-arrow" @click.stop="showMoreTypes = !showMoreTypes"><el-icon color="#36b37e"><Grid /></el-icon>{{ $t('home.moreTypes') }}<el-icon class="arrow-right"><ArrowRight /></el-icon>
               <div v-if="showMoreTypes" class="dropdown-submenu" @click.stop>
-                <div class="dropdown-item" @click="handleCreate('doc')"><el-icon color="#3370ff"><Document /></el-icon>白板</div>
-                <div class="dropdown-item" @click="handleCreate('doc')"><el-icon color="#ff7d00"><Connection /></el-icon>UML图</div>
-                <div class="dropdown-item" @click="handleCreate('doc')"><el-icon color="#36b37e"><TrendCharts /></el-icon>甘特图</div>
-                <div class="dropdown-item" @click="handleCreate('doc')"><el-icon color="#9254de"><Share /></el-icon>组织架构图</div>
+                <div class="dropdown-item" @click="handleCreate('doc')"><el-icon color="#3370ff"><Document /></el-icon>{{ $t('home.whiteboard') }}</div>
+                <div class="dropdown-item" @click="handleCreate('doc')"><el-icon color="#ff7d00"><Connection /></el-icon>{{ $t('home.uml') }}</div>
+                <div class="dropdown-item" @click="handleCreate('doc')"><el-icon color="#36b37e"><TrendCharts /></el-icon>{{ $t('home.gantt') }}</div>
+                <div class="dropdown-item" @click="handleCreate('doc')"><el-icon color="#9254de"><Share /></el-icon>{{ $t('home.orgChart') }}</div>
               </div>
             </div>
             <div class="dropdown-sep" />
-            <div class="dropdown-item" @click="openCreateFolderDialog(currentParentId)"><el-icon color="#f5a623"><Folder /></el-icon>文件夹</div>
-            <div class="dropdown-group-title">文档应用</div>
-            <div class="dropdown-item" @click="handleCreate('doc')"><el-icon color="#36b37e"><EditPen /></el-icon>画板</div>
-            <div class="dropdown-item" @click="handleCreate('mindnote')"><el-icon color="#9254de"><Share /></el-icon>思维导图</div>
-            <div class="dropdown-item" @click="handleCreate('doc')"><el-icon color="#ff7d00"><Connection /></el-icon>流程图</div>
+            <div class="dropdown-item" @click="openCreateFolderDialog(currentParentId)"><el-icon color="#f5a623"><Folder /></el-icon>{{ $t('home.folder') }}</div>
+            <div class="dropdown-group-title">{{ $t('home.docApps') }}</div>
+            <div class="dropdown-item" @click="handleCreate('doc')"><el-icon color="#36b37e"><EditPen /></el-icon>{{ $t('home.canvas') }}</div>
+            <div class="dropdown-item" @click="handleCreate('mindnote')"><el-icon color="#9254de"><Share /></el-icon>{{ $t('document.mindMap') }}</div>
+            <div class="dropdown-item" @click="handleCreate('doc')"><el-icon color="#ff7d00"><Connection /></el-icon>{{ $t('home.flowchart') }}</div>
           </div>
         </div>
         <div class="action-card" @click.stop="showUploadMenu = !showUploadMenu; showNewMenu = false">
           <div class="action-icon" style="background: #fef3e0"><el-icon :size="20" color="#f5a623"><Upload /></el-icon></div>
           <div class="action-info">
-            <div class="action-label">上传</div>
-            <div class="action-desc">上传本地文件</div>
+            <div class="action-label">{{ $t('home.upload') }}</div>
+            <div class="action-desc">{{ $t('home.uploadDesc') }}</div>
           </div>
           <el-icon class="action-arrow"><ArrowDown /></el-icon>
           <div v-if="showUploadMenu" class="action-dropdown" @click.stop>
-            <div class="dropdown-item" @click="triggerUpload('file')"><el-icon color="#f5a623"><Document /></el-icon>上传文件</div>
-            <div class="dropdown-item" @click="triggerUpload('folder')"><el-icon color="#f5a623"><Folder /></el-icon>上传文件夹</div>
-            <div class="dropdown-item" @click="triggerUpload('import')"><el-icon color="#3370ff"><DocumentCopy /></el-icon>导入为在线文档</div>
+            <div class="dropdown-item" @click="triggerUpload('file')"><el-icon color="#f5a623"><Document /></el-icon>{{ $t('home.uploadFile') }}</div>
+            <div class="dropdown-item" @click="triggerUpload('folder')"><el-icon color="#f5a623"><Folder /></el-icon>{{ $t('home.uploadFolder') }}</div>
+            <div class="dropdown-item" @click="triggerUpload('import')"><el-icon color="#3370ff"><DocumentCopy /></el-icon>{{ $t('home.importOnline') }}</div>
           </div>
         </div>
         <div class="action-card" @click="handleAddShortcut">
           <div class="action-icon" style="background: #e8f5e9"><el-icon :size="20" color="#36b37e"><Link /></el-icon></div>
           <div class="action-info">
-            <div class="action-label">添加</div>
-            <div class="action-desc">添加云文档的快捷方式</div>
+            <div class="action-label">{{ $t('cloudDrive.addShortcut') }}</div>
+            <div class="action-desc">{{ $t('cloudDrive.addShortcutDesc') }}</div>
           </div>
         </div>
-        <div class="action-card" @click="showTemplateLibrary = true">
+        <div class="action-card" :class="{ 'action-card-active': showTemplateLibrary }" @click="showTemplateLibrary = !showTemplateLibrary">
           <div class="action-icon" style="background: #fce4ec"><el-icon :size="20" color="#f54a45"><Files /></el-icon></div>
           <div class="action-info">
-            <div class="action-label">模板库</div>
-            <div class="action-desc">选择模板快速新建</div>
+            <div class="action-label">{{ $t('home.templateLib') }}</div>
+            <div class="action-desc">{{ $t('home.templateLibDesc') }}</div>
           </div>
         </div>
       </div>
 
+      <!-- Template Library Inline -->
+      <div v-if="showTemplateLibrary" class="template-library-inline">
+        <TemplateLibrary mode="page" @use="handleTemplateUse" />
+      </div>
+
       <!-- Documents Section -->
-      <div class="docs-section">
+      <div v-else class="docs-section">
         <div class="docs-section-header">
           <div class="docs-breadcrumb">
             <span v-for="(b, i) in breadcrumbs" :key="String(b.id)" class="breadcrumb-item" @click="navigateTo(b.id)">
@@ -156,12 +161,12 @@
           </div>
           <div class="docs-section-actions">
             <el-dropdown trigger="click" @command="handleSort">
-              <span class="tab-action"><el-icon><Sort /></el-icon> 排序</span>
+              <span class="tab-action"><el-icon><Sort /></el-icon> {{ $t('cloudDrive.sort') }}</span>
               <template #dropdown>
                 <el-dropdown-menu>
-                  <el-dropdown-item command="updated">修改时间</el-dropdown-item>
-                  <el-dropdown-item command="created">创建时间</el-dropdown-item>
-                  <el-dropdown-item command="title">名称</el-dropdown-item>
+                  <el-dropdown-item command="updated">{{ $t('home.updatedTime') }}</el-dropdown-item>
+                  <el-dropdown-item command="created">{{ $t('home.createdTime') }}</el-dropdown-item>
+                  <el-dropdown-item command="title">{{ $t('common.name') }}</el-dropdown-item>
                 </el-dropdown-menu>
               </template>
             </el-dropdown>
@@ -186,7 +191,7 @@
                 @row-contextmenu="(row: Document, _column: any, e: MouseEvent) => showRowContextMenu(e, row)"
               >
                 <el-table-column type="selection" width="50" />
-                <el-table-column label="标题" min-width="240" sortable>
+                <el-table-column :label="$t('home.title')" min-width="240" sortable>
                   <template #default="{ row }">
                     <div class="doc-name-cell">
                       <el-icon :color="getTypeColor(row.type, row.fileExt)"><component :is="getTypeIcon(row.type, row.fileExt)" /></el-icon>
@@ -195,20 +200,20 @@
                     </div>
                   </template>
                 </el-table-column>
-                <el-table-column label="文件类型" min-width="110">
+                <el-table-column :label="$t('home.fileType')" min-width="110">
                   <template #default="{ row }">
                     <el-tag size="small" :type="getTypeTagType(row.type)" disable-transitions>{{ getTypeName(row) }}</el-tag>
                   </template>
                 </el-table-column>
-                <el-table-column label="文件大小" min-width="100">
+                <el-table-column :label="$t('home.fileSize')" min-width="100">
                   <template #default="{ row }">
                     <span>{{ row.fileSize > 0 ? formatFileSize(row.fileSize) : '—' }}</span>
                   </template>
                 </el-table-column>
-                <el-table-column label="修改时间" min-width="130" sortable>
+                <el-table-column :label="$t('home.updatedTime')" min-width="130" sortable>
                   <template #default="{ row }">{{ formatDate(row.updatedAt) }}</template>
                 </el-table-column>
-                <el-table-column label="创建时间" min-width="130" sortable>
+                <el-table-column :label="$t('home.createdTime')" min-width="130" sortable>
                   <template #default="{ row }">{{ formatDate(row.createdAt) }}</template>
                 </el-table-column>
               </el-table>
@@ -240,11 +245,11 @@
           </div>
 
           <div class="end-marker" v-if="sortedDocuments.length">
-            <span>已经到底了</span>
+            <span>{{ $t('home.endOfList') }}</span>
           </div>
 
           <div v-if="!loading && !documents.length" class="empty-state">
-            <el-empty description="暂无文档" />
+            <el-empty :description="$t('home.noDocument')" />
           </div>
         </div>
       </div>
@@ -252,70 +257,70 @@
 
     <!-- Document Context Menu -->
     <div v-if="contextMenu.visible" class="context-menu" :style="{ left: contextMenu.x + 'px', top: contextMenu.y + 'px' }">
-      <div class="ctx-item" @click="handleShareDoc(contextMenu.doc!)"><el-icon><Share /></el-icon>分享</div>
-      <div class="ctx-item" @click="handleCopyLink(contextMenu.doc!)"><el-icon><Link /></el-icon>复制链接</div>
+      <div class="ctx-item" @click="handleShareDoc(contextMenu.doc!)"><el-icon><Share /></el-icon>{{ $t('common.share') }}</div>
+      <div class="ctx-item" @click="handleCopyLink(contextMenu.doc!)"><el-icon><Link /></el-icon>{{ $t('home.copyLink') }}</div>
       <div class="ctx-sep" />
-      <div class="ctx-item" @click="handleCopy(contextMenu.doc!)"><el-icon><DocumentCopy /></el-icon>创建副本</div>
-      <div class="ctx-item" @click="showMoveDialog(contextMenu.doc!)"><el-icon><Rank /></el-icon>移动到</div>
-      <div class="ctx-item" @click="handleAddShortcutFor(contextMenu.doc!)"><el-icon><Position /></el-icon>添加快捷方式到</div>
-      <div class="ctx-item" @click="handlePin(contextMenu.doc!)"><el-icon><Flag /></el-icon>{{ contextMenu.doc?.isPinned ? '从"置顶"移除' : '添加到"置顶"' }}</div>
-      <div class="ctx-item" @click="handleFavorite(contextMenu.doc!)"><el-icon><Star /></el-icon>{{ contextMenu.doc?.isFavorite ? '取消收藏' : '收藏' }}</div>
+      <div class="ctx-item" @click="handleCopy(contextMenu.doc!)"><el-icon><DocumentCopy /></el-icon>{{ $t('home.createCopy') }}</div>
+      <div class="ctx-item" @click="showMoveDialog(contextMenu.doc!)"><el-icon><Rank /></el-icon>{{ $t('home.moveTo') }}</div>
+      <div class="ctx-item" @click="handleAddShortcutFor(contextMenu.doc!)"><el-icon><Position /></el-icon>{{ $t('home.addShortcut') }}</div>
+      <div class="ctx-item" @click="handlePin(contextMenu.doc!)"><el-icon><Flag /></el-icon>{{ contextMenu.doc?.isPinned ? $t('home.removeFromTop') : $t('home.addToTop') }}</div>
+      <div class="ctx-item" @click="handleFavorite(contextMenu.doc!)"><el-icon><Star /></el-icon>{{ contextMenu.doc?.isFavorite ? $t('home.cancelFavorite') : $t('home.addFavorite') }}</div>
       <div class="ctx-sep" />
-      <div class="ctx-item" @click="handleTransfer(contextMenu.doc!)"><el-icon><Switch /></el-icon>转移所有权</div>
-      <div class="ctx-item danger" @click="handleDelete(contextMenu.doc!)"><el-icon><Delete /></el-icon>删除</div>
+      <div class="ctx-item" @click="handleTransfer(contextMenu.doc!)"><el-icon><Switch /></el-icon>{{ $t('home.transferOwnership') }}</div>
+      <div class="ctx-item danger" @click="handleDelete(contextMenu.doc!)"><el-icon><Delete /></el-icon>{{ $t('common.delete') }}</div>
     </div>
 
     <!-- Folder Context Menu -->
     <div v-if="folderCtxMenu.visible" class="context-menu" :style="{ left: folderCtxMenu.x + 'px', top: folderCtxMenu.y + 'px' }">
-      <div class="ctx-item" @click="handleFolderAction('open')"><el-icon><View /></el-icon>在新标签页打开</div>
+      <div class="ctx-item" @click="handleFolderAction('open')"><el-icon><View /></el-icon>{{ $t('docTree.openNewTab') }}</div>
       <div class="ctx-sep" />
-      <div class="ctx-item" @click="handleFolderAction('new')"><el-icon><Plus /></el-icon>新建</div>
-      <div class="ctx-item" @click="handleFolderAction('upload')"><el-icon><Upload /></el-icon>上传</div>
+      <div class="ctx-item" @click="handleFolderAction('new')"><el-icon><Plus /></el-icon>{{ $t('home.new') }}</div>
+      <div class="ctx-item" @click="handleFolderAction('upload')"><el-icon><Upload /></el-icon>{{ $t('home.upload') }}</div>
       <div class="ctx-sep" />
-      <div class="ctx-item" @click="handleFolderAction('share')"><el-icon><Share /></el-icon>分享</div>
-      <div class="ctx-item" @click="handleFolderAction('copyLink')"><el-icon><Link /></el-icon>复制链接</div>
+      <div class="ctx-item" @click="handleFolderAction('share')"><el-icon><Share /></el-icon>{{ $t('common.share') }}</div>
+      <div class="ctx-item" @click="handleFolderAction('copyLink')"><el-icon><Link /></el-icon>{{ $t('home.copyLink') }}</div>
       <div class="ctx-sep" />
-      <div class="ctx-item" @click="handleFolderAction('move')"><el-icon><Rank /></el-icon>移动到</div>
-      <div class="ctx-item" @click="handleFolderAction('quickAccess')"><el-icon><Star /></el-icon>添加到"快速访问文件夹"</div>
-      <div class="ctx-item" @click="handleFolderAction('favorite')"><el-icon><StarFilled /></el-icon>收藏</div>
+      <div class="ctx-item" @click="handleFolderAction('move')"><el-icon><Rank /></el-icon>{{ $t('home.moveTo') }}</div>
+      <div class="ctx-item" @click="handleFolderAction('quickAccess')"><el-icon><Star /></el-icon>{{ $t('cloudDrive.addToQuickAccess') }}</div>
+      <div class="ctx-item" @click="handleFolderAction('favorite')"><el-icon><StarFilled /></el-icon>{{ $t('home.addFavorite') }}</div>
       <div class="ctx-sep" />
-      <div class="ctx-item" @click="handleFolderAction('transfer')"><el-icon><Switch /></el-icon>转移所有权</div>
-      <div class="ctx-item" @click="handleFolderAction('download')"><el-icon><Download /></el-icon>下载</div>
-      <div class="ctx-item" @click="handleFolderAction('rename')"><el-icon><EditPen /></el-icon>重命名</div>
-      <div class="ctx-item danger" @click="handleFolderAction('delete')"><el-icon><Delete /></el-icon>删除</div>
+      <div class="ctx-item" @click="handleFolderAction('transfer')"><el-icon><Switch /></el-icon>{{ $t('home.transferOwnership') }}</div>
+      <div class="ctx-item" @click="handleFolderAction('download')"><el-icon><Download /></el-icon>{{ $t('common.download') }}</div>
+      <div class="ctx-item" @click="handleFolderAction('rename')"><el-icon><EditPen /></el-icon>{{ $t('common.rename') }}</div>
+      <div class="ctx-item danger" @click="handleFolderAction('delete')"><el-icon><Delete /></el-icon>{{ $t('common.delete') }}</div>
     </div>
 
     <!-- Create Folder Dialog -->
-    <el-dialog v-model="createFolderVisible" title="新建文件夹到云盘" width="480px" destroy-on-close>
+    <el-dialog v-model="createFolderVisible" :title="$t('cloudDrive.createFolderTitle')" width="480px" destroy-on-close>
       <el-form :model="createFolderForm" label-position="top">
-        <el-form-item label="名称">
-          <el-input v-model="createFolderForm.name" placeholder="请输入文件夹名称" maxlength="50" show-word-limit />
+        <el-form-item :label="$t('common.name')">
+          <el-input v-model="createFolderForm.name" :placeholder="$t('cloudDrive.folderNamePlaceholder')" maxlength="50" show-word-limit />
         </el-form-item>
-        <el-form-item label="描述">
-          <el-input v-model="createFolderForm.description" type="textarea" :rows="3" placeholder="添加描述（可选）" maxlength="200" show-word-limit />
+        <el-form-item :label="$t('common.description')">
+          <el-input v-model="createFolderForm.description" type="textarea" :rows="3" :placeholder="$t('cloudDrive.descPlaceholder')" maxlength="200" show-word-limit />
         </el-form-item>
-        <el-form-item label="邀请协作者">
-          <el-input v-model="createFolderForm.collaborator" placeholder="输入姓名或邮箱搜索" prefix-icon="Search">
+        <el-form-item :label="$t('home.inviteCollaborator')">
+          <el-input v-model="createFolderForm.collaborator" :placeholder="$t('home.searchUserOrEmail')" prefix-icon="Search">
             <template #append>
-              <el-button @click="searchCollaborator">搜索</el-button>
+              <el-button @click="searchCollaborator">{{ $t('common.search') }}</el-button>
             </template>
           </el-input>
-          <div class="collaborator-hint">可在创建后通过分享功能邀请更多协作者</div>
+          <div class="collaborator-hint">{{ $t('cloudDrive.collaboratorHint') }}</div>
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="createFolderVisible = false">取消</el-button>
-        <el-button type="primary" :loading="creatingFolder" @click="handleCreateFolder">创建</el-button>
+        <el-button @click="createFolderVisible = false">{{ $t('common.cancel') }}</el-button>
+        <el-button type="primary" :loading="creatingFolder" @click="handleCreateFolder">{{ $t('common.create') }}</el-button>
       </template>
     </el-dialog>
 
     <!-- Move Dialog -->
-    <el-dialog v-model="moveDialogVisible" title="移动到" width="400px">
-      <p>选择目标文件夹</p>
+    <el-dialog v-model="moveDialogVisible" :title="$t('home.moveTo')" width="400px">
+      <p>{{ $t('cloudDrive.selectTargetFolder') }}</p>
       <div class="move-folder-list">
         <div class="move-folder-item" :class="{ active: moveTargetParentId === null }" @click="moveTargetParentId = null">
           <el-icon color="#f5a623"><FolderOpened /></el-icon>
-          <span>根目录</span>
+          <span>{{ $t('home.rootDir') }}</span>
         </div>
         <div v-for="f in allFoldersList" :key="f.id" class="move-folder-item" :class="{ active: moveTargetParentId === f.id }" @click="moveTargetParentId = f.id">
           <el-icon color="#f5a623"><Folder /></el-icon>
@@ -323,17 +328,17 @@
         </div>
       </div>
       <template #footer>
-        <el-button @click="moveDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="confirmMove">确认移动</el-button>
+        <el-button @click="moveDialogVisible = false">{{ $t('common.cancel') }}</el-button>
+        <el-button type="primary" @click="confirmMove">{{ $t('home.confirmMove') }}</el-button>
       </template>
     </el-dialog>
 
     <!-- Rename Dialog -->
-    <el-dialog v-model="renameDialogVisible" title="重命名" width="400px" destroy-on-close>
-      <el-input v-model="renameValue" placeholder="请输入新名称" maxlength="50" show-word-limit />
+    <el-dialog v-model="renameDialogVisible" :title="$t('common.rename')" width="400px" destroy-on-close>
+      <el-input v-model="renameValue" :placeholder="$t('home.enterNewName')" maxlength="50" show-word-limit />
       <template #footer>
-        <el-button @click="renameDialogVisible = false">取消</el-button>
-        <el-button type="primary" :loading="renaming" @click="confirmRename">确认</el-button>
+        <el-button @click="renameDialogVisible = false">{{ $t('common.cancel') }}</el-button>
+        <el-button type="primary" :loading="renaming" @click="confirmRename">{{ $t('common.confirm') }}</el-button>
       </template>
     </el-dialog>
 
@@ -348,11 +353,11 @@
         directory
         webkitdirectory
         :on-change="handleFolderSelect"
-        :on-exceed="() => ElMessage.warning('文件数量过多')"
+        :on-exceed="() => ElMessage.warning(t('home.fileLimitExceed'))"
       >
         <el-icon class="el-icon--upload"><UploadFilled /></el-icon>
-        <div class="el-upload__text">拖拽文件夹到此处，或 <em>点击选择文件夹</em></div>
-        <template #tip><div class="el-upload__tip">选择文件夹批量上传文件</div></template>
+        <div class="el-upload__text">{{ $t('home.dragFolderHint') }} <em>{{ $t('home.clickSelectFolder') }}</em></div>
+        <template #tip><div class="el-upload__tip">{{ $t('home.batchUploadHint') }}</div></template>
       </el-upload>
       <el-upload
         v-else-if="uploadType === 'file'"
@@ -361,11 +366,11 @@
         :limit="10"
         multiple
         :on-change="handleFileSelect"
-        :on-exceed="() => ElMessage.warning('最多上传10个文件')"
+        :on-exceed="() => ElMessage.warning(t('home.maxUpload10'))"
       >
         <el-icon class="el-icon--upload"><UploadFilled /></el-icon>
-        <div class="el-upload__text">拖拽文件到此处，或 <em>点击上传</em></div>
-        <template #tip><div class="el-upload__tip">支持所有常见文件格式</div></template>
+        <div class="el-upload__text">{{ $t('home.dragFileHint') }} <em>{{ $t('home.clickUpload') }}</em></div>
+        <template #tip><div class="el-upload__tip">{{ $t('home.supportAllFormats') }}</div></template>
       </el-upload>
       <el-upload
         v-else
@@ -375,11 +380,11 @@
         :limit="1"
         accept=".md,.json,.txt,.html,.docx,.doc,.xlsx,.xls,.pptx,.ppt,.pdf,.png,.jpg,.jpeg,.gif,.webp"
         :on-change="handleFileChange"
-        :on-exceed="() => ElMessage.warning('只能上传一个文件')"
+        :on-exceed="() => ElMessage.warning(t('home.uploadOnly1'))"
       >
         <el-icon class="el-icon--upload"><UploadFilled /></el-icon>
-        <div class="el-upload__text">拖拽文件到此处，或 <em>点击上传</em></div>
-        <template #tip><div class="el-upload__tip">支持 Word、Excel、PPT、PDF、Markdown、JSON、TXT、HTML、图片格式</div></template>
+        <div class="el-upload__text">{{ $t('home.dragFileHint') }} <em>{{ $t('home.clickUpload') }}</em></div>
+        <template #tip><div class="el-upload__tip">{{ $t('home.supportFormats') }}</div></template>
       </el-upload>
       <div v-if="importFiles.length > 0" class="import-file-list">
         <div v-for="(f, i) in importFiles" :key="i" class="import-file-item">
@@ -390,94 +395,60 @@
       </div>
       <el-progress v-if="importProgress > 0 && importProgress < 100" :percentage="importProgress" style="margin-top: 8px" />
       <template #footer>
-        <el-button @click="showImportDialog = false; importFile = null; importFiles = []; importProgress = 0">取消</el-button>
-        <el-button type="primary" :loading="importLoading" :disabled="!importFile && !importFiles.length" @click="handleImport">导入</el-button>
+        <el-button @click="showImportDialog = false; importFile = null; importFiles = []; importProgress = 0">{{ $t('common.cancel') }}</el-button>
+        <el-button type="primary" :loading="importLoading" :disabled="!importFile && !importFiles.length" @click="handleImport">{{ $t('common.import') }}</el-button>
       </template>
     </el-dialog>
 
     <!-- Share Dialog -->
-    <el-dialog v-model="shareDialogVisible" title="分享" width="500px" destroy-on-close>
+    <el-dialog v-model="shareDialogVisible" :title="$t('common.share')" width="500px" destroy-on-close>
       <div class="share-section">
-        <div class="share-label">链接分享</div>
+        <div class="share-label">{{ $t('home.shareLink') }}</div>
         <div class="share-link-row">
           <el-input :model-value="shareLink" readonly />
-          <el-button type="primary" @click="copyShareLink">复制链接</el-button>
+          <el-button type="primary" @click="copyShareLink">{{ $t('home.copyLink') }}</el-button>
         </div>
         <el-radio-group v-model="shareLinkScope" style="margin-top:8px">
-          <el-radio value="collaborator">仅协作者</el-radio>
-          <el-radio value="org">组织内获得链接的人</el-radio>
-          <el-radio value="public">互联网上获得链接的人</el-radio>
+          <el-radio value="collaborator">{{ $t('home.collaboratorOnly') }}</el-radio>
+          <el-radio value="org">{{ $t('home.orgVisible') }}</el-radio>
+          <el-radio value="public">{{ $t('home.publicVisible') }}</el-radio>
         </el-radio-group>
       </div>
       <div class="share-section" style="margin-top:16px">
-        <div class="share-label">邀请协作者</div>
+        <div class="share-label">{{ $t('home.inviteCollaborator') }}</div>
         <div class="share-invite-row">
-          <el-input v-model="shareInviteEmail" placeholder="输入邮箱或用户名" style="flex:1" />
+          <el-input v-model="shareInviteEmail" :placeholder="$t('home.enterUserOrEmail')" style="flex:1" />
           <el-select v-model="shareInvitePermission" style="width:100px">
-            <el-option label="可编辑" value="edit" />
-            <el-option label="可阅读" value="view" />
+            <el-option :label="$t('home.canEdit')" value="edit" />
+            <el-option :label="$t('home.canView')" value="view" />
           </el-select>
-          <el-button @click="handleShareInvite">邀请</el-button>
+          <el-button @click="handleShareInvite">{{ $t('common.invite') }}</el-button>
         </div>
       </div>
       <template #footer>
-        <el-button @click="shareDialogVisible = false">关闭</el-button>
+        <el-button @click="shareDialogVisible = false">{{ $t('common.close') }}</el-button>
       </template>
     </el-dialog>
 
-    <!-- Template Library Dialog -->
-    <el-dialog v-model="showTemplateLibrary" title="模板库" width="800px" destroy-on-close @open="loadTemplates">
-      <div v-loading="templatesLoading" class="template-library">
-        <div class="template-categories">
-          <div
-            class="template-cat"
-            :class="{ active: selectedTemplateCat === '' }"
-            @click="selectedTemplateCat = ''"
-          >
-            全部
-          </div>
-          <div
-            v-for="cat in templateCategories"
-            :key="cat"
-            class="template-cat"
-            :class="{ active: selectedTemplateCat === cat }"
-            @click="selectedTemplateCat = cat"
-          >
-            {{ cat }}
-          </div>
-        </div>
-        <div class="template-grid">
-          <div v-for="tpl in filteredTemplates" :key="tpl.id" class="template-card" @click="useTemplate(tpl)">
-            <div class="template-preview" :style="{ background: getTypeBg(tpl.type) }">
-              <el-icon :size="32" :color="getTypeColor(tpl.type)"><component :is="getTypeIcon(tpl.type)" /></el-icon>
-            </div>
-            <div class="template-name">{{ tpl.name }}</div>
-            <div class="template-desc">{{ tpl.preview || tpl.description || '暂无预览内容' }}</div>
-          </div>
-          <div v-if="!templatesLoading && filteredTemplates.length === 0" class="template-empty">
-            <el-empty description="暂无模板" />
-          </div>
-        </div>
-      </div>
-    </el-dialog>
+
 
     <!-- Batch Action Bar -->
     <transition name="slide-up">
       <div v-if="selectedDocs.length" class="batch-bar">
-        <span class="batch-count">已选 {{ selectedDocs.length }} 项</span>
-        <el-button size="small" @click="batchMoveAction"><el-icon><Rank /></el-icon>移动到</el-button>
-        <el-button size="small" @click="batchCopyAction"><el-icon><DocumentCopy /></el-icon>创建副本</el-button>
-        <el-button size="small" @click="batchFavoriteAction"><el-icon><Star /></el-icon>收藏</el-button>
-        <el-button size="small" type="danger" @click="batchDeleteAction"><el-icon><Delete /></el-icon>删除</el-button>
-        <el-button size="small" text @click="selectedDocs = []">取消选择</el-button>
+        <span class="batch-count">{{ $t('common.selected', { count: selectedDocs.length }) }}</span>
+        <el-button size="small" @click="batchMoveAction"><el-icon><Rank /></el-icon>{{ $t('home.moveTo') }}</el-button>
+        <el-button size="small" @click="batchCopyAction"><el-icon><DocumentCopy /></el-icon>{{ $t('home.createCopy') }}</el-button>
+        <el-button size="small" @click="batchFavoriteAction"><el-icon><Star /></el-icon>{{ $t('home.addFavorite') }}</el-button>
+        <el-button size="small" type="danger" @click="batchDeleteAction"><el-icon><Delete /></el-icon>{{ $t('common.delete') }}</el-button>
+        <el-button size="small" text @click="selectedDocs = []">{{ $t('home.cancelSelect') }}</el-button>
       </div>
     </transition>
 
     <!-- Transfer List Drawer -->
-    <el-drawer v-model="showTransferList" title="传输列表" direction="rtl" size="400px">
+    <el-drawer v-model="showTransferList" :title="$t('cloudDrive.transferList')" direction="rtl" size="400px">
       <el-tabs v-model="transferTab">
-        <el-tab-pane label="上传中" name="uploading">
-          <div v-if="!transferUploads.length" class="transfer-empty">暂无上传任务</div>
+        <el-tab-pane :label="$t('cloudDrive.uploading')" name="uploading">
+          <div v-if="!transferUploads.length" class="transfer-empty">{{ $t('cloudDrive.noUploadTasks') }}</div>
           <div v-for="(item, i) in transferUploads" :key="i" class="transfer-item">
             <el-icon :color="getTypeColor(item.type || 'doc')"><component :is="getTypeIcon(item.type || 'doc')" /></el-icon>
             <div class="transfer-info">
@@ -487,13 +458,13 @@
             <span class="transfer-size">{{ formatSize(item.size) }}</span>
           </div>
         </el-tab-pane>
-        <el-tab-pane label="已完成" name="completed">
-          <div v-if="!transferCompleted.length" class="transfer-empty">暂无已完成任务</div>
+        <el-tab-pane :label="$t('cloudDrive.completed')" name="completed">
+          <div v-if="!transferCompleted.length" class="transfer-empty">{{ $t('cloudDrive.noCompletedTasks') }}</div>
           <div v-for="(item, i) in transferCompleted" :key="i" class="transfer-item">
             <el-icon :color="getTypeColor(item.type || 'doc')"><component :is="getTypeIcon(item.type || 'doc')" /></el-icon>
             <div class="transfer-info">
               <div class="transfer-name">{{ item.name }}</div>
-              <div class="transfer-status-text">上传完成</div>
+              <div class="transfer-status-text">{{ $t('cloudDrive.uploadComplete') }}</div>
             </div>
             <span class="transfer-size">{{ formatSize(item.size) }}</span>
           </div>
@@ -507,23 +478,25 @@
       <span class="storage-text">{{ storageUsedText }} / {{ storageTotalText }}</span>
     </div>
     <div v-if="showStoragePanel" class="storage-panel">
-      <div class="storage-panel-title">存储空间</div>
+      <div class="storage-panel-title">{{ $t('cloudDrive.storageSpace') }}</div>
       <el-progress :percentage="storagePercent" :stroke-width="8" :color="storagePercent > 90 ? '#f54a45' : '#3370ff'" />
       <div class="storage-detail">
-        <div class="storage-row"><span>已使用</span><span>{{ storageUsedText }}</span></div>
-        <div class="storage-row"><span>总容量</span><span>{{ storageTotalText }}</span></div>
-        <div class="storage-row"><span>文档数</span><span>{{ documents.length }}</span></div>
+        <div class="storage-row"><span>{{ $t('cloudDrive.used') }}</span><span>{{ storageUsedText }}</span></div>
+        <div class="storage-row"><span>{{ $t('cloudDrive.totalCapacity') }}</span><span>{{ storageTotalText }}</span></div>
+        <div class="storage-row"><span>{{ $t('cloudDrive.docCount') }}</span><span>{{ documents.length }}</span></div>
       </div>
-      <el-button size="small" type="primary" style="width:100%;margin-top:12px" @click="showUpgradeDialog = true">升级存储空间</el-button>
+      <el-button size="small" type="primary" style="width:100%;margin-top:12px" @click="showUpgradeDialog = true">{{ $t('cloudDrive.upgradeStorage') }}</el-button>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, onBeforeUnmount, inject, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 import { getDocumentTree, pinDocument, favoriteDocument, deleteDocument, copyDocument, moveDocument, importDocument, createDocument, updateDocument } from '@/api/modules/document'
-import { getTemplates, useTemplate as apiUseTemplate, type Template } from '@/api/modules/template'
+import { type Template } from '@/api/modules/template'
+import TemplateLibrary from '@/components/common/TemplateLibrary.vue'
 import { listRemoteStorages } from '@/api/modules/admin'
 import { listRemoteFiles, downloadRemoteFile, deleteRemoteFile, uploadRemoteFile, type RemoteFileInfo } from '@/api/modules/remote-storage'
 import type { Document, DocumentType } from '@/types'
@@ -552,6 +525,7 @@ interface RemoteStorageFolder {
 }
 
 const route = useRoute()
+const { t } = useI18n()
 const loading = ref(false)
 
 // Inject folder id from MainLayout's cloud drive sidebar
@@ -559,7 +533,7 @@ const driveSelectedFolderId = inject<import('vue').Ref<number | null>>('driveSel
 const viewMode = ref<'grid' | 'list'>('list')
 const documents = ref<Document[]>([])
 const currentParentId = ref<number | null>(null)
-const breadcrumbs = ref<{ id: number | string | null; title: string }[]>([{ id: null, title: '全部内容' }])
+const breadcrumbs = ref<{ id: number | string | null; title: string }[]>([{ id: null, title: t('cloudDrive.allContent') }])
 const moveDialogVisible = ref(false)
 const moveTargetDoc = ref<Document | null>(null)
 const moveTargetParentId = ref<number | null>(null)
@@ -579,9 +553,9 @@ const sortBy = ref('updated')
 
 const uploadDialogTitle = computed(() => {
   switch (uploadType.value) {
-    case 'file': return '上传文件'
-    case 'folder': return '上传文件夹'
-    default: return '导入为在线文档'
+    case 'file': return t('home.uploadDialogFile')
+    case 'folder': return t('home.uploadDialogFolder')
+    default: return t('home.uploadDialogImport')
   }
 })
 
@@ -631,42 +605,11 @@ const shareInvitePermission = ref('edit')
 
 // Template library
 const showUpgradeDialog = ref(false)
-const selectedTemplateCat = ref('')
-const templateCategories = ref<string[]>([])
-const templates = ref<Template[]>([])
-const templatesLoading = ref(false)
 
-const filteredTemplates = computed(() => {
-  if (!selectedTemplateCat.value) return templates.value
-  return templates.value.filter(t => t.category === selectedTemplateCat.value)
-})
-
-async function loadTemplates() {
-  templatesLoading.value = true
-  try {
-    const res = await getTemplates() as any
-    templates.value = res.data?.list || []
-    templateCategories.value = res.data?.categories || []
-  } finally {
-    templatesLoading.value = false
-  }
-}
-
-async function useTemplate(tpl: Template) {
+function handleTemplateUse(_payload: { template: Template; title: string; parentId?: number }) {
   showTemplateLibrary.value = false
-  try {
-    const res = await apiUseTemplate(tpl.id, {
-      title: tpl.name,
-      parentId: currentParentId.value,
-    }) as any
-    ElMessage.success(`已使用模板"${tpl.name}"创建文档`)
-    if (res.data?.id) {
-      window.open(`/doc/${res.data.id}`, '_blank')
-    }
-    fetchDocuments()
-  } catch {
-    ElMessage.error('创建文档失败')
-  }
+  // page 模式组件内部已经处理了创建逻辑，这里只需关闭弹窗并刷新列表
+  fetchDocuments()
 }
 
 // Transfer list
@@ -800,115 +743,42 @@ const extIconMap: Record<string, { icon: string; color: string }> = {
   kt: { icon: 'Memo', color: '#7f52ff' },
 }
 
-const typeNameMap: Record<string, string> = {
-  folder: '文件夹', doc: '文档', sheet: '表格', slide: '幻灯片',
-  mindnote: '思维笔记', bitable: '多维表格', survey: '问卷',
-  file: '其他', image: '图片', code: '代码',
+function getTypeNameMap(): Record<string, string> {
+  return {
+    folder: t('home.folder'), doc: t('home.doc'), sheet: t('home.sheet'), slide: t('home.slide'),
+    mindnote: t('home.mindNote'), bitable: t('home.bitable'), survey: t('home.survey'),
+    file: t('home.other'), image: t('cloudDrive.image'), code: t('cloudDrive.code'),
+  }
 }
-const extTypeMap: Record<string, string> = {
-  // 文档类
-  txt: '文本文档',
-  doc: 'Word文档',
-  docx: 'Word文档',
-  pdf: 'PDF文档',
-  rtf: '富文本',
-  epub: '电子书',
-  mobi: '电子书',
-
-  // 表格/数据类
-  xls: 'Excel表格',
-  xlsx: 'Excel表格',
-  csv: 'Csv表格',
-  db: '数据库',
-  sqlite: '数据库',
-  sql: '数据库',
-
-  // 演示文稿
-  ppt: '幻灯片',
-  pptx: '幻灯片',
-  pot: '幻灯片模板',
-
-  // 图片类
-  png: 'PNG图片',
-  jpg: 'JPEG图片',
-  jpeg: 'JPEG图片',
-  gif: 'GIF动图',
-  bmp: 'BMP图片',
-  webp: 'WebP图片',
-  svg: '矢量图片',
-  ico: '图标文件',
-
-  // 音频
-  mp3: '音频文件',
-  wav: '无损音频',
-  flac: 'FLAC无损音频',
-  aac: 'AAC音频',
-  ogg: 'OGG音频',
-  m4a: 'M4A音频',
-
-  // 视频
-  mp4: '视频文件',
-  mkv: 'MKV视频',
-  avi: 'AVI视频',
-  mov: 'MOV视频',
-  wmv: 'WMV视频',
-  flv: 'FLV视频',
-  webm: 'WEBM视频',
-
-  // 压缩包
-  zip: '压缩包',
-  rar: '压缩包',
-  '7z': '7Z压缩包',
-  tar: 'TAR打压缩包',
-  gz: 'GZ压缩包',
-  'tar.gz': 'TAR.GZ压缩包',
-  bz2: 'BZ2压缩包',
-
-  // 系统/安装包
-  exe: 'Windows程序',
-  msi: 'Windows安装包',
-  dll: '系统库文件',
-  apk: '安卓安装包',
-  aab: '安卓应用捆绑包',
-  ipa: 'iOS安装包',
-  app: 'macOS应用',
-  dmg: '苹果磁盘镜像',
-  deb: 'Ubuntu安装包',
-  rpm: 'RedHat安装包',
-  AppImage: 'Linux便携程序',
-  sh: 'Shell脚本',
-  iso: '光盘镜像',
-
-  // 网页/代码
-  html: '网页文件',
-  htm: '网页文件',
-  css: '样式文件',
-  js: 'JavaScript',
-  ts: 'TypeScript',
-  vue: 'Vue组件',
-  jsx: 'React组件',
-  md: 'Markdown文档',
-  json: 'JSON配置',
-  xml: 'XML文件',
-  yaml: 'YAML文件',
-  yml: 'YAML文件',
-
-  // 编程源码
-  c: 'C语言代码',
-  cpp: 'C++代码',
-  h: '头文件',
-  java: 'Java代码',
-  class: 'Java编译文件',
-  jar: 'Java包',
-  py: 'Python代码',
-  go: 'Go代码',
-  php: 'PHP脚本',
-
-  // 其他
-  log: '日志文件',
-  tmp: '临时文件',
-  vmdk: '虚拟机磁盘',
-  vdi: '虚拟机磁盘',
+function getExtTypeMap(): Record<string, string> {
+  return {
+    txt: t('fileType.textDoc'), doc: t('fileType.wordDoc'), docx: t('fileType.wordDoc'),
+    pdf: t('fileType.pdfDoc'), rtf: t('fileType.richText'), epub: t('fileType.ebook'), mobi: t('fileType.ebook'),
+    xls: t('fileType.excelSheet'), xlsx: t('fileType.excelSheet'), csv: t('fileType.csvSheet'),
+    db: t('fileType.database'), sqlite: t('fileType.database'), sql: t('fileType.database'),
+    ppt: t('fileType.presentation'), pptx: t('fileType.presentation'), pot: t('fileType.presentationTemplate'),
+    png: t('fileType.pngImage'), jpg: t('fileType.jpegImage'), jpeg: t('fileType.jpegImage'),
+    gif: t('fileType.gifImage'), bmp: t('fileType.bmpImage'), webp: t('fileType.webpImage'),
+    svg: t('fileType.vectorImage'), ico: t('fileType.iconFile'),
+    mp3: t('fileType.audioFile'), wav: t('fileType.losslessAudio'), flac: t('fileType.flacAudio'),
+    aac: t('fileType.aacAudio'), ogg: t('fileType.oggAudio'), m4a: t('fileType.m4aAudio'),
+    mp4: t('fileType.videoFile'), mkv: t('fileType.mkvVideo'), avi: t('fileType.aviVideo'),
+    mov: t('fileType.movVideo'), wmv: t('fileType.wmvVideo'), flv: t('fileType.flvVideo'), webm: t('fileType.webmVideo'),
+    zip: t('fileType.archive'), rar: t('fileType.archive'), '7z': t('fileType.7zArchive'),
+    tar: t('fileType.tarArchive'), gz: t('fileType.gzArchive'), 'tar.gz': t('fileType.tarGzArchive'), bz2: t('fileType.bz2Archive'),
+    exe: t('fileType.winProgram'), msi: t('fileType.winInstaller'), dll: t('fileType.systemLib'),
+    apk: t('fileType.androidApp'), aab: t('fileType.androidBundle'), ipa: t('fileType.iosApp'),
+    app: t('fileType.macApp'), dmg: t('fileType.macDiskImage'), deb: t('fileType.debPackage'),
+    rpm: t('fileType.rpmPackage'), AppImage: t('fileType.linuxPortable'), sh: t('fileType.shellScript'), iso: t('fileType.discImage'),
+    html: t('fileType.webPage'), htm: t('fileType.webPage'), css: t('fileType.stylesheet'),
+    js: 'JavaScript', ts: 'TypeScript', vue: t('fileType.vueComponent'), jsx: t('fileType.reactComponent'),
+    md: t('fileType.markdownDoc'), json: t('fileType.jsonConfig'), xml: t('fileType.xmlFile'),
+    yaml: t('fileType.yamlFile'), yml: t('fileType.yamlFile'),
+    c: t('fileType.cCode'), cpp: t('fileType.cppCode'), h: t('fileType.headerFile'),
+    java: t('fileType.javaCode'), class: t('fileType.javaCompiled'), jar: t('fileType.javaPackage'),
+    py: t('fileType.pythonCode'), go: t('fileType.goCode'), php: t('fileType.phpScript'),
+    log: t('fileType.logFile'), tmp: t('fileType.tempFile'), vmdk: t('fileType.vmDisk'), vdi: t('fileType.vmDisk'),
+  }
 }
 
 function getTypeIcon(type: string, ext?: string): string {
@@ -943,9 +813,11 @@ function getDisplayName(doc: Document): string {
 }
 function getTypeName(doc: Document): string {
   const ext = (doc.fileExt || '').replace('.', '').toLowerCase()
-  if (ext && extTypeMap[ext]) return extTypeMap[ext]
-  if (typeNameMap[doc.type]) return typeNameMap[doc.type]
-  return '其他'
+  const extMap = getExtTypeMap()
+  if (ext && extMap[ext]) return extMap[ext]
+  const nameMap = getTypeNameMap()
+  if (nameMap[doc.type]) return nameMap[doc.type]
+  return t('home.other')
 }
 function getTypeTagType(type: string): '' | 'success' | 'warning' | 'info' | 'danger' {
   const m: Record<string, '' | 'success' | 'warning' | 'info' | 'danger'> = {
@@ -960,10 +832,10 @@ function formatFileSize(bytes: number): string {
   if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
   return (bytes / (1024 * 1024 * 1024)).toFixed(1) + ' GB'
 }
-function formatDate(t: string) {
-  if (!t) return ''
-  const d = new Date(t)
-  return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`
+function formatDate(dateStr: string) {
+  if (!dateStr) return ''
+  const d = new Date(dateStr)
+  return d.toLocaleDateString(undefined, { year: 'numeric', month: '2-digit', day: '2-digit' })
 }
 
 // Build folder tree from flat list
@@ -1006,7 +878,7 @@ function selectFolder(node: FolderNode | Document) {
   
   selectedFolderId.value = node.id
   currentParentId.value = node.id
-  breadcrumbs.value = [{ id: null, title: '全部内容' }, { id: node.id, title: node.title }]
+  breadcrumbs.value = [{ id: null, title: t('cloudDrive.allContent') }, { id: node.id, title: node.title }]
   fetchDocuments()
 }
 
@@ -1042,7 +914,7 @@ async function selectRemoteStorage(storage: RemoteStorageFolder) {
   remotePath.value = '/'
   isRemoteMode.value = true
   breadcrumbs.value = [
-    { id: null, title: '全部内容' },
+    { id: null, title: t('cloudDrive.allContent') },
     { id: 'remote-' + storage.id, title: storage.name }
   ]
   await loadRemoteFiles()
@@ -1070,7 +942,7 @@ async function loadRemoteFiles() {
     // Update breadcrumbs for remote path
     updateRemoteBreadcrumbs()
   } catch (err: any) {
-    ElMessage.error(`加载远程文件失败: ${err.message || '未知错误'}`)
+    ElMessage.error(`${t('cloudDrive.loadRemoteFailed')}: ${err.message || t('common.unknownError')}`)
     documents.value = []
   } finally {
     remoteLoading.value = false
@@ -1091,7 +963,7 @@ function updateRemoteBreadcrumbs() {
   if (!currentRemoteStorage.value) return
   const parts = remotePath.value.split('/').filter(p => p)
   breadcrumbs.value = [
-    { id: null, title: '全部内容' },
+    { id: null, title: t('cloudDrive.allContent') },
     { id: 'remote-' + currentRemoteStorage.value!.id, title: currentRemoteStorage.value!.name }
   ]
   let pathSoFar = ''
@@ -1115,7 +987,7 @@ async function handleRemoteFileClick(file: RemoteFileInfo) {
     try {
       await downloadRemoteFile(currentRemoteStorage.value!.id, file.path)
     } catch (err: any) {
-      ElMessage.error(`下载失败: ${err.message || '未知错误'}`)
+      ElMessage.error(`${t('cloudDrive.downloadFailed')}: ${err.message || t('common.unknownError')}`)
     }
   }
 }
@@ -1197,7 +1069,7 @@ async function loadBreadcrumbForFolder(folderId: number) {
     }
 
     // 最前面加根目录
-    breadcrumbs.value = [{ id: null, title: '全部内部' }, ...path]
+    breadcrumbs.value = [{ id: null, title: t('cloudDrive.allContent') }, ...path]
   } catch (e) {
     console.error('加载面包屑失败', e)
   }
@@ -1214,22 +1086,22 @@ function openCreateFolderDialog(parentId: number | null) {
 
 function searchCollaborator() {
   if (!createFolderForm.collaborator.trim()) {
-    ElMessage.warning('请输入搜索关键词')
+    ElMessage.warning(t('cloudDrive.searchKeywordRequired'))
     return
   }
-  ElMessage.success(`正在搜索 "${createFolderForm.collaborator}"...`)
+  ElMessage.success(t('cloudDrive.searchingUser', { keyword: createFolderForm.collaborator }))
   // In real implementation, this would search for users
 }
 
 async function handleCreateFolder() {
   if (!createFolderForm.name.trim()) {
-    ElMessage.warning('请输入文件夹名称')
+    ElMessage.warning(t('cloudDrive.folderNameRequired'))
     return
   }
   creatingFolder.value = true
   try {
     await createDocument({ title: createFolderForm.name.trim(), type: 'folder', parentId: createFolderParentId.value })
-    ElMessage.success('文件夹已创建')
+    ElMessage.success(t('cloudDrive.folderCreated'))
     createFolderVisible.value = false
     fetchFolderTree()
     fetchDocuments()
@@ -1244,7 +1116,7 @@ async function handleCreate(type: DocumentType | 'folder') {
     return
   }
   try {
-    const res: any = await createDocument({ title: '无标题文档', type, parentId: currentParentId.value })
+    const res: any = await createDocument({ title: t('cloudDrive.untitledDoc'), type, parentId: currentParentId.value })
     // Open in new browser tab
     window.open(`/doc/${res.data.id}`, '_blank')
   } catch { /* handled */ }
@@ -1357,7 +1229,7 @@ async function handleFolderAction(action: string) {
     case 'copyLink': {
       const link = `${window.location.origin}/documents?folderId=${folder.id}`
       navigator.clipboard.writeText(link)
-      ElMessage.success('链接已复制')
+      ElMessage.success(t('cloudDrive.linkCopied'))
       break
     }
     case 'move':
@@ -1368,23 +1240,23 @@ async function handleFolderAction(action: string) {
     case 'quickAccess':
       if (!quickAccessFolders.value.find(f => f.id === folder.id)) {
         quickAccessFolders.value.push(folder as FolderNode)
-        ElMessage.success('已添加到快速访问')
+        ElMessage.success(t('cloudDrive.addedToQuickAccess'))
       } else {
-        ElMessage.info('已在快速访问列表中')
+        ElMessage.info(t('cloudDrive.alreadyInQuickAccess'))
       }
       break
     case 'favorite':
       await favoriteDocument(folder.id, true)
-      ElMessage.success('已收藏')
+      ElMessage.success(t('cloudDrive.favorited'))
       break
     case 'transfer':
-      ElMessage.info('请在文档编辑页面中转移所有权')
+      ElMessage.info(t('cloudDrive.transferHint'))
       break
     case 'download':
-      ElMessage.success(`正在打包下载 "${folder.title}"...`)
+      ElMessage.success(t('cloudDrive.downloadingFolder', { title: folder.title }))
       // Simulate download - in real implementation, this would call an API to create a zip
       setTimeout(() => {
-        ElMessage.success('文件夹已打包完成，开始下载')
+        ElMessage.success(t('cloudDrive.downloadReady'))
       }, 1500)
       break
     case 'rename':
@@ -1393,9 +1265,9 @@ async function handleFolderAction(action: string) {
       renameDialogVisible.value = true
       break
     case 'delete':
-      await ElMessageBox.confirm(`确定将文件夹"${folder.title}"移至回收站？`, '删除确认')
+      await ElMessageBox.confirm(t('cloudDrive.deleteFolderConfirm', { title: folder.title }), t('cloudDrive.deleteConfirmTitle'))
       await deleteDocument(folder.id)
-      ElMessage.success('已移至回收站')
+      ElMessage.success(t('cloudDrive.movedToTrash'))
       fetchFolderTree()
       fetchDocuments()
       break
@@ -1404,17 +1276,17 @@ async function handleFolderAction(action: string) {
 
 async function confirmRename() {
   if (!renameTarget.value || !renameValue.value.trim()) {
-    ElMessage.warning('名称不能为空')
+    ElMessage.warning(t('cloudDrive.nameRequired'))
     return
   }
   renaming.value = true
   try {
     await updateDocument(renameTarget.value.id, { title: renameValue.value.trim() })
-    ElMessage.success('重命名成功')
+    ElMessage.success(t('cloudDrive.renameSuccess'))
     renameDialogVisible.value = false
     fetchFolderTree()
     fetchDocuments()
-  } catch { ElMessage.error('重命名失败') }
+  } catch { ElMessage.error(t('cloudDrive.renameFailed')) }
   finally { renaming.value = false }
 }
 
@@ -1428,26 +1300,26 @@ function closeMenus() {
 async function handlePin(doc: Document) {
   contextMenu.visible = false
   await pinDocument(doc.id, !doc.isPinned)
-  ElMessage.success(doc.isPinned ? '已从置顶移除' : '已添加到置顶')
+  ElMessage.success(doc.isPinned ? t('cloudDrive.unpinned') : t('cloudDrive.pinned'))
   fetchDocuments()
 }
 async function handleFavorite(doc: Document) {
   contextMenu.visible = false
   await favoriteDocument(doc.id, !doc.isFavorite)
-  ElMessage.success(doc.isFavorite ? '已取消收藏' : '已收藏')
+  ElMessage.success(doc.isFavorite ? t('cloudDrive.unfavorited') : t('cloudDrive.favorited'))
   fetchDocuments()
 }
 async function handleCopy(doc: Document) {
   contextMenu.visible = false
   await copyDocument(doc.id, false)
-  ElMessage.success('副本已创建')
+  ElMessage.success(t('cloudDrive.copyCreated'))
   fetchDocuments()
 }
 function handleCopyLink(doc: Document) {
   contextMenu.visible = false
   const link = `${window.location.origin}/doc/${doc.id}`
   navigator.clipboard.writeText(link)
-  ElMessage.success('链接已复制')
+  ElMessage.success(t('cloudDrive.linkCopied'))
 }
 function handleShareDoc(doc: Document) {
   contextMenu.visible = false
@@ -1456,23 +1328,23 @@ function handleShareDoc(doc: Document) {
   shareDialogVisible.value = true
 }
 function handleAddShortcut() {
-  ElMessage.success('快捷方式已添加到桌面')
+  ElMessage.success(t('cloudDrive.shortcutAdded'))
 }
 function handleAddShortcutFor(doc: Document) {
   contextMenu.visible = false
   // In real implementation, this would create a shortcut document
-  ElMessage.success(`"${doc.title}" 的快捷方式已添加`)
+  ElMessage.success(t('cloudDrive.shortcutAddedFor', { title: doc.title }))
 }
 async function handleTransfer(doc: Document) {
   contextMenu.visible = false
   // Show transfer dialog
-  const { value } = await ElMessageBox.prompt('请输入新所有者的邮箱或用户名', '转移所有权', {
-    confirmButtonText: '转移',
-    cancelButtonText: '取消',
-    inputPlaceholder: '输入用户邮箱',
+  const { value } = await ElMessageBox.prompt(t('cloudDrive.transferPrompt'), t('cloudDrive.transferOwnership'), {
+    confirmButtonText: t('cloudDrive.transferBtn'),
+    cancelButtonText: t('common.cancel'),
+    inputPlaceholder: t('cloudDrive.transferInputPlaceholder'),
   }).catch(() => ({ value: null }))
   if (value) {
-    ElMessage.success(`"${doc.title}" 的所有权已转移给 ${value}`)
+    ElMessage.success(t('cloudDrive.ownershipTransferred', { title: doc.title, user: value }))
   }
 }
 function showMoveDialog(doc: Document) {
@@ -1484,7 +1356,7 @@ function showMoveDialog(doc: Document) {
 async function confirmMove() {
   if (moveTargetDoc.value) {
     await moveDocument(moveTargetDoc.value.id, moveTargetParentId.value)
-    ElMessage.success('已移动')
+    ElMessage.success(t('cloudDrive.moved'))
     moveDialogVisible.value = false
     fetchFolderTree()
     fetchDocuments()
@@ -1498,21 +1370,21 @@ async function handleDelete(doc: Document) {
     const docId = String(doc.id)
     const remoteFile = remoteFiles.value.find(f => 'remote-file-' + f.path === docId)
     if (remoteFile && currentRemoteStorage.value) {
-      await ElMessageBox.confirm(`确定删除"${doc.title}"？`, '删除确认')
+      await ElMessageBox.confirm(t('cloudDrive.deleteDocConfirm', { title: doc.title }), t('cloudDrive.deleteConfirmTitle'))
       try {
         await deleteRemoteFile(currentRemoteStorage.value.id, remoteFile.path)
-        ElMessage.success('已删除')
+        ElMessage.success(t('cloudDrive.deleted'))
         loadRemoteFiles()
       } catch (err: any) {
-        ElMessage.error(`删除失败: ${err.message || '未知错误'}`)
+        ElMessage.error(t('cloudDrive.deleteFailedWithError', { error: err.message || t('common.unknownError') }))
       }
       return
     }
   }
   
-  await ElMessageBox.confirm(`确定将"${doc.title}"移至回收站？`, '删除确认')
+  await ElMessageBox.confirm(t('cloudDrive.moveToTrashConfirm', { title: doc.title }), t('cloudDrive.deleteConfirmTitle'))
   await deleteDocument(doc.id)
-  ElMessage.success('已移至回收站')
+  ElMessage.success(t('cloudDrive.movedToTrash'))
   fetchDocuments()
 }
 
@@ -1554,7 +1426,7 @@ async function handleImport() {
     importProgress.value = 0
     try {
       const res: any = await importDocument(importFile.value, currentParentId.value, (p) => { importProgress.value = p })
-      ElMessage.success('导入成功')
+      ElMessage.success(t('cloudDrive.importSuccess'))
       showImportDialog.value = false
       importFile.value = null
       importProgress.value = 0
@@ -1562,7 +1434,7 @@ async function handleImport() {
       if (res.data?.id && res.data?.type !== 'folder') {
         window.open(`/doc/${res.data.id}`, '_blank')
       }
-    } catch { ElMessage.error('导入失败') } finally { importLoading.value = false }
+    } catch { ElMessage.error(t('cloudDrive.importFailed')) } finally { importLoading.value = false }
     return
   }
 
@@ -1590,12 +1462,12 @@ async function handleImport() {
     importProgress.value = 0
 
     if (successCount > 0) {
-      ElMessage.success(`成功上传 ${successCount} 个文件${failCount > 0 ? `，${failCount} 个失败` : ''}`)
+      ElMessage.success(failCount > 0 ? t('cloudDrive.uploadSuccessWithFail', { success: successCount, fail: failCount }) : t('cloudDrive.uploadSuccessCount', { success: successCount }))
       showImportDialog.value = false
       importFiles.value = []
       fetchDocuments()
     } else {
-      ElMessage.error('上传失败')
+      ElMessage.error(t('cloudDrive.uploadFailed'))
     }
   }
 }
@@ -1633,13 +1505,13 @@ async function handleRemoteUpload() {
   importProgress.value = 0
 
   if (successCount > 0) {
-    ElMessage.success(`成功上传 ${successCount} 个文件${failCount > 0 ? `，${failCount} 个失败` : ''}`)
+    ElMessage.success(failCount > 0 ? t('cloudDrive.uploadSuccessWithFail', { success: successCount, fail: failCount }) : t('cloudDrive.uploadSuccessCount', { success: successCount }))
     showImportDialog.value = false
     importFile.value = null
     importFiles.value = []
     loadRemoteFiles()
   } else {
-    ElMessage.error('上传失败')
+    ElMessage.error(t('cloudDrive.uploadFailed'))
   }
 }
 
@@ -1651,11 +1523,11 @@ function handleSelectionChange(rows: Document[]) {
 // Share helpers
 function copyShareLink() {
   navigator.clipboard.writeText(shareLink.value)
-  ElMessage.success('链接已复制')
+  ElMessage.success(t('cloudDrive.linkCopied'))
 }
 function handleShareInvite() {
-  if (!shareInviteEmail.value.trim()) { ElMessage.warning('请输入邮箱或用户名'); return }
-  ElMessage.success('邀请已发送')
+  if (!shareInviteEmail.value.trim()) { ElMessage.warning(t('cloudDrive.shareInviteRequired')); return }
+  ElMessage.success(t('cloudDrive.inviteSent'))
   shareInviteEmail.value = ''
 }
 
@@ -1669,7 +1541,7 @@ async function batchCopyAction() {
   for (const doc of selectedDocs.value) {
     try { await copyDocument(doc.id, false) } catch { /* continue */ }
   }
-  ElMessage.success(`已创建 ${selectedDocs.value.length} 个副本`)
+  ElMessage.success(t('cloudDrive.batchCopied', { count: selectedDocs.value.length }))
   selectedDocs.value = []
   fetchDocuments()
 }
@@ -1677,16 +1549,16 @@ async function batchFavoriteAction() {
   for (const doc of selectedDocs.value) {
     try { await favoriteDocument(doc.id, true) } catch { /* continue */ }
   }
-  ElMessage.success('已收藏')
+  ElMessage.success(t('cloudDrive.favorited'))
   selectedDocs.value = []
   fetchDocuments()
 }
 async function batchDeleteAction() {
-  await ElMessageBox.confirm(`确定删除选中的 ${selectedDocs.value.length} 项？`, '批量删除')
+  await ElMessageBox.confirm(t('cloudDrive.batchDeleteConfirm', { count: selectedDocs.value.length }), t('cloudDrive.batchDeleteTitle'))
   for (const doc of selectedDocs.value) {
     try { await deleteDocument(doc.id) } catch { /* continue */ }
   }
-  ElMessage.success('已删除')
+  ElMessage.success(t('cloudDrive.batchDeleted'))
   selectedDocs.value = []
   fetchDocuments()
 }
@@ -1738,11 +1610,11 @@ async function handleDrop(_e: DragEvent, targetDoc: Document) {
   
   try {
     await moveDocument(draggedDoc.value.id, targetDoc.id)
-    ElMessage.success(`已将"${draggedDoc.value.title}"移动到"${targetDoc.title}"`)
+    ElMessage.success(t('cloudDrive.movedToFolder', { source: draggedDoc.value.title, target: targetDoc.title }))
     fetchDocuments()
     fetchFolderTree()
   } catch {
-    ElMessage.error('移动失败')
+    ElMessage.error(t('cloudDrive.moveFailed'))
   }
   draggedDoc.value = null
 }
@@ -1982,6 +1854,11 @@ onBeforeUnmount(() => {
 .action-card:hover {
   border-color: var(--kx-primary);
   box-shadow: 0 2px 8px rgba(51,112,255,0.08);
+}
+.action-card-active {
+  border-color: var(--kx-primary);
+  background: #f0f5ff;
+  box-shadow: 0 2px 8px rgba(51,112,255,0.12);
 }
 .action-icon {
   width: 36px;
@@ -2491,73 +2368,6 @@ onBeforeUnmount(() => {
   padding: 4px 0;
 }
 
-/* Template Library */
-.template-library {
-  display: flex;
-  gap: 20px;
-  min-height: 400px;
-}
-.template-categories {
-  width: 120px;
-  flex-shrink: 0;
-}
-.template-cat {
-  padding: 8px 12px;
-  cursor: pointer;
-  border-radius: 6px;
-  font-size: 14px;
-  color: var(--kx-text-secondary);
-  margin-bottom: 4px;
-}
-.template-cat:hover {
-  background: rgba(0,0,0,0.04);
-}
-.template-cat.active {
-  background: rgba(51,112,255,0.08);
-  color: var(--kx-primary);
-  font-weight: 500;
-}
-.template-grid {
-  flex: 1;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 16px;
-}
-.template-card {
-  cursor: pointer;
-  border: 1px solid var(--kx-border);
-  border-radius: 8px;
-  padding: 12px;
-  transition: all 0.2s;
-}
-.template-card:hover {
-  border-color: var(--kx-primary);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-}
-.template-preview {
-  height: 80px;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 8px;
-}
-.template-name {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--kx-text-primary);
-  margin-bottom: 4px;
-}
-.template-desc {
-  font-size: 12px;
-  color: var(--kx-text-placeholder);
-}
-.template-empty {
-  grid-column: 1 / -1;
-  display: flex;
-  justify-content: center;
-  padding: 40px 0;
-}
 
 /* More Types Dropdown Submenu */
 .dropdown-submenu {
@@ -2572,4 +2382,12 @@ onBeforeUnmount(() => {
   padding: 4px 0;
   z-index: 101;
 }
+.template-library-inline {
+  flex: 1;
+  height: 0;
+  min-height: 0;
+  overflow: hidden;
+}
 </style>
+
+

@@ -72,6 +72,11 @@ func (c *WebDAVClient) List(path string) ([]RemoteFileInfo, error) {
 		}
 	}
 
+	// Validate path security
+	if _, err := ValidatePath(path); err != nil {
+		return nil, err
+	}
+
 	path = strings.TrimPrefix(path, "/")
 	if path == "" {
 		path = "/"
@@ -122,6 +127,11 @@ func (c *WebDAVClient) Download(path string) (io.ReadCloser, error) {
 		}
 	}
 
+	// Validate path security
+	if _, err := ValidatePath(path); err != nil {
+		return nil, err
+	}
+
 	reader, err := c.client.ReadStream(path)
 	if err != nil {
 		return nil, err
@@ -138,6 +148,11 @@ func (c *WebDAVClient) Upload(path string, reader io.Reader, size int64) error {
 		}
 	}
 
+	// Validate path security
+	if _, err := ValidatePath(path); err != nil {
+		return err
+	}
+
 	return c.client.WriteStream(path, reader, 0644)
 }
 
@@ -149,6 +164,11 @@ func (c *WebDAVClient) Delete(path string) error {
 		}
 	}
 
+	// Validate path security
+	if _, err := ValidatePath(path); err != nil {
+		return err
+	}
+
 	return c.client.Remove(path)
 }
 
@@ -158,6 +178,11 @@ func (c *WebDAVClient) Mkdir(path string) error {
 		if err := c.Connect(); err != nil {
 			return err
 		}
+	}
+
+	// Validate path security
+	if _, err := ValidatePath(path); err != nil {
+		return err
 	}
 
 	return c.client.Mkdir(path, 0755)

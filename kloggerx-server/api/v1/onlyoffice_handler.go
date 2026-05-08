@@ -36,7 +36,15 @@ type OnlyOfficeCallbackRequest struct {
 	Token      string          `json:"token"` // JWT token from OnlyOffice
 }
 
-// GetOnlyOfficeConfig returns the editor configuration for a document
+// GetOnlyOfficeConfig godoc
+// @Summary 获取OnlyOffice编辑器配置
+// @Description 获取文档的OnlyOffice编辑器配置
+// @Tags 文档管理
+// @Accept json
+// @Produce json
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /onlyoffice/config [post]
 func GetOnlyOfficeConfig(c *gin.Context) {
 	var req OnlyOfficeConfigRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -65,7 +73,15 @@ func GetOnlyOfficeConfig(c *gin.Context) {
 	c.JSON(http.StatusOK, model.Success(ooConfig))
 }
 
-// OnlyOfficeCallback handles callbacks from OnlyOffice DocumentServer
+// OnlyOfficeCallback godoc
+// @Summary OnlyOffice回调
+// @Description 处理OnlyOffice服务器的回调请求
+// @Tags 文档管理
+// @Accept json
+// @Produce json
+// @Param docId path int true "文档ID"
+// @Success 200 {object} map[string]interface{}
+// @Router /onlyoffice/callback/{docId} [post]
 func OnlyOfficeCallback(c *gin.Context) {
 	docIDStr := c.Param("docId")
 	docID, err := strconv.ParseUint(docIDStr, 10, 64)
@@ -109,7 +125,14 @@ func OnlyOfficeCallback(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"error": 0})
 }
 
-// DownloadDocumentForOnlyOffice serves document content for OnlyOffice to download
+// DownloadDocumentForOnlyOffice godoc
+// @Summary OnlyOffice文档下载
+// @Description 为OnlyOffice提供文档内容下载
+// @Tags 文档管理
+// @Produce application/octet-stream
+// @Param docId path int true "文档ID"
+// @Success 200 {file} binary
+// @Router /onlyoffice/download/{docId} [get]
 func DownloadDocumentForOnlyOffice(c *gin.Context) {
 	docIDStr := c.Param("docId")
 	docID, err := strconv.ParseUint(docIDStr, 10, 64)
@@ -147,7 +170,14 @@ func DownloadDocumentForOnlyOffice(c *gin.Context) {
 	c.Data(http.StatusOK, "application/octet-stream", content)
 }
 
-// GetOnlyOfficeServerURL returns the OnlyOffice server URL for frontend
+// GetOnlyOfficeServerURL godoc
+// @Summary 获取OnlyOffice服务器URL
+// @Description 返回OnlyOffice服务器地址
+// @Tags 文档管理
+// @Produce json
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /onlyoffice/server-url [get]
 func GetOnlyOfficeServerURL(c *gin.Context) {
 	c.JSON(http.StatusOK, model.Success(gin.H{
 		"serverUrl": config.Cfg.OnlyOffice.ServerURL,

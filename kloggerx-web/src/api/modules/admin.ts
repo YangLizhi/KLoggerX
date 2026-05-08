@@ -1,6 +1,15 @@
 import { get, post, put, del } from '../request'
 import type { ApiResponse, PaginatedData } from '@/types'
 
+// Dashboard
+export function getDashboardStats() {
+  return get<ApiResponse<any>>('/api/v1/admin/dashboard/stats')
+}
+
+export function getSystemInfo() {
+  return get<ApiResponse<any>>('/api/v1/admin/system/info')
+}
+
 // User Management
 export function getAdminUsers(params: { page: number; pageSize: number; keyword?: string; role?: string }) {
   return get<ApiResponse<PaginatedData<any>>>('/api/v1/admin/users', params)
@@ -142,6 +151,15 @@ export function importLdapUsers(data: { type: string; server: string; baseDN: st
   return post<ApiResponse>('/api/v1/admin/ldap/import', data)
 }
 
+// Follow-up Suggestions
+export function updateFollowUpSuggestionsConfig(enabled: boolean) {
+  return put<ApiResponse>('/api/v1/admin/settings/follow-up-suggestions', { enabled })
+}
+
+export function getFollowUpSuggestionsConfig() {
+  return get<ApiResponse<{ enabled: boolean }>>('/api/v1/admin/settings/follow-up-suggestions')
+}
+
 // Template Management
 export interface Template {
   id: number
@@ -168,4 +186,62 @@ export function updateTemplate(id: number, data: Partial<{ name: string; descrip
 
 export function deleteTemplate(id: number) {
   return del<ApiResponse<{ id: number }>>(`/api/v1/admin/template/${id}`)
+}
+
+// Feedback Review
+export interface FeedbackReview {
+  id: number
+  messageId: number
+  conversationId: number
+  userId: number
+  rating: number
+  feedbackType: string
+  comment: string
+  correctAnswer: string
+  reviewStatus: string
+  reviewerId: number | null
+  reviewComment: string
+  reviewedAt: string | null
+  createdAt: string
+  originalQuestion: string
+  originalAnswer: string
+  knowledgeBaseId: number
+  userName: string
+}
+
+export function getPendingReviews(params: { page?: number; pageSize?: number }) {
+  return get<ApiResponse<{ list: FeedbackReview[]; total: number }>>('/api/v1/admin/feedback/reviews', params)
+}
+
+export function approveReview(id: number, comment?: string) {
+  return post<ApiResponse>(`/api/v1/admin/feedback/reviews/${id}/approve`, { comment })
+}
+
+export function rejectReview(id: number, comment?: string) {
+  return post<ApiResponse>(`/api/v1/admin/feedback/reviews/${id}/reject`, { comment })
+}
+
+export function getReviewStats() {
+  return get<ApiResponse<{ pending: number; approved: number; rejected: number }>>('/api/v1/admin/feedback/reviews/stats')
+}
+
+// Operation Logs
+export interface OperationLog {
+  id: number
+  userId: number
+  userName: string
+  action: string
+  resource: string
+  resourceType: string
+  resourceTitle: string
+  detail: string
+  ip: string
+  userAgent: string
+  status: number
+  duration: number
+  createdAt: string
+}
+
+export function getOperationLogs(params: { user_id?: number; action?: string; start_time?: string; end_time?: string; page?: number; page_size?: number }) {
+  return get<ApiResponse<PaginatedData<OperationLog>>>('/api/v1/admin/operation-logs', params)
 }

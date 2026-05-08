@@ -1,12 +1,24 @@
+// @title KloggerX API
+// @version 1.0
+// @description KloggerX 知识协作平台 API 文档
+// @host localhost:8080
+// @BasePath /api/v1
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
 package main
 
 import (
 	"fmt"
 	"log"
+	"os"
+	"time"
 
 	"kloggerx-server/api/v1"
 	"kloggerx-server/config"
+	_ "kloggerx-server/docs"
 	"kloggerx-server/internal/middleware"
+	"kloggerx-server/internal/pkg/crypto"
 	"kloggerx-server/internal/pkg/logger"
 	miniosvc "kloggerx-server/internal/pkg/minio"
 	"kloggerx-server/internal/repository/mysql"
@@ -16,11 +28,23 @@ import (
 	"kloggerx-server/internal/ws"
 
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 func main() {
 	if err := config.Init("config/config.yaml"); err != nil {
 		log.Fatalf("Failed to load config: %v", err)
+	}
+
+	// Initialize encryption key
+	cryptoKey := os.Getenv("KLOGGERX_ENCRYPTION_KEY")
+	if cryptoKey == "" {
+		cryptoKey = "default-key-change-in-production"
+		log.Println("WARNING: Using default encryption key, set KLOGGERX_ENCRYPTION_KEY in production")
+	}
+	if err := crypto.Init(cryptoKey); err != nil {
+		log.Fatalf("Failed to initialize crypto: %v", err)
 	}
 
 	logger.Init(config.Cfg.Log)
@@ -77,6 +101,21 @@ func main() {
 	hub := ws.NewHub()
 	go hub.Run()
 
+	// Start scheduled cleanup of expired documents (daily at 3:00 AM)
+	go func() {
+		for {
+			now := time.Now()
+			next := time.Date(now.Year(), now.Month(), now.Day()+1, 3, 0, 0, 0, now.Location())
+			time.Sleep(next.Sub(now))
+			count, err := service.CleanupExpiredDocuments()
+			if err != nil {
+				logger.Errorf("Auto cleanup failed: %v", err)
+			} else if count > 0 {
+				logger.Infof("Auto cleanup: permanently deleted %d expired documents", count)
+			}
+		}
+	}()
+
 	gin.SetMode(config.Cfg.Server.Mode)
 	r := gin.New()
 	r.Use(gin.Recovery())
@@ -87,6 +126,9 @@ func main() {
 	r.Static("/uploads", "./uploads")
 
 	v1.RegisterRoutes(r, hub)
+
+	// Swagger docs
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	addr := fmt.Sprintf(":%d", config.Cfg.Server.Port)
 	logger.Info("Server starting on " + addr)

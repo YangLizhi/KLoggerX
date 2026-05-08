@@ -29,6 +29,8 @@ KloggerX is a self-hosted online knowledge collaboration and management platform
 - **Comments & Annotations**: Document-level comments and inline annotation features
 - **Document Template Library**: Built-in template library for quickly creating standard documents
 - **Collaborator Awareness**: Real-time display of online collaborators and join/leave notifications
+- **Internationalization**: Chinese/English interface switching
+- **Knowledge Graph**: LLM-based entity relationship extraction and visualization
 
 ---
 
@@ -437,6 +439,13 @@ qdrant:
 - [x] Univer professional spreadsheet engine integration
 - [x] Operation logs and audit trail
 - [x] Storage policy management
+- [x] Internationalization (Chinese/English)
+- [x] Knowledge graph visualization
+- [x] Fine-grained document permission management
+- [x] LDAP authentication integration
+- [x] Rate limiting and security enhancements
+- [x] Global search and keyboard shortcuts
+- [x] Template library UI optimization
 
 ### v1.0
 
@@ -455,8 +464,8 @@ qdrant:
 
 - [ ] Mobile adaptation
 - [ ] Offline editing
-- [ ] Internationalization support
 - [ ] Plugin system
+- [ ] Version comparison and merging
 
 ---
 

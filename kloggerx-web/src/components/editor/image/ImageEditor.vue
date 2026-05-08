@@ -2,19 +2,19 @@
   <div class="image-editor">
     <div class="image-toolbar">
       <div class="toolbar-group">
-        <el-button size="small" @click="zoomIn"><el-icon><ZoomIn /></el-icon>放大</el-button>
-        <el-button size="small" @click="zoomOut"><el-icon><ZoomOut /></el-icon>缩小</el-button>
-        <el-button size="small" @click="resetZoom"><el-icon><RefreshRight /></el-icon>重置</el-button>
+        <el-button size="small" @click="zoomIn"><el-icon><ZoomIn /></el-icon>{{ $t('editor.imageViewer.zoomIn') }}</el-button>
+        <el-button size="small" @click="zoomOut"><el-icon><ZoomOut /></el-icon>{{ $t('editor.imageViewer.zoomOut') }}</el-button>
+        <el-button size="small" @click="resetZoom"><el-icon><RefreshRight /></el-icon>{{ $t('editor.imageViewer.reset') }}</el-button>
       </div>
       <span class="toolbar-divider" />
       <div class="toolbar-group">
-        <el-button size="small" @click="rotateLeft"><el-icon><RefreshLeft /></el-icon>左旋转</el-button>
-        <el-button size="small" @click="rotateRight"><el-icon><RefreshRight /></el-icon>右旋转</el-button>
+        <el-button size="small" @click="rotateLeft"><el-icon><RefreshLeft /></el-icon>{{ $t('editor.imageViewer.rotateLeft') }}</el-button>
+        <el-button size="small" @click="rotateRight"><el-icon><RefreshRight /></el-icon>{{ $t('editor.imageViewer.rotateRight') }}</el-button>
       </div>
       <span class="toolbar-divider" />
       <div class="toolbar-group">
-        <el-button size="small" @click="downloadImage"><el-icon><Download /></el-icon>下载</el-button>
-        <el-button size="small" @click="copyImage"><el-icon><CopyDocument /></el-icon>复制</el-button>
+        <el-button size="small" @click="downloadImage"><el-icon><Download /></el-icon>{{ $t('editor.imageViewer.download') }}</el-button>
+        <el-button size="small" @click="copyImage"><el-icon><CopyDocument /></el-icon>{{ $t('editor.imageViewer.copy') }}</el-button>
       </div>
       <div class="toolbar-info">
         <span v-if="imageInfo">{{ imageInfo.width }} x {{ imageInfo.height }}</span>
@@ -33,7 +33,7 @@
         />
         <div v-else class="image-placeholder">
           <el-icon :size="48"><Picture /></el-icon>
-          <p>无法加载图片</p>
+          <p>{{ $t('editor.imageViewer.loadFailed') }}</p>
         </div>
       </div>
     </div>
@@ -42,6 +42,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
 
 interface ImageInfo {
@@ -58,6 +59,8 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'save', content: string): void
 }>()
+
+const { t } = useI18n()
 
 // const containerRef = ref<HTMLElement>()
 const imageUrl = ref('')
@@ -107,7 +110,7 @@ function onImageLoad(e: Event) {
 
 function onImageError() {
   loading.value = false
-  ElMessage.error('图片加载失败')
+  ElMessage.error(t('editor.imageViewer.imageLoadError'))
 }
 
 function zoomIn() {
@@ -157,9 +160,9 @@ async function downloadImage() {
     a.download = imageInfo.value?.name || 'image.png'
     a.click()
     URL.revokeObjectURL(url)
-    ElMessage.success('下载成功')
+    ElMessage.success(t('editor.imageViewer.downloadSuccess'))
   } catch {
-    ElMessage.error('下载失败')
+    ElMessage.error(t('editor.imageViewer.downloadFailed'))
   }
 }
 
@@ -171,9 +174,9 @@ async function copyImage() {
     await navigator.clipboard.write([
       new ClipboardItem({ [blob.type]: blob })
     ])
-    ElMessage.success('已复制到剪贴板')
+    ElMessage.success(t('editor.imageViewer.copiedToClipboard'))
   } catch {
-    ElMessage.error('复制失败')
+    ElMessage.error(t('editor.imageViewer.copyFailed'))
   }
 }
 

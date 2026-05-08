@@ -5,23 +5,23 @@
       <div class="kb-quick-item" @click="showCreate = true; createMode = 'blank'">
         <el-icon :size="20" color="#3370ff"><EditPen /></el-icon>
         <div class="kb-quick-info">
-          <span class="kb-quick-title">新建</span>
-          <span class="kb-quick-desc">新建文档开始协作</span>
+          <span class="kb-quick-title">{{ $t('common.create') }}</span>
+          <span class="kb-quick-desc">{{ $t('home.newDesc') }}</span>
         </div>
         <el-icon class="kb-quick-arrow"><ArrowDown /></el-icon>
       </div>
       <div class="kb-quick-item" @click="showCreate = true; createMode = 'template'">
         <el-icon :size="20" color="#ff7d00"><Files /></el-icon>
         <div class="kb-quick-info">
-          <span class="kb-quick-title">模板库</span>
-          <span class="kb-quick-desc">选择模板快速新建</span>
+          <span class="kb-quick-title">{{ $t('home.templateLib') }}</span>
+          <span class="kb-quick-desc">{{ $t('home.templateLibDesc') }}</span>
         </div>
       </div>
       <div class="kb-quick-item" @click="showCreate = true; createMode = 'blank'">
         <el-icon :size="20" color="#3370ff"><Collection /></el-icon>
         <div class="kb-quick-info">
-          <span class="kb-quick-title">新建知识库</span>
-          <span class="kb-quick-desc">让知识创造价值</span>
+          <span class="kb-quick-title">{{ $t('knowledge.list.newKb') }}</span>
+          <span class="kb-quick-desc">{{ $t('knowledge.list.newKbDesc') }}</span>
         </div>
       </div>
     </div>
@@ -29,14 +29,14 @@
     <!-- Tabs + Controls Row -->
     <div class="kb-tabs-row">
       <div class="kb-tabs">
-        <span class="kb-tab" :class="{ active: activeTab === 'all' }" @click="activeTab = 'all'; fetchData()">全部</span>
-        <span class="kb-tab" :class="{ active: activeTab === 'created' }" @click="activeTab = 'created'; fetchData()">我创建的</span>
-        <span class="kb-tab" :class="{ active: activeTab === 'joined' }" @click="activeTab = 'joined'; fetchData()">我加入的</span>
+        <span class="kb-tab" :class="{ active: activeTab === 'all' }" @click="activeTab = 'all'; fetchData()">{{ $t('knowledge.list.all') }}</span>
+        <span class="kb-tab" :class="{ active: activeTab === 'created' }" @click="activeTab = 'created'; fetchData()">{{ $t('knowledge.list.created') }}</span>
+        <span class="kb-tab" :class="{ active: activeTab === 'joined' }" @click="activeTab = 'joined'; fetchData()">{{ $t('knowledge.list.joined') }}</span>
       </div>
       <div class="kb-controls">
         <el-input
           v-model="keyword"
-          placeholder="搜索知识库"
+          :placeholder="$t('knowledge.list.searchKb')"
           prefix-icon="Search"
           clearable
           class="kb-search-inline"
@@ -46,15 +46,15 @@
           <span class="ctrl-btn"><el-icon><Sort /></el-icon>{{ sortLabel }}</span>
           <template #dropdown>
             <el-dropdown-menu>
-              <el-dropdown-item command="updated">最近更新</el-dropdown-item>
-              <el-dropdown-item command="created">最近创建</el-dropdown-item>
-              <el-dropdown-item command="name">名称</el-dropdown-item>
-              <el-dropdown-item command="docCount">文档数</el-dropdown-item>
+              <el-dropdown-item command="updated">{{ $t('knowledge.list.recentUpdate') }}</el-dropdown-item>
+              <el-dropdown-item command="created">{{ $t('knowledge.list.recentCreate') }}</el-dropdown-item>
+              <el-dropdown-item command="name">{{ $t('common.name') }}</el-dropdown-item>
+              <el-dropdown-item command="docCount">{{ $t('knowledge.list.docCount') }}</el-dropdown-item>
             </el-dropdown-menu>
           </template>
         </el-dropdown>
         <span class="ctrl-btn" @click="viewMode = viewMode === 'grid' ? 'list' : 'grid'">
-          <el-icon><component :is="viewMode === 'grid' ? 'List' : 'Grid'" /></el-icon>{{ viewMode === 'grid' ? '列表' : '网格' }}
+          <el-icon><component :is="viewMode === 'grid' ? 'List' : 'Grid'" /></el-icon>{{ viewMode === 'grid' ? $t('knowledge.list.listView') : $t('knowledge.list.gridView') }}
         </span>
       </div>
     </div>
@@ -73,7 +73,7 @@
         </div>
         <div class="kb-card-body">
           <div class="kb-card-name">{{ kb.name }}</div>
-          <div class="kb-card-desc">{{ kb.description || '暂无描述' }}</div>
+          <div class="kb-card-desc">{{ kb.description || $t('common.noDescription') }}</div>
           <div class="kb-card-footer">
             <div class="kb-card-stats">
               <span><el-icon :size="13"><Document /></el-icon>{{ kb.docCount }}</span>
@@ -90,7 +90,7 @@
       <div class="kb-card kb-card-new" @click="showCreate = true">
         <div class="kb-card-new-inner">
           <el-icon :size="36" color="var(--kx-text-placeholder)"><Plus /></el-icon>
-          <span>新建知识库</span>
+          <span>{{ $t('knowledge.list.newKb') }}</span>
         </div>
       </div>
     </div>
@@ -98,7 +98,7 @@
     <!-- List View -->
     <div v-if="viewMode === 'list'" v-loading="loading" class="kb-list-view">
       <el-table :data="sortedList" style="width:100%" @row-click="(row: any) => $router.push(`/knowledge/${row.id}`)" @row-contextmenu="handleRowCtxMenu">
-        <el-table-column label="名称" min-width="300">
+        <el-table-column :label="$t('common.name')" min-width="300">
           <template #default="{ row }">
             <div class="kb-list-name">
               <div class="kb-list-icon" :style="{ background: getCoverColor(row.id) }"><el-icon color="#fff" :size="14"><Collection /></el-icon></div>
@@ -106,15 +106,15 @@
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="描述" min-width="200">
+        <el-table-column :label="$t('knowledge.list.description')" min-width="200">
           <template #default="{ row }">
-            <span class="kb-list-desc">{{ row.description || '暂无描述' }}</span>
+            <span class="kb-list-desc">{{ row.description || $t('common.noDescription') }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="文档数" width="100" align="center" prop="docCount" />
-        <el-table-column label="成员" width="100" align="center" prop="memberCount" />
-        <el-table-column label="创建者" width="120" prop="ownerName" />
-        <el-table-column label="更新时间" width="160">
+        <el-table-column :label="$t('knowledge.list.docCount')" width="100" align="center" prop="docCount" />
+        <el-table-column :label="$t('knowledge.list.members')" width="100" align="center" prop="memberCount" />
+        <el-table-column :label="$t('knowledge.list.creator')" width="120" prop="ownerName" />
+        <el-table-column :label="$t('knowledge.list.updateTime')" width="160">
           <template #default="{ row }">{{ formatDate(row.updatedAt) }}</template>
         </el-table-column>
         <el-table-column width="50" align="center">
@@ -126,8 +126,8 @@
     </div>
 
     <div v-if="!loading && !list.length" class="kb-empty">
-      <el-empty description="暂无知识库">
-        <el-button type="primary" @click="showCreate = true">创建知识库</el-button>
+      <el-empty :description="$t('knowledge.list.noKb')">
+        <el-button type="primary" @click="showCreate = true">{{ $t('knowledge.createKb') }}</el-button>
       </el-empty>
     </div>
 
@@ -137,21 +137,21 @@
 
     <!-- Knowledge Base Context Menu -->
     <div v-if="kbMenu.visible" class="context-menu" :style="{ left: kbMenu.x + 'px', top: kbMenu.y + 'px' }">
-      <div class="ctx-item" @click="handleKbAction('open')"><el-icon><View /></el-icon>打开</div>
-      <div class="ctx-item" @click="handleKbAction('openNew')"><el-icon><TopRight /></el-icon>在新标签页打开</div>
+      <div class="ctx-item" @click="handleKbAction('open')"><el-icon><View /></el-icon>{{ $t('common.open') }}</div>
+      <div class="ctx-item" @click="handleKbAction('openNew')"><el-icon><TopRight /></el-icon>{{ $t('knowledge.list.openInNewTab') }}</div>
       <div class="ctx-sep" />
-      <div class="ctx-item" @click="handleKbAction('share')"><el-icon><Share /></el-icon>分享</div>
-      <div class="ctx-item" @click="handleKbAction('copyLink')"><el-icon><Link /></el-icon>复制链接</div>
+      <div class="ctx-item" @click="handleKbAction('share')"><el-icon><Share /></el-icon>{{ $t('common.share') }}</div>
+      <div class="ctx-item" @click="handleKbAction('copyLink')"><el-icon><Link /></el-icon>{{ $t('home.copyLink') }}</div>
       <div class="ctx-sep" />
-      <div class="ctx-item" @click="handleKbAction('pin')"><el-icon><Flag /></el-icon>添加到"置顶"</div>
-      <div class="ctx-item" @click="handleKbAction('favorite')"><el-icon><Star /></el-icon>收藏</div>
+      <div class="ctx-item" @click="handleKbAction('pin')"><el-icon><Flag /></el-icon>{{ $t('knowledge.list.addToTop') }}</div>
+      <div class="ctx-item" @click="handleKbAction('favorite')"><el-icon><Star /></el-icon>{{ $t('home.addFavorite') }}</div>
       <div class="ctx-sep" />
-      <div class="ctx-item" @click="handleKbAction('settings')"><el-icon><Setting /></el-icon>设置</div>
-      <div class="ctx-item danger" @click="handleKbAction('delete')"><el-icon><Delete /></el-icon>删除</div>
+      <div class="ctx-item" @click="handleKbAction('settings')"><el-icon><Setting /></el-icon>{{ $t('common.settings') }}</div>
+      <div class="ctx-item danger" @click="handleKbAction('delete')"><el-icon><Delete /></el-icon>{{ $t('common.delete') }}</div>
     </div>
 
     <!-- Create Dialog -->
-    <el-dialog v-model="showCreate" :title="createMode === 'template' ? '从模板创建知识库' : '新建知识库'" width="560px" destroy-on-close>
+    <el-dialog v-model="showCreate" :title="createMode === 'template' ? $t('knowledge.list.fromTemplate') : $t('knowledge.list.newKb')" width="560px" destroy-on-close>
       <!-- Template Selection -->
       <div v-if="createMode === 'template'" class="template-grid">
         <div
@@ -168,57 +168,57 @@
       </div>
 
       <el-form :model="createForm" label-position="top" style="margin-top:16px">
-        <el-form-item label="名称">
-          <el-input v-model="createForm.name" placeholder="输入知识库名称" maxlength="50" show-word-limit />
+        <el-form-item :label="$t('knowledge.list.kbNameLabel')">
+          <el-input v-model="createForm.name" :placeholder="$t('knowledge.list.kbNamePlaceholder')" maxlength="50" show-word-limit />
         </el-form-item>
-        <el-form-item label="描述">
-          <el-input v-model="createForm.description" type="textarea" :rows="3" placeholder="描述知识库的用途（可选）" maxlength="200" show-word-limit />
+        <el-form-item :label="$t('knowledge.list.kbDescLabel')">
+          <el-input v-model="createForm.description" type="textarea" :rows="3" :placeholder="$t('knowledge.list.kbDescPlaceholder')" maxlength="200" show-word-limit />
         </el-form-item>
-        <el-form-item label="可见范围">
+        <el-form-item :label="$t('knowledge.list.visibility')">
           <el-radio-group v-model="createForm.visibility">
             <el-radio value="private">
-              <div>仅知识库成员可见</div>
-              <div class="radio-desc">只有被邀请的成员才能查看</div>
+              <div>{{ $t('knowledge.list.visibilityPrivate') }}</div>
+              <div class="radio-desc">{{ $t('knowledge.list.visibilityPrivateDesc') }}</div>
             </el-radio>
             <el-radio value="team">
-              <div>团队内所有人可见</div>
-              <div class="radio-desc">团队内成员均可浏览</div>
+              <div>{{ $t('knowledge.list.visibilityTeam') }}</div>
+              <div class="radio-desc">{{ $t('knowledge.list.visibilityTeamDesc') }}</div>
             </el-radio>
             <el-radio value="public">
-              <div>所有人可见</div>
-              <div class="radio-desc">所有注册用户均可浏览</div>
+              <div>{{ $t('knowledge.list.visibilityPublic') }}</div>
+              <div class="radio-desc">{{ $t('knowledge.list.visibilityPublicDesc') }}</div>
             </el-radio>
           </el-radio-group>
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="showCreate = false">取消</el-button>
-        <el-button type="primary" :loading="creating" @click="handleCreate">创建</el-button>
+        <el-button @click="showCreate = false">{{ $t('common.cancel') }}</el-button>
+        <el-button type="primary" :loading="creating" @click="handleCreate">{{ $t('common.create') }}</el-button>
       </template>
     </el-dialog>
 
     <!-- Share Dialog -->
-    <el-dialog v-model="showShareDialog" title="分享知识库" width="500px" destroy-on-close>
+    <el-dialog v-model="showShareDialog" :title="$t('knowledge.list.shareKb')" width="500px" destroy-on-close>
       <div class="share-section">
-        <div class="share-label">分享链接</div>
+        <div class="share-label">{{ $t('knowledge.list.shareLinkLabel') }}</div>
         <div class="share-link-row">
           <el-input :model-value="shareLink" readonly />
-          <el-button type="primary" @click="copyShareLink">复制链接</el-button>
+          <el-button type="primary" @click="copyShareLink">{{ $t('knowledge.list.copyLink') }}</el-button>
         </div>
       </div>
       <div class="share-section">
-        <div class="share-label">邀请成员</div>
+        <div class="share-label">{{ $t('knowledge.list.inviteMember') }}</div>
         <div class="share-invite-row">
-          <el-input v-model="shareInviteEmail" placeholder="输入邮箱或用户名" style="flex:1" />
+          <el-input v-model="shareInviteEmail" :placeholder="$t('knowledge.list.inputEmailOrUsername')" style="flex:1" />
           <el-select v-model="shareInviteRole" style="width:100px">
-            <el-option label="可编辑" value="editor" />
-            <el-option label="仅查看" value="viewer" />
+            <el-option :label="$t('knowledge.list.canEdit')" value="editor" />
+            <el-option :label="$t('knowledge.list.viewOnly')" value="viewer" />
           </el-select>
-          <el-button type="primary" @click="handleInvite">邀请</el-button>
+          <el-button type="primary" @click="handleInvite">{{ $t('common.invite') }}</el-button>
         </div>
       </div>
       <template #footer>
-        <el-button @click="showShareDialog = false">关闭</el-button>
+        <el-button @click="showShareDialog = false">{{ $t('common.close') }}</el-button>
       </template>
     </el-dialog>
   </div>
@@ -227,9 +227,12 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
-import { getKnowledgeBaseList, createKnowledgeBase, deleteKnowledgeBase } from '@/api/modules/knowledge'
+import { getKnowledgeBaseList, createKnowledgeBase, deleteKnowledgeBase, addKnowledgeMember } from '@/api/modules/knowledge'
 import type { KnowledgeBase } from '@/types'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const router = useRouter()
 const loading = ref(false)
@@ -254,16 +257,17 @@ const showShareDialog = ref(false)
 const shareLink = ref('')
 const shareInviteEmail = ref('')
 const shareInviteRole = ref('editor')
+const currentShareKbId = ref(0)
 
 // Templates
-const templates = [
-  { id: 'team-wiki', name: '团队 Wiki', description: '适合团队知识沉淀和分享', color: '#3370ff' },
-  { id: 'product-docs', name: '产品文档', description: '产品需求、PRD、设计文档', color: '#36b37e' },
-  { id: 'dev-docs', name: '技术文档', description: 'API 文档、架构设计、开发规范', color: '#ff7d00' },
-  { id: 'onboarding', name: '新人手册', description: '新员工入职指南和培训材料', color: '#9254de' },
-  { id: 'meeting', name: '会议纪要', description: '会议记录和决议跟踪', color: '#f54a45' },
-  { id: 'project', name: '项目管理', description: '项目计划、进度和复盘', color: '#00b8d9' },
-]
+const templates = computed(() => [
+  { id: 'team-wiki', name: t('knowledge.list.tplTeamWiki'), description: t('knowledge.list.tplTeamWikiDesc'), color: '#3370ff' },
+  { id: 'product-docs', name: t('knowledge.list.tplProductDocs'), description: t('knowledge.list.tplProductDocsDesc'), color: '#36b37e' },
+  { id: 'dev-docs', name: t('knowledge.list.tplDevDocs'), description: t('knowledge.list.tplDevDocsDesc'), color: '#ff7d00' },
+  { id: 'onboarding', name: t('knowledge.list.tplOnboarding'), description: t('knowledge.list.tplOnboardingDesc'), color: '#9254de' },
+  { id: 'meeting', name: t('knowledge.list.tplMeeting'), description: t('knowledge.list.tplMeetingDesc'), color: '#f54a45' },
+  { id: 'project', name: t('knowledge.list.tplProject'), description: t('knowledge.list.tplProjectDesc'), color: '#00b8d9' },
+])
 
 const coverColors = ['#3370ff', '#36b37e', '#ff7d00', '#f54a45', '#9254de', '#00b8d9', '#f5a623', '#7b61ff']
 const avatarColors = ['#3370ff', '#36b37e', '#ff7d00', '#f54a45', '#9254de', '#00b8d9']
@@ -277,12 +281,12 @@ function getAvatarColor(id: number) {
 function formatDate(t: string) {
   if (!t) return ''
   const d = new Date(t)
-  return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`
+  return d.toLocaleDateString()
 }
 
 const sortLabel = computed(() => {
-  const map: Record<string, string> = { updated: '最近更新', created: '最近创建', name: '名称', docCount: '文档数' }
-  return map[sortBy.value] || '排序'
+  const map: Record<string, string> = { updated: t('knowledge.list.recentUpdate'), created: t('knowledge.list.recentCreate'), name: t('common.name'), docCount: t('knowledge.list.docCount') }
+  return map[sortBy.value] || t('knowledge.detail.sort')
 })
 
 const sortedList = computed(() => {
@@ -319,11 +323,11 @@ function handleSortChange(cmd: string) {
 }
 
 async function handleCreate() {
-  if (!createForm.name.trim()) { ElMessage.warning('请输入名称'); return }
+  if (!createForm.name.trim()) { ElMessage.warning(t('knowledge.list.pleaseInputName')); return }
   creating.value = true
   try {
     await createKnowledgeBase({ name: createForm.name, description: createForm.description })
-    ElMessage.success('创建成功')
+    ElMessage.success(t('knowledge.list.createSuccess'))
     showCreate.value = false
     createForm.name = ''
     createForm.description = ''
@@ -359,27 +363,28 @@ async function handleKbAction(action: string) {
       break
     case 'share':
       shareLink.value = `${window.location.origin}/knowledge/${kb.id}`
+      currentShareKbId.value = kb.id
       showShareDialog.value = true
       break
     case 'copyLink': {
       const link = `${window.location.origin}/knowledge/${kb.id}`
       navigator.clipboard.writeText(link)
-      ElMessage.success('链接已复制')
+      ElMessage.success(t('common.linkCopied'))
       break
     }
     case 'pin':
-      ElMessage.success('已添加到置顶')
+      ElMessage.success(t('home.addedToTop'))
       break
     case 'favorite':
-      ElMessage.success('已收藏')
+      ElMessage.success(t('home.favorited'))
       break
     case 'settings':
       router.push(`/knowledge/${kb.id}`)
       break
     case 'delete':
-      await ElMessageBox.confirm(`确定删除知识库"${kb.name}"？删除后不可恢复。`, '删除确认', { type: 'warning' })
+      await ElMessageBox.confirm(t('knowledge.list.deleteKbConfirm', { name: kb.name }), t('home.deleteConfirmTitle'), { type: 'warning' })
       await deleteKnowledgeBase(kb.id)
-      ElMessage.success('已删除')
+      ElMessage.success(t('knowledge.list.deleted'))
       fetchData()
       break
   }
@@ -387,13 +392,18 @@ async function handleKbAction(action: string) {
 
 function copyShareLink() {
   navigator.clipboard.writeText(shareLink.value)
-  ElMessage.success('链接已复制')
+  ElMessage.success(t('common.linkCopied'))
 }
 
-function handleInvite() {
-  if (!shareInviteEmail.value.trim()) { ElMessage.warning('请输入邮箱或用户名'); return }
-  ElMessage.success('邀请已发送')
-  shareInviteEmail.value = ''
+async function handleInvite() {
+  if (!shareInviteEmail.value.trim()) { ElMessage.warning(t('knowledge.list.inputEmailRequired')); return }
+  try {
+    await addKnowledgeMember(currentShareKbId.value, { keyword: shareInviteEmail.value.trim(), role: shareInviteRole.value })
+    ElMessage.success(t('knowledge.list.inviteSent'))
+    shareInviteEmail.value = ''
+  } catch (e: any) {
+    ElMessage.error(e?.response?.data?.message || t('knowledge.list.inviteFailed'))
+  }
 }
 
 function closeMenus() {
@@ -731,5 +741,55 @@ onBeforeUnmount(() => {
 .share-invite-row {
   display: flex;
   gap: 8px;
+}
+
+/* ===== Responsive: 768px - Tablet ===== */
+@media (max-width: 768px) {
+  .knowledge-page {
+    padding: 16px 16px;
+  }
+  .kb-quick-bar {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .kb-quick-item {
+    min-width: 140px;
+    padding: 12px 14px;
+  }
+  .kb-quick-desc {
+    display: none;
+  }
+}
+
+/* ===== Responsive: 640px - Large Phone ===== */
+@media (max-width: 640px) {
+  .knowledge-page {
+    padding: 12px 12px;
+  }
+  .kb-quick-bar {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .kb-quick-item {
+    min-width: 0;
+    width: 100%;
+  }
+}
+
+/* ===== Responsive: 480px - Small Phone ===== */
+@media (max-width: 480px) {
+  .knowledge-page {
+    padding: 8px 8px;
+  }
+  .kb-quick-bar {
+    margin-bottom: 16px;
+  }
+  .kb-quick-item {
+    padding: 10px 12px;
+  }
+  .share-link-row,
+  .share-invite-row {
+    flex-direction: column;
+  }
 }
 </style>

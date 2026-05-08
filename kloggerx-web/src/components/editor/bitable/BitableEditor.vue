@@ -75,36 +75,36 @@
     </div>
 
     <!-- Field Edit Dialog -->
-    <el-dialog v-model="showFieldDialog" title="编辑字段" width="400px">
+    <el-dialog v-model="showFieldDialog" :title="$t('editor.bitable.editFieldTitle')" width="400px">
       <el-form label-width="80px">
-        <el-form-item label="字段名称">
+        <el-form-item :label="$t('editor.bitable.fieldName')">
           <el-input v-model="editingFieldName" />
         </el-form-item>
-        <el-form-item label="字段类型">
+        <el-form-item :label="$t('editor.bitable.fieldType')">
           <el-select v-model="editingFieldType" style="width: 100%">
-            <el-option label="文本" value="text" />
-            <el-option label="数字" value="number" />
-            <el-option label="单选" value="select" />
-            <el-option label="多选" value="multiSelect" />
-            <el-option label="日期" value="date" />
-            <el-option label="人员" value="person" />
-            <el-option label="附件" value="attachment" />
-            <el-option label="链接" value="link" />
-            <el-option label="复选框" value="checkbox" />
-            <el-option label="评分" value="rating" />
+            <el-option :label="$t('editor.bitable.text')" value="text" />
+            <el-option :label="$t('editor.bitable.number')" value="number" />
+            <el-option :label="$t('editor.bitable.select')" value="select" />
+            <el-option :label="$t('editor.bitable.multiSelect')" value="multiSelect" />
+            <el-option :label="$t('editor.bitable.date')" value="date" />
+            <el-option :label="$t('editor.bitable.person')" value="person" />
+            <el-option :label="$t('editor.bitable.attachment')" value="attachment" />
+            <el-option :label="$t('editor.bitable.link')" value="link" />
+            <el-option :label="$t('editor.bitable.checkbox')" value="checkbox" />
+            <el-option :label="$t('editor.bitable.rating')" value="rating" />
           </el-select>
         </el-form-item>
-        <el-form-item v-if="editingFieldType === 'select' || editingFieldType === 'multiSelect'" label="选项">
+        <el-form-item v-if="editingFieldType === 'select' || editingFieldType === 'multiSelect'" :label="$t('editor.bitable.options')">
           <div v-for="(_, i) in editingFieldOptions" :key="i" style="display:flex;gap:8px;margin-bottom:4px">
             <el-input v-model="editingFieldOptions[i]" size="small" />
             <el-button size="small" @click="editingFieldOptions.splice(i, 1)"><el-icon><Close /></el-icon></el-button>
           </div>
-          <el-button size="small" text @click="editingFieldOptions.push('新选项')"><el-icon><Plus /></el-icon>添加选项</el-button>
+          <el-button size="small" text @click="editingFieldOptions.push(t('editor.bitable.newOption'))"><el-icon><Plus /></el-icon>{{ $t('editor.bitable.addOption') }}</el-button>
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="showFieldDialog = false">取消</el-button>
-        <el-button type="primary" @click="saveField">保存</el-button>
+        <el-button @click="showFieldDialog = false">{{ $t('editor.bitable.cancel') }}</el-button>
+        <el-button type="primary" @click="saveField">{{ $t('editor.bitable.save') }}</el-button>
       </template>
     </el-dialog>
   </div>
@@ -112,6 +112,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, watch, nextTick } from 'vue'
+import { useI18n } from 'vue-i18n'
 import BitableToolbar from './BitableToolbar.vue'
 import { ElMessage } from 'element-plus'
 
@@ -148,6 +149,8 @@ const emit = defineEmits<{
   (e: 'save', content: string): void
 }>()
 
+const { t } = useI18n()
+
 const fields = ref<Field[]>([])
 const records = ref<RecordItem[]>([])
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -175,7 +178,7 @@ function initData() {
       if (parsed.fields && Array.isArray(parsed.fields)) {
         fields.value = parsed.fields
         records.value = (parsed as any).records || []
-        views.value = parsed.views || [{ id: genId(), name: '表格视图', type: 'table' }]
+        views.value = parsed.views || [{ id: genId(), name: t('editor.bitable.tableView'), type: 'table' }]
         if (views.value.length > 0) {
           currentViewId.value = views.value[0].id
         }
@@ -185,17 +188,17 @@ function initData() {
   }
   // Default data
   fields.value = [
-    { id: genId(), name: '标题', type: 'text' },
-    { id: genId(), name: '状态', type: 'select', options: ['未开始', '进行中', '已完成'] },
-    { id: genId(), name: '负责人', type: 'person' },
-    { id: genId(), name: '截止日期', type: 'date' },
+    { id: genId(), name: t('editor.bitable.defaultTitle'), type: 'text' },
+    { id: genId(), name: t('editor.bitable.defaultStatus'), type: 'select', options: [t('editor.bitable.statusNotStarted'), t('editor.bitable.statusInProgress'), t('editor.bitable.statusDone')] },
+    { id: genId(), name: t('editor.bitable.defaultPerson'), type: 'person' },
+    { id: genId(), name: t('editor.bitable.defaultDueDate'), type: 'date' },
   ]
   records.value = [
     { id: genId(), data: {} } as RecordItem,
     { id: genId(), data: {} } as RecordItem,
     { id: genId(), data: {} } as RecordItem,
   ]
-  views.value = [{ id: genId(), name: '表格视图', type: 'table' }]
+  views.value = [{ id: genId(), name: t('editor.bitable.tableView'), type: 'table' }]
   currentViewId.value = views.value[0].id
 }
 
@@ -261,13 +264,13 @@ function handleToolbarAction(event: { action: string; params?: any }) {
     case 'showFilter':
     case 'showSort':
     case 'showGroup':
-      ElMessage.info(`${event.action}功能开发中`)
+      ElMessage.info(t('editor.bitable.featureInDev', { feature: event.action }))
       break
     case 'export':
-      ElMessage.info('导出功能开发中')
+      ElMessage.info(t('editor.bitable.exportInDev'))
       break
     case 'import':
-      ElMessage.info('导入功能开发中')
+      ElMessage.info(t('editor.bitable.importInDev'))
       break
   }
 }
@@ -287,9 +290,9 @@ function deleteRecord() {
 function addField(type: string) {
   const newField: Field = {
     id: genId(),
-    name: '新字段',
+    name: t('editor.bitable.newField'),
     type,
-    options: (type === 'select' || type === 'multiSelect') ? ['选项1', '选项2'] : undefined,
+    options: (type === 'select' || type === 'multiSelect') ? [t('editor.bitable.option1'), t('editor.bitable.option2')] : undefined,
   }
   fields.value.push(newField)
   scheduleSave()
@@ -330,7 +333,7 @@ function deleteField() {
 function addView() {
   const newView: View = {
     id: genId(),
-    name: '新视图',
+    name: t('editor.bitable.newViewName'),
     type: 'table',
   }
   views.value.push(newView)

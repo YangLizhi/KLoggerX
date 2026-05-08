@@ -161,7 +161,6 @@ func signOnlyOfficeToken(document OnlyOfficeDocument, documentType string, edito
 		"document":     document,
 		"documentType": documentType,
 		"editorConfig": editor,
-		"iat":          time.Now().Unix(),
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)

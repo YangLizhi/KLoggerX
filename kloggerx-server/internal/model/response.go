@@ -24,3 +24,11 @@ func Error(code int, msg string) Response {
 func ErrorMsg(msg string) Response {
 	return Response{Code: -1, Message: msg}
 }
+
+func SuccessMsg(msg string) Response {
+	return Response{Code: 0, Message: msg}
+}
+
+func SuccessData(data interface{}) Response {
+	return Response{Code: 0, Message: "success", Data: data}
+}

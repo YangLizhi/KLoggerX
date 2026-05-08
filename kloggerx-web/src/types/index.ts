@@ -1,4 +1,4 @@
-export type DocumentType = 'doc' | 'sheet' | 'slide' | 'mindnote' | 'bitable' | 'survey' | 'code' | 'image' | 'file'
+export type DocumentType = 'doc' | 'sheet' | 'slide' | 'mindnote' | 'bitable' | 'survey' | 'code' | 'image' | 'file' | 'whiteboard' | 'uml' | 'gantt' | 'flowchart'
 
 export interface User {
   id: number

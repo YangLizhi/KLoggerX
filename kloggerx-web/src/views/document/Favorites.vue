@@ -1,8 +1,8 @@
 <template>
   <div class="favorites-page">
-    <h2>收藏夹</h2>
+    <h2>{{ $t('document.favorites') }}</h2>
     <el-table v-loading="loading" :data="documents" style="width: 100%; margin-top: 16px" table-layout="auto" @row-click="handleRowClick">
-      <el-table-column label="名称" min-width="200">
+      <el-table-column :label="$t('common.name')" min-width="200">
         <template #default="{ row }">
           <div style="display:flex;align-items:center;gap:8px">
             <el-icon><Document /></el-icon>
@@ -10,13 +10,13 @@
           </div>
         </template>
       </el-table-column>
-      <el-table-column label="所有者" prop="ownerName" min-width="100" />
-      <el-table-column label="更新时间" min-width="130">
+      <el-table-column :label="$t('document.owner')" prop="ownerName" min-width="100" />
+      <el-table-column :label="$t('home.updatedTime')" min-width="130">
         <template #default="{ row }">{{ row.updatedAt ? new Date(row.updatedAt).toLocaleString('zh-CN') : '' }}</template>
       </el-table-column>
-      <el-table-column label="操作" width="100">
+      <el-table-column :label="$t('home.operations')" width="100">
         <template #default="{ row }">
-          <el-button link type="warning" @click.stop="handleUnfavorite(row)">取消收藏</el-button>
+          <el-button link type="warning" @click.stop="handleUnfavorite(row)">{{ $t('home.cancelFavorite') }}</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -28,9 +28,12 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { getFavorites, favoriteDocument } from '@/api/modules/document'
 import type { Document } from '@/types'
 import { ElMessage } from 'element-plus'
+
+const { t } = useI18n()
 
 const loading = ref(false)
 const documents = ref<Document[]>([])
@@ -48,7 +51,7 @@ async function fetchData() {
 
 async function handleUnfavorite(doc: Document) {
   await favoriteDocument(doc.id, false)
-  ElMessage.success('已取消收藏')
+  ElMessage.success(t('home.unfavorited'))
   fetchData()
 }
 

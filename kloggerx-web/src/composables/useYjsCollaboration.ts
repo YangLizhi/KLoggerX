@@ -4,6 +4,9 @@ import { WebsocketProvider } from 'y-websocket'
 import type { Collaborator } from '@/types'
 import type { Editor } from '@tiptap/vue-3'
 
+export type ConnectionStatus = 'connecting' | 'connected' | 'disconnected'
+export type SyncStatus = 'synced' | 'syncing' | 'conflict' | 'offline'
+
 // 防抖记录：记录每个用户最近一次提示的时间
 const concurrentEditToastTimestamps = new Map<string, number>()
 const TOAST_DEBOUNCE_MS = 10000 // 10秒防抖
@@ -34,7 +37,13 @@ export interface YjsCollaborationReturn {
   destroy: () => void
   setEditor: (editor: Editor | null) => void
   getRemoteUserCursors: () => Map<number, { userId: number; userName: string; color: string; from: number; to: number }>
-  synced: Ref<boolean>  // 新增：是否已完成初始同步
+  synced: Ref<boolean>
+  connectionStatus: Ref<ConnectionStatus>
+  syncStatus: Ref<SyncStatus>
+  lastSyncTime: Ref<Date | null>
+  conflictDetected: Ref<boolean>
+  dismissConflict: () => void
+  retryConnection: () => void
 }
 
 /**
@@ -46,6 +55,10 @@ export function useYjsCollaboration(options: YjsCollaborationOptions): YjsCollab
 
   // 同步状态
   const synced = ref(false)
+  const connectionStatus = ref<ConnectionStatus>('connecting')
+  const syncStatus = ref<SyncStatus>('syncing')
+  const lastSyncTime = ref<Date | null>(null)
+  const conflictDetected = ref(false)
 
   // 创建 Yjs Doc
   const ydoc = new Y.Doc()
@@ -58,14 +71,15 @@ export function useYjsCollaboration(options: YjsCollaborationOptions): YjsCollab
 
   // 创建 WebSocket Provider
   // 使用 y-websocket 连接到后端的 Yjs 通道
+  // 通过 Sec-WebSocket-Protocol header 传递 token
   const provider = new WebsocketProvider(
     wsBaseUrl,
     `yjs/${documentId}`,
     ydoc,
     {
-      params: { token },
+      protocols: ['access_token', token],
       resyncInterval: 10000,
-      maxBackoffTime: 10000,
+      maxBackoffTime: 30000,
       connect: true,
     }
   )
@@ -90,7 +104,12 @@ export function useYjsCollaboration(options: YjsCollaborationOptions): YjsCollab
   provider.on('status', (event: { status: string }) => {
     console.log('[Yjs] WebSocket status:', event.status)
     if (event.status === 'connected') {
+      connectionStatus.value = 'connected'
       setLocalUserState()
+    } else if (event.status === 'connecting') {
+      connectionStatus.value = 'connecting'
+    } else {
+      connectionStatus.value = 'disconnected'
     }
   })
 
@@ -98,8 +117,35 @@ export function useYjsCollaboration(options: YjsCollaborationOptions): YjsCollab
   provider.on('sync', (isSynced: boolean) => {
     console.log('[Yjs] Sync status:', isSynced)
     synced.value = isSynced
+    if (isSynced) {
+      syncStatus.value = 'synced'
+      lastSyncTime.value = new Date()
+    } else {
+      syncStatus.value = 'syncing'
+    }
     if (onSync) {
       onSync(isSynced)
+    }
+  })
+
+  // 监听连接断开时更新 syncStatus
+  provider.on('connection-close', () => {
+    syncStatus.value = 'offline'
+  })
+
+  // 监听文档更新，检测潜在冲突（版本分叉）
+  ydoc.on('update', (_update: Uint8Array, origin: any) => {
+    // 如果更新来自远程且本地有未同步的更改，可能存在冲突
+    if (origin !== null && origin !== ydoc.clientID && !synced.value) {
+      // Yjs CRDT 自动合并，标记为冲突已检测并自动解决
+      conflictDetected.value = true
+      syncStatus.value = 'conflict'
+      // 5秒后自动恢复
+      setTimeout(() => {
+        if (syncStatus.value === 'conflict') {
+          syncStatus.value = 'synced'
+        }
+      }, 5000)
     }
   })
 
@@ -230,6 +276,20 @@ export function useYjsCollaboration(options: YjsCollaborationOptions): YjsCollab
     currentEditor = editor
   }
 
+  // 消除冲突提示
+  const dismissConflict = () => {
+    conflictDetected.value = false
+    if (syncStatus.value === 'conflict') {
+      syncStatus.value = 'synced'
+    }
+  }
+
+  // 手动重连
+  const retryConnection = () => {
+    connectionStatus.value = 'connecting'
+    provider.connect()
+  }
+
   // 清理函数
   const destroy = () => {
     awareness.off('change', handleAwarenessChange)
@@ -253,6 +313,12 @@ export function useYjsCollaboration(options: YjsCollaborationOptions): YjsCollab
     setEditor,
     getRemoteUserCursors,
     synced,
+    connectionStatus,
+    syncStatus,
+    lastSyncTime,
+    conflictDetected,
+    dismissConflict,
+    retryConnection,
   }
 }
 

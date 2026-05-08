@@ -2,6 +2,7 @@ package v1
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -14,7 +15,14 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// GetAIModelSettings returns AI model settings
+// GetAIModelSettings godoc
+// @Summary 获取AI模型设置
+// @Description 获取AI模型配置信息
+// @Tags 系统管理
+// @Produce json
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /admin/settings/ai [get]
 func GetAIModelSettings(c *gin.Context) {
 	var setting model.SystemSetting
 	if err := mysql.DB.Where("`key` = ?", "ai_model_settings").First(&setting).Error; err != nil {
@@ -36,7 +44,15 @@ func GetAIModelSettings(c *gin.Context) {
 	c.JSON(http.StatusOK, model.Success(data))
 }
 
-// SaveAIModelSettings saves AI model settings
+// SaveAIModelSettings godoc
+// @Summary 保存AI模型设置
+// @Description 保存AI模型配置
+// @Tags 系统管理
+// @Accept json
+// @Produce json
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /admin/settings/ai [post]
 func SaveAIModelSettings(c *gin.Context) {
 	var req map[string]interface{}
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -68,7 +84,14 @@ func SaveAIModelSettings(c *gin.Context) {
 	c.JSON(http.StatusOK, model.Success(nil))
 }
 
-// GetStorageSettings returns storage settings
+// GetStorageSettings godoc
+// @Summary 获取存储设置
+// @Description 获取存储配置信息
+// @Tags 系统管理
+// @Produce json
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /admin/settings/storage [get]
 func GetStorageSettings(c *gin.Context) {
 	var setting model.SystemSetting
 	if err := mysql.DB.Where("`key` = ?", "storage_settings").First(&setting).Error; err != nil {
@@ -95,7 +118,15 @@ func GetStorageSettings(c *gin.Context) {
 	c.JSON(http.StatusOK, model.Success(data))
 }
 
-// SaveStorageSettings saves storage settings
+// SaveStorageSettings godoc
+// @Summary 保存存储设置
+// @Description 保存存储配置
+// @Tags 系统管理
+// @Accept json
+// @Produce json
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /admin/settings/storage [post]
 func SaveStorageSettings(c *gin.Context) {
 	var req map[string]interface{}
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -117,14 +148,22 @@ func SaveStorageSettings(c *gin.Context) {
 	c.JSON(http.StatusOK, model.Success(nil))
 }
 
-// TestRemoteStorage tests remote storage connection
+// TestRemoteStorage godoc
+// @Summary 测试远程存储连接
+// @Description 测试远程存储连接是否正常
+// @Tags 系统管理
+// @Accept json
+// @Produce json
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /admin/settings/storage/test [post]
 func TestRemoteStorage(c *gin.Context) {
 	var req struct {
-		Type     string `json:"type" binding:"required"`
-		Server   string `json:"server" binding:"required"`
+		Type     string `json:"type" binding:"required,max=50"`
+		Server   string `json:"server" binding:"required,max=500"`
 		Port     int    `json:"port"`
-		Username string `json:"username"`
-		Password string `json:"password"`
+		Username string `json:"username" binding:"max=200"`
+		Password string `json:"password" binding:"max=500"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusOK, model.ErrorMsg("参数错误"))
@@ -139,11 +178,19 @@ func TestRemoteStorage(c *gin.Context) {
 	}))
 }
 
-// DetectAIModels probes available models from an AI provider
+// DetectAIModels godoc
+// @Summary 检测AI模型
+// @Description 探测AI提供商可用模型列表
+// @Tags 系统管理
+// @Accept json
+// @Produce json
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /admin/settings/ai/detect [post]
 func DetectAIModels(c *gin.Context) {
 	var req struct {
-		BaseURL string `json:"baseUrl" binding:"required"`
-		APIKey  string `json:"apiKey" binding:"required"`
+		BaseURL string `json:"baseUrl" binding:"required,max=500"`
+		APIKey  string `json:"apiKey" binding:"required,max=500"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusOK, model.ErrorMsg("参数错误"))
@@ -249,13 +296,21 @@ func DetectAIModels(c *gin.Context) {
 	}))
 }
 
-// TestAIModel tests a specific AI model
+// TestAIModel godoc
+// @Summary 测试AI模型
+// @Description 测试指定AI模型是否可用
+// @Tags 系统管理
+// @Accept json
+// @Produce json
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /admin/settings/ai/test [post]
 func TestAIModel(c *gin.Context) {
 	var req struct {
-		BaseURL string `json:"baseUrl" binding:"required"`
-		APIKey  string `json:"apiKey" binding:"required"`
-		Model   string `json:"model" binding:"required"`
-		Prompt  string `json:"prompt"`
+		BaseURL string `json:"baseUrl" binding:"required,max=500"`
+		APIKey  string `json:"apiKey" binding:"required,max=500"`
+		Model   string `json:"model" binding:"required,max=200"`
+		Prompt  string `json:"prompt" binding:"max=5000"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusOK, model.ErrorMsg("参数错误"))
@@ -354,14 +409,22 @@ func getDefaultModels(baseURL string) []map[string]interface{} {
 	}
 }
 
-// TestLdapConnection tests LDAP/AD connection
+// TestLdapConnection godoc
+// @Summary 测试LDAP连接
+// @Description 测试LDAP/AD服务器连接
+// @Tags 系统管理
+// @Accept json
+// @Produce json
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /admin/ldap/test [post]
 func TestLdapConnection(c *gin.Context) {
 	var req struct {
-		Type         string `json:"type" binding:"required"`
-		Server       string `json:"server" binding:"required"`
-		BaseDN       string `json:"baseDN" binding:"required"`
-		BindDN       string `json:"bindDN" binding:"required"`
-		BindPassword string `json:"bindPassword" binding:"required"`
+		Type         string `json:"type" binding:"required,max=50"`
+		Server       string `json:"server" binding:"required,max=500"`
+		BaseDN       string `json:"baseDN" binding:"required,max=500"`
+		BindDN       string `json:"bindDN" binding:"required,max=500"`
+		BindPassword string `json:"bindPassword" binding:"required,max=500"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusOK, model.ErrorMsg("请填写完整的连接参数"))
@@ -374,42 +437,110 @@ func TestLdapConnection(c *gin.Context) {
 		return
 	}
 
-	// TODO: actual LDAP connection test with go-ldap library
-	// For now, return error to avoid false positives
+	// 解析服务器地址
+	host, port, useSSL, err := service.ParseLDAPServerURL(req.Server)
+	if err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg(err.Error()))
+		return
+	}
+
+	config := service.LDAPConfig{
+		Host:         host,
+		Port:         port,
+		BaseDN:       req.BaseDN,
+		BindDN:       req.BindDN,
+		BindPassword: req.BindPassword,
+		UseSSL:       useSSL,
+	}
+
+	if err := service.TestLDAPConnection(config); err != nil {
+		c.JSON(http.StatusOK, model.Success(map[string]interface{}{
+			"success": false,
+			"message": err.Error(),
+		}))
+		return
+	}
+
 	c.JSON(http.StatusOK, model.Success(map[string]interface{}{
-		"success": false,
-		"message": "LDAP连接功能需要配置LDAP服务器，请确保服务器地址和认证信息正确",
+		"success": true,
+		"message": "连接成功",
 	}))
 }
 
-// FetchLdapUsers fetches user list from LDAP/AD
+// FetchLdapUsers godoc
+// @Summary 获取LDAP用户
+// @Description 从LDAP/AD获取用户列表
+// @Tags 系统管理
+// @Accept json
+// @Produce json
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /admin/ldap/users [post]
 func FetchLdapUsers(c *gin.Context) {
 	var req struct {
-		Type         string `json:"type" binding:"required"`
-		Server       string `json:"server" binding:"required"`
-		BaseDN       string `json:"baseDN" binding:"required"`
-		BindDN       string `json:"bindDN" binding:"required"`
-		BindPassword string `json:"bindPassword" binding:"required"`
+		Type         string `json:"type" binding:"required,max=50"`
+		Server       string `json:"server" binding:"required,max=500"`
+		BaseDN       string `json:"baseDN" binding:"required,max=500"`
+		BindDN       string `json:"bindDN" binding:"required,max=500"`
+		BindPassword string `json:"bindPassword" binding:"required,max=500"`
+		Page         int    `json:"page"`
+		PageSize     int    `json:"pageSize"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusOK, model.ErrorMsg("参数错误"))
 		return
 	}
 
-	// TODO: actual LDAP user search with go-ldap library
+	host, port, useSSL, err := service.ParseLDAPServerURL(req.Server)
+	if err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg(err.Error()))
+		return
+	}
+
+	if req.Page <= 0 {
+		req.Page = 1
+	}
+	if req.PageSize <= 0 {
+		req.PageSize = 50
+	}
+
+	config := service.LDAPConfig{
+		Host:         host,
+		Port:         port,
+		BaseDN:       req.BaseDN,
+		BindDN:       req.BindDN,
+		BindPassword: req.BindPassword,
+		UseSSL:       useSSL,
+	}
+
+	users, total, err := service.ListLDAPUsers(config, req.Page, req.PageSize)
+	if err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg(fmt.Sprintf("获取LDAP用户失败: %v", err)))
+		return
+	}
+
 	c.JSON(http.StatusOK, model.Success(map[string]interface{}{
-		"users": []interface{}{},
+		"users": users,
+		"total": total,
 	}))
 }
 
-// ImportLdapUsers imports selected LDAP users into the system
+// ImportLdapUsers godoc
+// @Summary 导入LDAP用户
+// @Description 导入选中的LDAP用户到系统
+// @Tags 系统管理
+// @Accept json
+// @Produce json
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /admin/ldap/import [post]
 func ImportLdapUsers(c *gin.Context) {
 	var req struct {
-		Type         string   `json:"type" binding:"required"`
-		Server       string   `json:"server" binding:"required"`
-		BaseDN       string   `json:"baseDN" binding:"required"`
-		BindDN       string   `json:"bindDN" binding:"required"`
-		BindPassword string   `json:"bindPassword" binding:"required"`
+		Type         string   `json:"type" binding:"required,max=50"`
+		Server       string   `json:"server" binding:"required,max=500"`
+		BaseDN       string   `json:"baseDN" binding:"required,max=500"`
+		BindDN       string   `json:"bindDN" binding:"required,max=500"`
+		BindPassword string   `json:"bindPassword" binding:"required,max=500"`
 		Users        []string `json:"users" binding:"required"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -417,15 +548,39 @@ func ImportLdapUsers(c *gin.Context) {
 		return
 	}
 
-	// TODO: actual LDAP user import
+	host, port, useSSL, err := service.ParseLDAPServerURL(req.Server)
+	if err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg(err.Error()))
+		return
+	}
+
+	config := service.LDAPConfig{
+		Host:         host,
+		Port:         port,
+		BaseDN:       req.BaseDN,
+		BindDN:       req.BindDN,
+		BindPassword: req.BindPassword,
+		UseSSL:       useSSL,
+	}
+
+	imported, importErrors := service.ImportLDAPUsers(config, req.Users)
+
 	c.JSON(http.StatusOK, model.Success(map[string]interface{}{
-		"imported": len(req.Users),
+		"imported": imported,
+		"errors":   importErrors,
 	}))
 }
 
 // ===================== User Storage Settings =====================
 
-// GetUserStorageSettings returns user-specific storage settings
+// GetUserStorageSettings godoc
+// @Summary 获取用户存储设置
+// @Description 获取用户个人存储设置
+// @Tags 用户
+// @Produce json
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /user/storage-settings [get]
 func GetUserStorageSettings(c *gin.Context) {
 	userID := utils.GetUserID(c.MustGet("userId"))
 
@@ -447,13 +602,21 @@ func GetUserStorageSettings(c *gin.Context) {
 	}))
 }
 
-// SaveUserStorageSettings saves user-specific storage settings
+// SaveUserStorageSettings godoc
+// @Summary 保存用户存储设置
+// @Description 保存用户个人存储设置
+// @Tags 用户
+// @Accept json
+// @Produce json
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /user/storage-settings [post]
 func SaveUserStorageSettings(c *gin.Context) {
 	userID := utils.GetUserID(c.MustGet("userId"))
 
 	var req struct {
-		SyncDir     string `json:"syncDir"`
-		DownloadDir string `json:"downloadDir"`
+		SyncDir     string `json:"syncDir" binding:"max=500"`
+		DownloadDir string `json:"downloadDir" binding:"max=500"`
 		AutoSync    bool   `json:"autoSync"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -486,7 +649,14 @@ func SaveUserStorageSettings(c *gin.Context) {
 
 // ===================== Remote Storage Management =====================
 
-// ListRemoteStorages returns list of remote storage configurations
+// ListRemoteStorages godoc
+// @Summary 获取远程存储列表
+// @Description 获取所有远程存储配置
+// @Tags 系统管理
+// @Produce json
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /admin/remote-storages [get]
 func ListRemoteStorages(c *gin.Context) {
 	var storages []model.RemoteStorage
 	mysql.DB.Find(&storages)
@@ -494,18 +664,26 @@ func ListRemoteStorages(c *gin.Context) {
 	c.JSON(http.StatusOK, model.Success(storages))
 }
 
-// CreateRemoteStorage creates a new remote storage configuration
+// CreateRemoteStorage godoc
+// @Summary 创建远程存储
+// @Description 创建新的远程存储配置
+// @Tags 系统管理
+// @Accept json
+// @Produce json
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /admin/remote-storages [post]
 func CreateRemoteStorage(c *gin.Context) {
 	var req struct {
-		Name       string `json:"name" binding:"required"`
-		Type       string `json:"type" binding:"required"`
-		Server     string `json:"server" binding:"required"`
+		Name       string `json:"name" binding:"required,max=200"`
+		Type       string `json:"type" binding:"required,oneof=sftp ftp smb webdav nfs baidu aliyun tencent"`
+		Server     string `json:"server" binding:"required,max=500"`
 		Port       int    `json:"port"`
-		Username   string `json:"username"`
-		Password   string `json:"password"`
-		SharePath  string `json:"sharePath"`
-		Domain     string `json:"domain"`
-		MountPoint string `json:"mountPoint" binding:"required"`
+		Username   string `json:"username" binding:"max=200"`
+		Password   string `json:"password" binding:"max=500"`
+		SharePath  string `json:"sharePath" binding:"max=500"`
+		Domain     string `json:"domain" binding:"max=200"`
+		MountPoint string `json:"mountPoint" binding:"required,max=200"`
 		IsEnabled  bool   `json:"isEnabled"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -532,20 +710,29 @@ func CreateRemoteStorage(c *gin.Context) {
 	c.JSON(http.StatusOK, model.Success(storage))
 }
 
-// UpdateRemoteStorage updates an existing remote storage configuration
+// UpdateRemoteStorage godoc
+// @Summary 更新远程存储
+// @Description 更新远程存储配置
+// @Tags 系统管理
+// @Accept json
+// @Produce json
+// @Param id path int true "存储ID"
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /admin/remote-storages/{id} [put]
 func UpdateRemoteStorage(c *gin.Context) {
 	id := c.Param("id")
 
 	var req struct {
-		Name       string `json:"name" binding:"required"`
-		Type       string `json:"type" binding:"required"`
-		Server     string `json:"server" binding:"required"`
+		Name       string `json:"name" binding:"required,max=200"`
+		Type       string `json:"type" binding:"required,oneof=sftp ftp smb webdav nfs baidu aliyun tencent"`
+		Server     string `json:"server" binding:"required,max=500"`
 		Port       int    `json:"port"`
-		Username   string `json:"username"`
-		Password   string `json:"password"`
-		SharePath  string `json:"sharePath"`
-		Domain     string `json:"domain"`
-		MountPoint string `json:"mountPoint" binding:"required"`
+		Username   string `json:"username" binding:"max=200"`
+		Password   string `json:"password" binding:"max=500"`
+		SharePath  string `json:"sharePath" binding:"max=500"`
+		Domain     string `json:"domain" binding:"max=200"`
+		MountPoint string `json:"mountPoint" binding:"required,max=200"`
 		IsEnabled  bool   `json:"isEnabled"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -584,7 +771,15 @@ func UpdateRemoteStorage(c *gin.Context) {
 	c.JSON(http.StatusOK, model.Success(nil))
 }
 
-// DeleteRemoteStorage deletes a remote storage configuration
+// DeleteRemoteStorage godoc
+// @Summary 删除远程存储
+// @Description 删除远程存储配置
+// @Tags 系统管理
+// @Produce json
+// @Param id path int true "存储ID"
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /admin/remote-storages/{id} [delete]
 func DeleteRemoteStorage(c *gin.Context) {
 	id := c.Param("id")
 
@@ -597,7 +792,15 @@ func DeleteRemoteStorage(c *gin.Context) {
 	c.JSON(http.StatusOK, model.Success(nil))
 }
 
-// TestRemoteStorageConnection tests connection to a specific remote storage
+// TestRemoteStorageConnection godoc
+// @Summary 测试远程存储连接
+// @Description 测试指定远程存储的连接
+// @Tags 系统管理
+// @Produce json
+// @Param id path int true "存储ID"
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /admin/remote-storages/{id}/test [post]
 func TestRemoteStorageConnection(c *gin.Context) {
 	id := c.Param("id")
 
@@ -645,7 +848,15 @@ func TestRemoteStorageConnection(c *gin.Context) {
 	}))
 }
 
-// ConnectRemoteStorage establishes connection to a remote storage
+// ConnectRemoteStorage godoc
+// @Summary 连接远程存储
+// @Description 建立与远程存储的连接
+// @Tags 系统管理
+// @Produce json
+// @Param id path int true "存储ID"
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /admin/remote-storages/{id}/connect [post]
 func ConnectRemoteStorage(c *gin.Context) {
 	id := c.Param("id")
 
@@ -692,7 +903,15 @@ func ConnectRemoteStorage(c *gin.Context) {
 	}))
 }
 
-// DisconnectRemoteStorage disconnects from a remote storage
+// DisconnectRemoteStorage godoc
+// @Summary 断开远程存储
+// @Description 断开与远程存储的连接
+// @Tags 系统管理
+// @Produce json
+// @Param id path int true "存储ID"
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /admin/remote-storages/{id}/disconnect [post]
 func DisconnectRemoteStorage(c *gin.Context) {
 	id := c.Param("id")
 

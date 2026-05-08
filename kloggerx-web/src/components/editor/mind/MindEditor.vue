@@ -37,7 +37,7 @@
           ref="editInputRef"
           autofocus
         />
-        <span v-else class="node-text">{{ node.text || '新节点' }}</span>
+        <span v-else class="node-text">{{ node.text || $t('editor.mind.newNode') }}</span>
       </div>
     </div>
   </div>
@@ -47,6 +47,9 @@
 import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import MindToolbar from './MindToolbar.vue'
 import { ElMessage } from 'element-plus'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 interface MindNode {
   id: string
@@ -106,12 +109,12 @@ function initData() {
   }
   nodes.value = [{
     id: genId(),
-    text: '中心主题',
+    text: t('editor.mind.centralTopic'),
     color: '#3370ff',
     children: [
-      { id: genId(), text: '分支1', children: [] },
-      { id: genId(), text: '分支2', children: [] },
-      { id: genId(), text: '分支3', children: [] },
+      { id: genId(), text: `${t('editor.mind.branch')}1`, children: [] },
+      { id: genId(), text: `${t('editor.mind.branch')}2`, children: [] },
+      { id: genId(), text: `${t('editor.mind.branch')}3`, children: [] },
     ],
   }]
 }
@@ -261,10 +264,10 @@ function handleToolbarAction(event: { action: string; params?: any }) {
       break
     case 'expandAll':
     case 'collapseAll':
-      ElMessage.info('展开/收起功能开发中')
+      ElMessage.info(t('editor.mind.expandCollapseDev'))
       break
     case 'exportImage':
-      ElMessage.info('导出图片功能开发中')
+      ElMessage.info(t('editor.mind.exportImageDev'))
       break
   }
 }
@@ -273,7 +276,7 @@ function addChild() {
   if (!selectedNode.value) return
   const node = findNodeById(nodes.value, selectedNode.value.id)
   if (node) {
-    node.children.push({ id: genId(), text: '新节点', children: [] })
+    node.children.push({ id: genId(), text: t('editor.mind.newNode'), children: [] })
     scheduleSave()
   }
 }
@@ -283,7 +286,7 @@ function addSibling() {
   const parent = findParentById(nodes.value, selectedNode.value.id)
   if (parent) {
     const idx = parent.children.findIndex((c) => c.id === selectedNode.value!.id)
-    parent.children.splice(idx + 1, 0, { id: genId(), text: '新节点', children: [] })
+    parent.children.splice(idx + 1, 0, { id: genId(), text: t('editor.mind.newNode'), children: [] })
     scheduleSave()
   }
 }

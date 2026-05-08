@@ -1,44 +1,44 @@
 <template>
   <div class="bitable-toolbar">
     <div class="toolbar-group">
-      <el-button size="small" @click="addRecord"><el-icon><Plus /></el-icon>添加记录</el-button>
-      <el-button size="small" @click="deleteRecord" :disabled="!hasSelection"><el-icon><Delete /></el-icon>删除记录</el-button>
+      <el-button size="small" @click="addRecord"><el-icon><Plus /></el-icon>{{ $t('editor.bitable.addRecord') }}</el-button>
+      <el-button size="small" @click="deleteRecord" :disabled="!hasSelection"><el-icon><Delete /></el-icon>{{ $t('editor.bitable.deleteRecord') }}</el-button>
     </div>
     <span class="toolbar-divider" />
     <div class="toolbar-group">
       <el-dropdown trigger="click" @command="addField">
         <el-button size="small">
-          <el-icon><Grid /></el-icon>添加字段<el-icon class="el-icon--right"><ArrowDown /></el-icon>
+          <el-icon><Grid /></el-icon>{{ $t('editor.bitable.addField') }}<el-icon class="el-icon--right"><ArrowDown /></el-icon>
         </el-button>
         <template #dropdown>
           <el-dropdown-menu>
-            <el-dropdown-item command="text">文本</el-dropdown-item>
-            <el-dropdown-item command="number">数字</el-dropdown-item>
-            <el-dropdown-item command="select">单选</el-dropdown-item>
-            <el-dropdown-item command="multiSelect">多选</el-dropdown-item>
-            <el-dropdown-item command="date">日期</el-dropdown-item>
-            <el-dropdown-item command="person">人员</el-dropdown-item>
-            <el-dropdown-item command="attachment">附件</el-dropdown-item>
-            <el-dropdown-item command="link">链接</el-dropdown-item>
-            <el-dropdown-item command="checkbox">复选框</el-dropdown-item>
-            <el-dropdown-item command="rating">评分</el-dropdown-item>
+            <el-dropdown-item command="text">{{ $t('editor.bitable.text') }}</el-dropdown-item>
+            <el-dropdown-item command="number">{{ $t('editor.bitable.number') }}</el-dropdown-item>
+            <el-dropdown-item command="select">{{ $t('editor.bitable.select') }}</el-dropdown-item>
+            <el-dropdown-item command="multiSelect">{{ $t('editor.bitable.multiSelect') }}</el-dropdown-item>
+            <el-dropdown-item command="date">{{ $t('editor.bitable.date') }}</el-dropdown-item>
+            <el-dropdown-item command="person">{{ $t('editor.bitable.person') }}</el-dropdown-item>
+            <el-dropdown-item command="attachment">{{ $t('editor.bitable.attachment') }}</el-dropdown-item>
+            <el-dropdown-item command="link">{{ $t('editor.bitable.link') }}</el-dropdown-item>
+            <el-dropdown-item command="checkbox">{{ $t('editor.bitable.checkbox') }}</el-dropdown-item>
+            <el-dropdown-item command="rating">{{ $t('editor.bitable.rating') }}</el-dropdown-item>
           </el-dropdown-menu>
         </template>
       </el-dropdown>
-      <el-button size="small" @click="editField" :disabled="!selectedField"><el-icon><Edit /></el-icon>编辑字段</el-button>
-      <el-button size="small" @click="deleteField" :disabled="!selectedField"><el-icon><Delete /></el-icon>删除字段</el-button>
+      <el-button size="small" @click="editField" :disabled="!selectedField"><el-icon><Edit /></el-icon>{{ $t('editor.bitable.editField') }}</el-button>
+      <el-button size="small" @click="deleteField" :disabled="!selectedField"><el-icon><Delete /></el-icon>{{ $t('editor.bitable.deleteField') }}</el-button>
     </div>
     <span class="toolbar-divider" />
     <div class="toolbar-group">
-      <el-button size="small" @click="addView"><el-icon><View /></el-icon>新建视图</el-button>
-      <el-button size="small" @click="showFilter"><el-icon><Filter /></el-icon>筛选</el-button>
-      <el-button size="small" @click="showSort"><el-icon><Sort /></el-icon>排序</el-button>
-      <el-button size="small" @click="showGroup"><el-icon><Menu /></el-icon>分组</el-button>
+      <el-button size="small" @click="addView"><el-icon><View /></el-icon>{{ $t('editor.bitable.newView') }}</el-button>
+      <el-button size="small" @click="showFilter"><el-icon><Filter /></el-icon>{{ $t('editor.bitable.filter') }}</el-button>
+      <el-button size="small" @click="showSort"><el-icon><Sort /></el-icon>{{ $t('editor.bitable.sort') }}</el-button>
+      <el-button size="small" @click="showGroup"><el-icon><Menu /></el-icon>{{ $t('editor.bitable.group') }}</el-button>
     </div>
     <span class="toolbar-divider" />
     <div class="toolbar-group">
-      <el-button size="small" @click="exportData"><el-icon><Download /></el-icon>导出</el-button>
-      <el-button size="small" @click="importData"><el-icon><Upload /></el-icon>导入</el-button>
+      <el-button size="small" @click="exportData"><el-icon><Download /></el-icon>{{ $t('editor.bitable.export') }}</el-button>
+      <el-button size="small" @click="importData"><el-icon><Upload /></el-icon>{{ $t('editor.bitable.import') }}</el-button>
     </div>
   </div>
 </template>

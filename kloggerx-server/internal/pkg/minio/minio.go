@@ -19,9 +19,13 @@ var isInitialized bool
 
 // Init initializes MinIO client
 func Init(cfg config.MinIOConfig) error {
+	// Override credentials from environment variables if available
+	accessKey := config.GetMinIOAccessKey()
+	secretKey := config.GetMinIOSecretKey()
+
 	var err error
 	client, err = minio.New(cfg.Endpoint, &minio.Options{
-		Creds:  credentials.NewStaticV4(cfg.AccessKey, cfg.SecretKey, ""),
+		Creds:  credentials.NewStaticV4(accessKey, secretKey, ""),
 		Secure: cfg.UseSSL,
 	})
 	if err != nil {

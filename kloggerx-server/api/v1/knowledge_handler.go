@@ -1,6 +1,8 @@
 package v1
 
 import (
+	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -13,6 +15,350 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// ExportKnowledgeBase 导出知识库为zip
+// GET /knowledge/:id/export
+func ExportKnowledgeBase(c *gin.Context) {
+	uid := utils.GetUserID(c.MustGet("userId"))
+	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+
+	data, filename, err := service.ExportKnowledgeBaseAsZip(uid, uint(id))
+	if err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg(err.Error()))
+		return
+	}
+
+	c.Header("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, filename))
+	c.Data(http.StatusOK, "application/zip", data)
+}
+
+// ─── Conversation History ─────────────────────────────────────────────────────
+
+// GetConversationListHandler godoc
+// @Summary 获取会话列表
+// @Description 获取用户的AI会话历史列表
+// @Tags 知识库
+// @Produce json
+// @Param page query int false "页码"
+// @Param pageSize query int false "每页数量"
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /knowledge/conversations [get]
+func GetConversationListHandler(c *gin.Context) {
+	uid := utils.GetUserID(c.MustGet("userId"))
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "20"))
+	kbIDStr := c.Query("knowledgeBaseId")
+	var kbID *uint
+	if kbIDStr != "" {
+		id, _ := strconv.ParseUint(kbIDStr, 10, 64)
+		p := uint(id)
+		kbID = &p
+	}
+	list, total, err := service.GetConversationList(uid, kbID, page, pageSize)
+	if err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg(err.Error()))
+		return
+	}
+	c.JSON(http.StatusOK, model.Success(model.PaginatedData{List: list, Total: total, Page: page, PageSize: pageSize}))
+}
+
+// CreateConversationHandler godoc
+// @Summary 创建会话
+// @Description 创建新的AI会话
+// @Tags 知识库
+// @Accept json
+// @Produce json
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /knowledge/conversations [post]
+func CreateConversationHandler(c *gin.Context) {
+	uid := utils.GetUserID(c.MustGet("userId"))
+	var body struct {
+		KnowledgeBaseID *uint  `json:"knowledgeBaseId"`
+		Model           string `json:"model" binding:"max=100"`
+	}
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg("参数错误"))
+		return
+	}
+	conv, err := service.CreateConversation(uid, body.KnowledgeBaseID, body.Model)
+	if err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg(err.Error()))
+		return
+	}
+	c.JSON(http.StatusOK, model.Success(conv))
+}
+
+// GetConversationDetailHandler godoc
+// @Summary 获取会话详情
+// @Description 获取会话详情及消息列表
+// @Tags 知识库
+// @Produce json
+// @Param id path int true "会话ID"
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /knowledge/conversations/{id} [get]
+func GetConversationDetailHandler(c *gin.Context) {
+	uid := utils.GetUserID(c.MustGet("userId"))
+	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+	msgPage, _ := strconv.Atoi(c.DefaultQuery("msgPage", "1"))
+	msgPageSize, _ := strconv.Atoi(c.DefaultQuery("msgPageSize", "50"))
+	conv, messages, msgTotal, err := service.GetConversationDetail(uint(id), uid, msgPage, msgPageSize)
+	if err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg(err.Error()))
+		return
+	}
+	c.JSON(http.StatusOK, model.Success(map[string]interface{}{
+		"conversation": conv,
+		"messages":     messages,
+		"msgTotal":     msgTotal,
+		"msgPage":      msgPage,
+		"msgPageSize":  msgPageSize,
+	}))
+}
+
+// UpdateConversationHandler godoc
+// @Summary 更新会话
+// @Description 更新会话标题或置顶状态
+// @Tags 知识库
+// @Accept json
+// @Produce json
+// @Param id path int true "会话ID"
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /knowledge/conversations/{id} [put]
+func UpdateConversationHandler(c *gin.Context) {
+	uid := utils.GetUserID(c.MustGet("userId"))
+	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+	var body struct {
+		Title    string `json:"title" binding:"max=500"`
+		IsPinned *bool  `json:"isPinned"`
+	}
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg("参数错误"))
+		return
+	}
+	updates := map[string]interface{}{}
+	if body.Title != "" {
+		updates["title"] = body.Title
+	}
+	if body.IsPinned != nil {
+		updates["is_pinned"] = *body.IsPinned
+	}
+	if len(updates) == 0 {
+		c.JSON(http.StatusOK, model.ErrorMsg("无更新内容"))
+		return
+	}
+	if err := service.UpdateConversation(uint(id), uid, updates); err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg(err.Error()))
+		return
+	}
+	c.JSON(http.StatusOK, model.Success(nil))
+}
+
+// DeleteConversationHandler godoc
+// @Summary 删除会话
+// @Description 删除指定会话
+// @Tags 知识库
+// @Produce json
+// @Param id path int true "会话ID"
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /knowledge/conversations/{id} [delete]
+func DeleteConversationHandler(c *gin.Context) {
+	uid := utils.GetUserID(c.MustGet("userId"))
+	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err := service.DeleteConversation(uint(id), uid); err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg(err.Error()))
+		return
+	}
+	c.JSON(http.StatusOK, model.Success(nil))
+}
+
+// BatchDeleteConversationsHandler godoc
+// @Summary 批量删除会话
+// @Description 批量删除多个会话
+// @Tags 知识库
+// @Accept json
+// @Produce json
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /knowledge/conversations [delete]
+func BatchDeleteConversationsHandler(c *gin.Context) {
+	uid := utils.GetUserID(c.MustGet("userId"))
+	var body struct {
+		IDs []uint `json:"ids" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg("参数错误"))
+		return
+	}
+	if err := service.BatchDeleteConversations(body.IDs, uid); err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg(err.Error()))
+		return
+	}
+	c.JSON(http.StatusOK, model.Success(nil))
+}
+
+// ExportConversationHandler GET /api/v1/knowledge/conversations/:id/export
+func ExportConversationHandler(c *gin.Context) {
+	uid := utils.GetUserID(c.MustGet("userId"))
+	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+	format := c.DefaultQuery("format", "markdown")
+
+	content, filename, contentType, err := service.ExportConversation(uint(id), uid, format)
+	if err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg(err.Error()))
+		return
+	}
+
+	c.Header("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, filename))
+	c.Data(http.StatusOK, contentType, content)
+}
+
+// CreateShareLinkHandler POST /api/v1/knowledge/conversations/:id/share
+func CreateShareLinkHandler(c *gin.Context) {
+	uid := utils.GetUserID(c.MustGet("userId"))
+	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+
+	var body struct {
+		ExpiresInHours *int `json:"expiresInHours"`
+	}
+	c.ShouldBindJSON(&body)
+
+	link, err := service.CreateShareLink(uint(id), uid, body.ExpiresInHours)
+	if err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg(err.Error()))
+		return
+	}
+	c.JSON(http.StatusOK, model.Success(link))
+}
+
+// RevokeShareLinkHandler DELETE /api/v1/knowledge/conversations/:id/share
+func RevokeShareLinkHandler(c *gin.Context) {
+	uid := utils.GetUserID(c.MustGet("userId"))
+	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+
+	if err := service.RevokeShareLink(uint(id), uid); err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg(err.Error()))
+		return
+	}
+	c.JSON(http.StatusOK, model.Success(nil))
+}
+
+// GetSharedConversationHandler GET /api/v1/knowledge/share/:token (public, no auth)
+func GetSharedConversationHandler(c *gin.Context) {
+	token := c.Param("token")
+	if token == "" {
+		c.JSON(http.StatusOK, model.ErrorMsg("无效的分享链接"))
+		return
+	}
+
+	conv, messages, err := service.GetSharedConversation(token)
+	if err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg(err.Error()))
+		return
+	}
+	c.JSON(http.StatusOK, model.Success(map[string]interface{}{
+		"conversation": conv,
+		"messages":     messages,
+	}))
+}
+
+// GetFollowUpSuggestionsHandler GET /api/v1/admin/settings/follow-up-suggestions
+func GetFollowUpSuggestionsHandler(c *gin.Context) {
+	enabled := service.IsFollowUpSuggestionsEnabled()
+	c.JSON(http.StatusOK, model.Success(gin.H{"enabled": enabled}))
+}
+
+// UpdateFollowUpSuggestionsHandler PUT /api/v1/admin/settings/follow-up-suggestions
+func UpdateFollowUpSuggestionsHandler(c *gin.Context) {
+	var body struct {
+		Enabled bool `json:"enabled"`
+	}
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg("参数错误"))
+		return
+	}
+
+	if err := service.UpdateFollowUpSuggestionsEnabled(body.Enabled); err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg("更新设置失败: "+err.Error()))
+		return
+	}
+	c.JSON(http.StatusOK, model.Success(nil))
+}
+
+// ─── Knowledge Base ───────────────────────────────────────────────────────────
+
+// ─── Feedback ─────────────────────────────────────────────────────────────────
+
+// SubmitFeedbackHandler POST /api/v1/knowledge/messages/:id/feedback
+func SubmitFeedbackHandler(c *gin.Context) {
+	uid := utils.GetUserID(c.MustGet("userId"))
+	msgID, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg("无效的消息ID"))
+		return
+	}
+
+	var body struct {
+		Rating        int8   `json:"rating" binding:"required"`
+		FeedbackType  string `json:"feedbackType" binding:"max=100"`
+		Comment       string `json:"comment" binding:"max=2000"`
+		CorrectAnswer string `json:"correctAnswer" binding:"max=5000"`
+	}
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg("参数错误"))
+		return
+	}
+
+	// 验证 rating 值
+	if body.Rating != 1 && body.Rating != -1 {
+		c.JSON(http.StatusOK, model.ErrorMsg("rating 必须为 1 或 -1"))
+		return
+	}
+
+	// 踩时 feedbackType 必填
+	if body.Rating == -1 && body.FeedbackType == "" {
+		c.JSON(http.StatusOK, model.ErrorMsg("踩时必须提供 feedbackType"))
+		return
+	}
+
+	if err := service.SubmitFeedback(uid, uint(msgID), body.Rating, body.FeedbackType, body.Comment, body.CorrectAnswer); err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg(err.Error()))
+		return
+	}
+	c.JSON(http.StatusOK, model.Success(nil))
+}
+
+// GetFeedbackHandler GET /api/v1/knowledge/messages/:id/feedback
+func GetFeedbackHandler(c *gin.Context) {
+	uid := utils.GetUserID(c.MustGet("userId"))
+	msgID, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg("无效的消息ID"))
+		return
+	}
+
+	feedback, err := service.GetMessageFeedback(uid, uint(msgID))
+	if err != nil {
+		// 无反馈记录返回 null
+		c.JSON(http.StatusOK, model.Success(nil))
+		return
+	}
+	c.JSON(http.StatusOK, model.Success(feedback))
+}
+
+// GetKnowledgeBaseList godoc
+// @Summary 获取知识库列表
+// @Description 分页获取知识库列表
+// @Tags 知识库
+// @Produce json
+// @Param page query int false "页码"
+// @Param pageSize query int false "每页数量"
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /knowledge/list [get]
 func GetKnowledgeBaseList(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "20"))
@@ -25,8 +371,25 @@ func GetKnowledgeBaseList(c *gin.Context) {
 	c.JSON(http.StatusOK, model.Success(model.PaginatedData{List: list, Total: total, Page: page, PageSize: pageSize}))
 }
 
+// GetKnowledgeBaseDetail godoc
+// @Summary 获取知识库详情
+// @Description 获取指定知识库的详细信息
+// @Tags 知识库
+// @Produce json
+// @Param id path int true "知识库ID"
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /knowledge/{id} [get]
 func GetKnowledgeBaseDetail(c *gin.Context) {
+	uid := utils.GetUserID(c.MustGet("userId"))
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+
+	// 权限检查：需要是知识库成员
+	if err := service.CheckKnowledgePermission(uid, uint(id), "read"); err != nil {
+		c.JSON(http.StatusForbidden, model.ErrorMsg("无权限访问该知识库"))
+		return
+	}
+
 	kb, err := service.GetKnowledgeBaseDetail(uint(id))
 	if err != nil {
 		c.JSON(http.StatusOK, model.ErrorMsg("知识库不存在"))
@@ -35,11 +398,20 @@ func GetKnowledgeBaseDetail(c *gin.Context) {
 	c.JSON(http.StatusOK, model.Success(kb))
 }
 
+// CreateKnowledgeBase godoc
+// @Summary 创建知识库
+// @Description 创建新的知识库
+// @Tags 知识库
+// @Accept json
+// @Produce json
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /knowledge/create [post]
 func CreateKnowledgeBase(c *gin.Context) {
 	uid := utils.GetUserID(c.MustGet("userId"))
 	var body struct {
-		Name        string `json:"name" binding:"required"`
-		Description string `json:"description"`
+		Name        string `json:"name" binding:"required,min=1,max=100"`
+		Description string `json:"description" binding:"max=1000"`
 	}
 	if err := c.ShouldBindJSON(&body); err != nil {
 		c.JSON(http.StatusOK, model.ErrorMsg("参数错误"))
@@ -53,11 +425,29 @@ func CreateKnowledgeBase(c *gin.Context) {
 	c.JSON(http.StatusOK, model.Success(kb))
 }
 
+// UpdateKnowledgeBase godoc
+// @Summary 更新知识库
+// @Description 更新知识库信息
+// @Tags 知识库
+// @Accept json
+// @Produce json
+// @Param id path int true "知识库ID"
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /knowledge/{id}/update [post]
 func UpdateKnowledgeBase(c *gin.Context) {
+	uid := utils.GetUserID(c.MustGet("userId"))
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+
+	// 权限检查：需要 owner 或 admin 成员
+	if err := service.CheckKnowledgePermission(uid, uint(id), "edit"); err != nil {
+		c.JSON(http.StatusForbidden, model.ErrorMsg("无权限修改该知识库"))
+		return
+	}
+
 	var body struct {
-		Name        string `json:"name"`
-		Description string `json:"description"`
+		Name        string `json:"name" binding:"max=100"`
+		Description string `json:"description" binding:"max=1000"`
 	}
 	c.ShouldBindJSON(&body)
 	updates := map[string]interface{}{}
@@ -73,8 +463,25 @@ func UpdateKnowledgeBase(c *gin.Context) {
 	c.JSON(http.StatusOK, model.Success(nil))
 }
 
+// DeleteKnowledgeBase godoc
+// @Summary 删除知识库
+// @Description 删除指定知识库
+// @Tags 知识库
+// @Produce json
+// @Param id path int true "知识库ID"
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /knowledge/{id} [delete]
 func DeleteKnowledgeBase(c *gin.Context) {
+	uid := utils.GetUserID(c.MustGet("userId"))
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+
+	// 权限检查：只有 owner 才能删除
+	if err := service.CheckKnowledgePermission(uid, uint(id), "delete"); err != nil {
+		c.JSON(http.StatusForbidden, model.ErrorMsg("无权限删除该知识库"))
+		return
+	}
+
 	if err := service.DeleteKnowledgeBase(uint(id)); err != nil {
 		c.JSON(http.StatusOK, model.ErrorMsg(err.Error()))
 		return
@@ -190,7 +597,7 @@ func GetKnowledgeSources(c *gin.Context) {
 func AddKnowledgeSource(c *gin.Context) {
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
 	var body struct {
-		SourceType string `json:"sourceType" binding:"required"` // "folder" | "document"
+		SourceType string `json:"sourceType" binding:"required,oneof=folder document"` // "folder" | "document"
 		SourceID   uint   `json:"sourceId" binding:"required"`
 	}
 	if err := c.ShouldBindJSON(&body); err != nil {
@@ -226,12 +633,22 @@ func SyncKnowledgeSource(c *gin.Context) {
 
 // ─── Knowledge AI Chat ────────────────────────────────────────────────────────
 
+// KnowledgeChat godoc
+// @Summary 知识库对话
+// @Description 基于知识库进行AI对话
+// @Tags 知识库
+// @Accept json
+// @Produce json
+// @Param id path int true "知识库ID"
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /knowledge/{id}/chat [post]
 func KnowledgeChat(c *gin.Context) {
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
 	var body struct {
-		Question string                 `json:"question" binding:"required"`
+		Question string                 `json:"question" binding:"required,max=10000"`
 		History  []service.ChatMessage  `json:"history"`
-		Model    string                 `json:"model"` // Optional: override model
+		Model    string                 `json:"model" binding:"max=100"` // Optional: override model
 	}
 	if err := c.ShouldBindJSON(&body); err != nil {
 		c.JSON(http.StatusOK, model.ErrorMsg("参数错误"))
@@ -249,10 +666,10 @@ func KnowledgeChat(c *gin.Context) {
 func KnowledgeChatGlobal(c *gin.Context) {
 	uid := utils.GetUserID(c.MustGet("userId"))
 	var body struct {
-		Question string                `json:"question" binding:"required"`
+		Question string                `json:"question" binding:"required,max=10000"`
 		History  []service.ChatMessage `json:"history"`
 		KBIDs    []uint                `json:"kbIds"`
-		Model    string                `json:"model"` // Optional: override model
+		Model    string                `json:"model" binding:"max=100"` // Optional: override model
 	}
 	if err := c.ShouldBindJSON(&body); err != nil {
 		c.JSON(http.StatusOK, model.ErrorMsg("参数错误"))
@@ -298,7 +715,141 @@ func KnowledgeChatGlobal(c *gin.Context) {
 	c.JSON(http.StatusOK, model.Success(result))
 }
 
+// ─── Streaming Chat (SSE) ─────────────────────────────────────────────────────
+
+// StreamChatHandler handles POST /api/v1/knowledge/chat/stream
+// It uses Server-Sent Events to stream AI responses back to the client.
+func StreamChatHandler(c *gin.Context) {
+	uid := utils.GetUserID(c.MustGet("userId"))
+
+	var body struct {
+		Question        string                `json:"question" binding:"required,max=10000"`
+		ConversationID  uint                  `json:"conversationId"`
+		KnowledgeBaseID *uint                 `json:"knowledgeBaseId"`
+		History         []service.ChatMessage `json:"history"`
+		Model           string                `json:"model" binding:"max=100"`
+	}
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(http.StatusBadRequest, model.ErrorMsg("参数错误"))
+		return
+	}
+
+	// Set SSE response headers
+	c.Writer.Header().Set("Content-Type", "text/event-stream")
+	c.Writer.Header().Set("Cache-Control", "no-cache")
+	c.Writer.Header().Set("Connection", "keep-alive")
+	c.Writer.Header().Set("X-Accel-Buffering", "no")
+	c.Writer.Header().Set("Transfer-Encoding", "chunked")
+	c.Writer.WriteHeader(http.StatusOK)
+	c.Writer.Flush()
+
+	ctx := c.Request.Context()
+
+	opts := service.ChatOptions{
+		UserID:          uid,
+		ConversationID:  body.ConversationID,
+		KnowledgeBaseID: body.KnowledgeBaseID,
+		Question:        body.Question,
+		History:         body.History,
+		ModelOverride:   body.Model,
+	}
+
+	writer := func(event service.SSEEvent) {
+		// Check if client disconnected
+		select {
+		case <-ctx.Done():
+			return
+		default:
+		}
+
+		data, err := json.Marshal(event)
+		if err != nil {
+			return
+		}
+		fmt.Fprintf(c.Writer, "event: message\ndata: %s\n\n", string(data))
+		c.Writer.(http.Flusher).Flush()
+	}
+
+	_ = service.StreamChatWithKnowledge(ctx, opts, writer)
+}
+
 // ─── RAPTOR Tree Management ────────────────────────────────────────────────
+
+// ─── Knowledge Graph ──────────────────────────────────────────────────────────
+
+// BuildKnowledgeGraph godoc
+// @Summary 构建知识图谱
+// @Description 触发构建知识图谱
+// @Tags 知识库
+// @Produce json
+// @Param id path int true "知识库ID"
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /knowledge/{id}/graph/build [post]
+func BuildKnowledgeGraph(c *gin.Context) {
+	_ = utils.GetUserID(c.MustGet("userId"))
+	kbID, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg("无效的知识库ID"))
+		return
+	}
+
+	if err := service.BuildKnowledgeGraph(uint(kbID)); err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg(err.Error()))
+		return
+	}
+	c.JSON(http.StatusOK, model.Success("知识图谱构建已启动"))
+}
+
+// GetKnowledgeGraph godoc
+// @Summary 获取知识图谱数据
+// @Description 获取知识图谱数据
+// @Tags 知识库
+// @Produce json
+// @Param id path int true "知识库ID"
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /knowledge/{id}/graph [get]
+func GetKnowledgeGraph(c *gin.Context) {
+	kbID, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg("无效的知识库ID"))
+		return
+	}
+
+	graph, err := service.GetKnowledgeGraphData(uint(kbID))
+	if err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg(err.Error()))
+		return
+	}
+	c.JSON(http.StatusOK, model.Success(graph))
+}
+
+// GetKnowledgeGraphStatus godoc
+// @Summary 获取知识图谱状态
+// @Description 获取知识图谱构建状态
+// @Tags 知识库
+// @Produce json
+// @Param id path int true "知识库ID"
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /knowledge/{id}/graph/status [get]
+func GetKnowledgeGraphStatus(c *gin.Context) {
+	kbID, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg("无效的知识库ID"))
+		return
+	}
+
+	status, err := service.GetKnowledgeGraphStatus(uint(kbID))
+	if err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg(err.Error()))
+		return
+	}
+	c.JSON(http.StatusOK, model.Success(status))
+}
+
+// ─── RAPTOR Tree Management (continued) ────────────────────────────────────
 
 // BuildRaptorTree handles building RAPTOR tree for a knowledge base
 func BuildRaptorTree(c *gin.Context) {

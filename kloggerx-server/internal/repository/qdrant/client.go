@@ -169,6 +169,7 @@ type SearchResult struct {
 	DocumentTitle string
 	KBID          uint
 	RaptorLevel   int
+	QualityScore  float64 // quality_score from payload, default 1.0
 }
 
 // Search performs a vector similarity search
@@ -214,6 +215,7 @@ func (vc *VectorClient) Search(ctx context.Context, kbID uint, vector []float32,
 			DocumentTitle: getPayloadString(result.Payload, "document_title"),
 			KBID:          getPayloadUint(result.Payload, "kb_id"),
 			RaptorLevel:   getPayloadInt(result.Payload, "raptor_level"),
+			QualityScore:  getPayloadFloat(result.Payload, "quality_score", 1.0),
 		}
 	}
 
@@ -261,6 +263,16 @@ func (vc *VectorClient) DeleteByKnowledgeBase(ctx context.Context, kbID uint) er
 // DeleteByPointID deletes a specific vector point by ID
 func (vc *VectorClient) DeleteByPointID(ctx context.Context, pointID string) error {
 	return DeletePointsByIDs(ctx, vc.collectionName, []string{pointID})
+}
+
+// UpdatePayloadByPointIDs updates payload fields on specific points
+func (vc *VectorClient) UpdatePayloadByPointIDs(ctx context.Context, payload map[string]interface{}, pointIDs []string) error {
+	return SetPayloadByPointIDs(ctx, vc.collectionName, payload, pointIDs)
+}
+
+// UpdatePayloadByFilter updates payload fields on points matching a filter
+func (vc *VectorClient) UpdatePayloadByFilter(ctx context.Context, payload map[string]interface{}, filter map[string]interface{}) error {
+	return SetPayload(ctx, vc.collectionName, payload, filter)
 }
 
 // GetCollectionStats returns statistics about the collection
@@ -331,4 +343,16 @@ func getPayloadString(payload map[string]interface{}, key string) string {
 		}
 	}
 	return ""
+}
+
+func getPayloadFloat(payload map[string]interface{}, key string, defaultVal float64) float64 {
+	if v, ok := payload[key]; ok {
+		switch val := v.(type) {
+		case float64:
+			return val
+		case int64:
+			return float64(val)
+		}
+	}
+	return defaultVal
 }

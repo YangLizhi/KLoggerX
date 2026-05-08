@@ -1,8 +1,8 @@
 <template>
   <div class="not-found">
     <h1>404</h1>
-    <p>页面未找到</p>
-    <el-button type="primary" @click="$router.push('/')">返回首页</el-button>
+    <p>{{ $t('editor.notFound.title') }}</p>
+    <el-button type="primary" @click="$router.push('/')">{{ $t('editor.notFound.backHome') }}</el-button>
   </div>
 </template>
 

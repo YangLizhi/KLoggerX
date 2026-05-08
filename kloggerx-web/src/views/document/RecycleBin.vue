@@ -1,24 +1,24 @@
 <template>
   <div class="recycle-page">
     <div class="recycle-header">
-      <h2 class="recycle-title">回收站</h2>
+      <h2 class="recycle-title">{{ $t('nav.recycleBin') }}</h2>
       <div class="recycle-actions">
-        <el-input v-model="searchKey" placeholder="搜索已删除文档..." prefix-icon="Search" clearable class="recycle-search" @keyup.enter="fetchData" />
-        <el-button size="small" type="danger" :disabled="!documents.length" @click="handleEmptyAll"><el-icon><Delete /></el-icon>清空回收站</el-button>
+        <el-input v-model="searchKey" :placeholder="$t('recycleBin.searchPlaceholder')" prefix-icon="Search" clearable class="recycle-search" @keyup.enter="fetchData" />
+        <el-button size="small" type="danger" :disabled="!documents.length" @click="handleEmptyAll"><el-icon><Delete /></el-icon>{{ $t('recycleBin.emptyAll') }}</el-button>
       </div>
     </div>
 
     <!-- Notice -->
-    <el-alert title="回收站中的文档将在删除30天后自动清除，届时无法恢复。" type="warning" :closable="true" show-icon class="recycle-notice" />
+    <el-alert :title="$t('recycleBin.notice')" type="warning" :closable="true" show-icon class="recycle-notice" />
 
     <!-- Filter tabs -->
     <div class="recycle-tabs">
-      <span class="rc-tab" :class="{ active: filterType === 'all' }" @click="filterType = 'all'">全部</span>
-      <span class="rc-tab" :class="{ active: filterType === 'doc' }" @click="filterType = 'doc'">文档</span>
-      <span class="rc-tab" :class="{ active: filterType === 'sheet' }" @click="filterType = 'sheet'">表格</span>
-      <span class="rc-tab" :class="{ active: filterType === 'slide' }" @click="filterType = 'slide'">幻灯片</span>
-      <span class="rc-tab" :class="{ active: filterType === 'folder' }" @click="filterType = 'folder'">文件夹</span>
-      <span class="rc-tab" :class="{ active: filterType === 'other' }" @click="filterType = 'other'">其他</span>
+      <span class="rc-tab" :class="{ active: filterType === 'all' }" @click="filterType = 'all'">{{ $t('common.all') }}</span>
+      <span class="rc-tab" :class="{ active: filterType === 'doc' }" @click="filterType = 'doc'">{{ $t('home.doc') }}</span>
+      <span class="rc-tab" :class="{ active: filterType === 'sheet' }" @click="filterType = 'sheet'">{{ $t('home.sheet') }}</span>
+      <span class="rc-tab" :class="{ active: filterType === 'slide' }" @click="filterType = 'slide'">{{ $t('home.slide') }}</span>
+      <span class="rc-tab" :class="{ active: filterType === 'folder' }" @click="filterType = 'folder'">{{ $t('home.folder') }}</span>
+      <span class="rc-tab" :class="{ active: filterType === 'other' }" @click="filterType = 'other'">{{ $t('home.other') }}</span>
     </div>
 
     <!-- Table -->
@@ -29,40 +29,40 @@
       @selection-change="handleSelectionChange"
     >
       <el-table-column type="selection" width="40" />
-      <el-table-column label="名称" min-width="320" sortable>
+      <el-table-column :label="$t('common.name')" min-width="320" sortable>
         <template #default="{ row }">
           <div class="doc-name-cell">
             <el-icon :color="getTypeColor(row.type)"><component :is="getTypeIcon(row.type)" /></el-icon>
             <span>{{ row.title }}</span>
-            <el-tag v-if="isExpiringSoon(row.deletedAt)" type="danger" size="small">即将清除</el-tag>
+            <el-tag v-if="isExpiringSoon(row.deletedAt)" type="danger" size="small">{{ $t('recycleBin.expiringSoon') }}</el-tag>
           </div>
         </template>
       </el-table-column>
-      <el-table-column label="类型" width="100">
+      <el-table-column :label="$t('home.fileType')" width="100">
         <template #default="{ row }">
           <span class="type-label">{{ getTypeLabel(row.type) }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="原始位置" width="180">
+      <el-table-column :label="$t('recycleBin.originalLocation')" width="180">
         <template #default="{ row }">
-          <span class="location-text">{{ row.parentTitle || '根目录' }}</span>
+          <span class="location-text">{{ row.parentTitle || $t('home.rootDir') }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="删除人" width="120">
-        <template #default="{ row }">{{ row.ownerName || '我' }}</template>
+      <el-table-column :label="$t('recycleBin.deletedBy')" width="120">
+        <template #default="{ row }">{{ row.ownerName || $t('recycleBin.me') }}</template>
       </el-table-column>
-      <el-table-column label="删除时间" width="180" sortable>
+      <el-table-column :label="$t('recycleBin.deletedTime')" width="180" sortable>
         <template #default="{ row }">{{ formatDate(row.deletedAt) }}</template>
       </el-table-column>
-      <el-table-column label="剩余天数" width="100" align="center">
+      <el-table-column :label="$t('recycleBin.remainingDays')" width="100" align="center">
         <template #default="{ row }">
-          <span :class="{ 'days-warn': getRemainingDays(row.deletedAt) <= 7 }">{{ getRemainingDays(row.deletedAt) }} 天</span>
+          <span :class="{ 'days-warn': getRemainingDays(row.deletedAt) <= 7 }">{{ getRemainingDays(row.deletedAt) }} {{ $t('recycleBin.days') }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="160" fixed="right">
+      <el-table-column :label="$t('home.operations')" width="160" fixed="right">
         <template #default="{ row }">
-          <el-button link type="primary" size="small" @click="handleRestore(row)"><el-icon><RefreshLeft /></el-icon>恢复</el-button>
-          <el-button link type="danger" size="small" @click="handlePermanentDelete(row)"><el-icon><Delete /></el-icon>彻底删除</el-button>
+          <el-button link type="primary" size="small" @click="handleRestore(row)"><el-icon><RefreshLeft /></el-icon>{{ $t('home.restore') }}</el-button>
+          <el-button link type="danger" size="small" @click="handlePermanentDelete(row)"><el-icon><Delete /></el-icon>{{ $t('home.permanentDelete') }}</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -70,16 +70,16 @@
     <!-- Batch Bar -->
     <transition name="slide-up">
       <div v-if="selectedDocs.length" class="batch-bar">
-        <span class="batch-count">已选 {{ selectedDocs.length }} 项</span>
-        <el-button size="small" type="primary" @click="batchRestore"><el-icon><RefreshLeft /></el-icon>批量恢复</el-button>
-        <el-button size="small" type="danger" @click="batchPermanentDelete"><el-icon><Delete /></el-icon>批量彻底删除</el-button>
-        <el-button size="small" text @click="selectedDocs = []">取消选择</el-button>
+        <span class="batch-count">{{ $t('common.selected', { count: selectedDocs.length }) }}</span>
+        <el-button size="small" type="primary" @click="batchRestore"><el-icon><RefreshLeft /></el-icon>{{ $t('home.batchRestore') }}</el-button>
+        <el-button size="small" type="danger" @click="batchPermanentDelete"><el-icon><Delete /></el-icon>{{ $t('recycleBin.batchPermanentDelete') }}</el-button>
+        <el-button size="small" text @click="selectedDocs = []">{{ $t('home.cancelSelect') }}</el-button>
       </div>
     </transition>
 
     <!-- Empty State -->
     <div v-if="!loading && !documents.length" class="recycle-empty">
-      <el-empty description="回收站为空">
+      <el-empty :description="$t('recycleBin.empty')">
         <template #image>
           <el-icon :size="48" color="var(--kx-text-placeholder)"><Delete /></el-icon>
         </template>
@@ -95,9 +95,12 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { getRecycleBin, restoreDocument, permanentDeleteDocument } from '@/api/modules/document'
 import type { Document } from '@/types'
 import { ElMessage, ElMessageBox } from 'element-plus'
+
+const { t } = useI18n()
 
 const loading = ref(false)
 const documents = ref<Document[]>([])
@@ -107,24 +110,24 @@ const searchKey = ref('')
 const filterType = ref('all')
 const selectedDocs = ref<Document[]>([])
 
-const typeMap: Record<string, { icon: string; color: string; label: string }> = {
-  folder: { icon: 'Folder', color: '#f5a623', label: '文件夹' },
-  doc: { icon: 'Document', color: '#3370ff', label: '文档' },
-  sheet: { icon: 'Grid', color: '#36b37e', label: '表格' },
-  slide: { icon: 'Monitor', color: '#ff7d00', label: '幻灯片' },
-  mindnote: { icon: 'Share', color: '#9254de', label: '思维笔记' },
-  bitable: { icon: 'Tickets', color: '#00b8d9', label: '多维表格' },
-  survey: { icon: 'Notebook', color: '#f54a45', label: '问卷' },
+const typeMap: Record<string, { icon: string; color: string; labelKey: string }> = {
+  folder: { icon: 'Folder', color: '#f5a623', labelKey: 'home.folder' },
+  doc: { icon: 'Document', color: '#3370ff', labelKey: 'home.doc' },
+  sheet: { icon: 'Grid', color: '#36b37e', labelKey: 'home.sheet' },
+  slide: { icon: 'Monitor', color: '#ff7d00', labelKey: 'home.slide' },
+  mindnote: { icon: 'Share', color: '#9254de', labelKey: 'home.mindNote' },
+  bitable: { icon: 'Tickets', color: '#00b8d9', labelKey: 'home.bitable' },
+  survey: { icon: 'Notebook', color: '#f54a45', labelKey: 'home.survey' },
 }
 
 function getTypeIcon(type: string) { return typeMap[type]?.icon || 'Document' }
 function getTypeColor(type: string) { return typeMap[type]?.color || '#3370ff' }
-function getTypeLabel(type: string) { return typeMap[type]?.label || '文档' }
+function getTypeLabel(type: string) { return t(typeMap[type]?.labelKey || 'home.doc') }
 
-function formatDate(t: string | null) {
-  if (!t) return ''
-  const d = new Date(t)
-  return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+function formatDate(dateStr: string | null) {
+  if (!dateStr) return ''
+  const d = new Date(dateStr)
+  return d.toLocaleString(undefined, { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })
 }
 
 function getRemainingDays(deletedAt: string | null): number {
@@ -173,14 +176,14 @@ function handleSelectionChange(rows: Document[]) {
 
 async function handleRestore(doc: Document) {
   await restoreDocument(doc.id)
-  ElMessage.success(`"${doc.title}" 已恢复`)
+  ElMessage.success(t('home.restored', { title: doc.title }))
   fetchData()
 }
 
 async function handlePermanentDelete(doc: Document) {
-  await ElMessageBox.confirm(`彻底删除"${doc.title}"？此操作不可撤销`, '警告', { type: 'warning' })
+  await ElMessageBox.confirm(t('recycleBin.permanentDeleteSingle', { title: doc.title }), t('common.delete'), { type: 'warning' })
   await permanentDeleteDocument(doc.id)
-  ElMessage.success('已彻底删除')
+  ElMessage.success(t('home.permanentDeleted'))
   fetchData()
 }
 
@@ -189,28 +192,28 @@ async function batchRestore() {
   for (const doc of selectedDocs.value) {
     try { await restoreDocument(doc.id) } catch { /* continue */ }
   }
-  ElMessage.success(`已恢复 ${count} 个文档`)
+  ElMessage.success(t('home.batchRestored', { count }))
   selectedDocs.value = []
   fetchData()
 }
 
 async function batchPermanentDelete() {
   const count = selectedDocs.value.length
-  await ElMessageBox.confirm(`确定彻底删除选中的 ${count} 个文档？此操作不可撤销`, '批量删除', { type: 'warning' })
+  await ElMessageBox.confirm(t('home.batchPermanentDeleteConfirm', { count }), t('recycleBin.batchDeleteTitle'), { type: 'warning' })
   for (const doc of selectedDocs.value) {
     try { await permanentDeleteDocument(doc.id) } catch { /* continue */ }
   }
-  ElMessage.success(`已彻底删除 ${count} 个文档`)
+  ElMessage.success(t('recycleBin.batchPermanentDeleted', { count }))
   selectedDocs.value = []
   fetchData()
 }
 
 async function handleEmptyAll() {
-  await ElMessageBox.confirm('清空回收站？所有文档将被彻底删除，不可恢复', '警告', { type: 'warning' })
+  await ElMessageBox.confirm(t('recycleBin.emptyAllConfirm'), t('common.delete'), { type: 'warning' })
   for (const doc of documents.value) {
     try { await permanentDeleteDocument(doc.id) } catch { /* continue */ }
   }
-  ElMessage.success('回收站已清空')
+  ElMessage.success(t('recycleBin.emptied'))
   fetchData()
 }
 

@@ -15,7 +15,7 @@ export function searchUsers(query: string) {
   return get<ApiResponse<UserSearchResult[]>>(`/api/v1/users/search`, { q: query })
 }
 
-export function addComment(data: { documentId: number; content: string; selection?: any; parentId?: number }) {
+export function addComment(data: { documentId: number; content: string; quoted_text?: string; parent_id?: number }) {
   return post<ApiResponse>('/api/v1/collaborate/comment/add', data)
 }
 

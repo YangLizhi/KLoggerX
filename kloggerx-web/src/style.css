@@ -30,24 +30,22 @@
   }
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
+html.dark {
+  --text: #9ca3af;
+  --text-h: #f3f4f6;
+  --bg: #16171d;
+  --border: #2e303a;
+  --code-bg: #1f2028;
+  --accent: #c084fc;
+  --accent-bg: rgba(192, 132, 252, 0.15);
+  --accent-border: rgba(192, 132, 252, 0.5);
+  --social-bg: rgba(47, 48, 58, 0.5);
+  --shadow:
+    rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
+}
 
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
+html.dark #social .button-icon {
+  filter: invert(1) brightness(2);
 }
 
 body {
@@ -292,5 +290,119 @@ code {
   &::after {
     right: 0;
     border-right-color: var(--border);
+  }
+}
+
+/* ========================================
+   Global Responsive Breakpoints
+   ======================================== */
+
+/* Utility Classes */
+.hide-on-tablet {
+  display: initial;
+}
+.hide-on-mobile {
+  display: initial;
+}
+.show-on-mobile {
+  display: none !important;
+}
+
+/* 768px - Tablet Portrait */
+@media (max-width: 768px) {
+  :root {
+    font-size: 16px;
+  }
+
+  h1 {
+    font-size: 32px;
+    margin: 16px 0;
+  }
+  h2 {
+    font-size: 18px;
+  }
+
+  .hide-on-tablet {
+    display: none !important;
+  }
+
+  /* Element Plus table horizontal scroll */
+  .el-table {
+    width: 100%;
+    overflow-x: auto;
+  }
+
+  /* Dialogs wider on tablet */
+  .el-dialog {
+    --el-dialog-width: 85% !important;
+    margin: 8vh auto !important;
+  }
+
+  .el-drawer {
+    width: 80% !important;
+  }
+}
+
+/* 640px - Large Phone */
+@media (max-width: 640px) {
+  :root {
+    font-size: 15px;
+  }
+
+  h1 {
+    font-size: 28px;
+    margin: 12px 0;
+  }
+  h2 {
+    font-size: 17px;
+  }
+
+  .hide-on-mobile {
+    display: none !important;
+  }
+  .show-on-mobile {
+    display: initial !important;
+  }
+
+  /* Dialogs near full screen */
+  .el-dialog {
+    --el-dialog-width: 94% !important;
+    margin: 4vh auto !important;
+  }
+
+  .el-drawer {
+    width: 100% !important;
+  }
+
+  /* Button groups wrap */
+  .el-button-group {
+    flex-wrap: wrap;
+  }
+}
+
+/* 480px - Small Phone */
+@media (max-width: 480px) {
+  :root {
+    font-size: 14px;
+  }
+
+  h1 {
+    font-size: 24px;
+    margin: 10px 0;
+  }
+  h2 {
+    font-size: 16px;
+  }
+
+  /* Dialogs full width */
+  .el-dialog {
+    --el-dialog-width: 100% !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    height: 100vh;
+  }
+
+  .el-message-box {
+    width: 90% !important;
   }
 }

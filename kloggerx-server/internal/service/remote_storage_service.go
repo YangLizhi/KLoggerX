@@ -1,14 +1,40 @@
 package service
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"log"
+	"path/filepath"
+	"strings"
 	"sync"
 
 	"kloggerx-server/internal/model"
 	"kloggerx-server/internal/repository/mysql"
 )
+
+// ValidatePath 验证路径安全性，防止路径遍历攻击
+func ValidatePath(path string) (string, error) {
+	// 1. 清理路径
+	cleaned := filepath.Clean(path)
+
+	// 2. 禁止包含 .. 的路径
+	if strings.Contains(cleaned, "..") {
+		return "", errors.New("路径包含非法字符")
+	}
+
+	// 3. 禁止绝对路径（远程操作应相对于根目录）
+	if filepath.IsAbs(cleaned) && !strings.HasPrefix(cleaned, "/") {
+		return "", errors.New("不允许绝对路径")
+	}
+
+	// 4. 禁止特殊字符
+	if strings.ContainsAny(cleaned, "\x00") {
+		return "", errors.New("路径包含非法字符")
+	}
+
+	return cleaned, nil
+}
 
 // RemoteStorageService manages remote storage connections and operations
 type RemoteStorageService struct {
@@ -112,47 +138,67 @@ func (s *RemoteStorageService) createClient(config RemoteStorageConfig) (RemoteC
 
 // ListFiles lists files in a remote storage directory
 func (s *RemoteStorageService) ListFiles(storageID uint, path string) ([]RemoteFileInfo, error) {
+	validatedPath, err := ValidatePath(path)
+	if err != nil {
+		return nil, fmt.Errorf("invalid path: %w", err)
+	}
 	client, err := s.GetClient(storageID)
 	if err != nil {
 		return nil, err
 	}
-	return client.List(path)
+	return client.List(validatedPath)
 }
 
 // DownloadFile downloads a file from remote storage
 func (s *RemoteStorageService) DownloadFile(storageID uint, path string) (io.ReadCloser, error) {
+	validatedPath, err := ValidatePath(path)
+	if err != nil {
+		return nil, fmt.Errorf("invalid path: %w", err)
+	}
 	client, err := s.GetClient(storageID)
 	if err != nil {
 		return nil, err
 	}
-	return client.Download(path)
+	return client.Download(validatedPath)
 }
 
 // UploadFile uploads a file to remote storage
 func (s *RemoteStorageService) UploadFile(storageID uint, path string, reader io.Reader, size int64) error {
+	validatedPath, err := ValidatePath(path)
+	if err != nil {
+		return fmt.Errorf("invalid path: %w", err)
+	}
 	client, err := s.GetClient(storageID)
 	if err != nil {
 		return err
 	}
-	return client.Upload(path, reader, size)
+	return client.Upload(validatedPath, reader, size)
 }
 
 // DeleteFile deletes a file or directory from remote storage
 func (s *RemoteStorageService) DeleteFile(storageID uint, path string) error {
+	validatedPath, err := ValidatePath(path)
+	if err != nil {
+		return fmt.Errorf("invalid path: %w", err)
+	}
 	client, err := s.GetClient(storageID)
 	if err != nil {
 		return err
 	}
-	return client.Delete(path)
+	return client.Delete(validatedPath)
 }
 
 // CreateDir creates a directory in remote storage
 func (s *RemoteStorageService) CreateDir(storageID uint, path string) error {
+	validatedPath, err := ValidatePath(path)
+	if err != nil {
+		return fmt.Errorf("invalid path: %w", err)
+	}
 	client, err := s.GetClient(storageID)
 	if err != nil {
 		return err
 	}
-	return client.Mkdir(path)
+	return client.Mkdir(validatedPath)
 }
 
 // TestConnection tests connection to a remote storage

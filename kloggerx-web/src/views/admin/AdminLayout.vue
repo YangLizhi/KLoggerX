@@ -3,7 +3,7 @@
     <div class="admin-sidebar" :class="{ collapsed: sidebarCollapsed }">
       <div class="sidebar-header">
         <el-icon :size="20"><Setting /></el-icon>
-        <span v-show="!sidebarCollapsed">系统管理</span>
+        <span v-show="!sidebarCollapsed">{{ $t('admin.systemAdmin') }}</span>
         <el-icon
           class="collapse-btn"
           @click="sidebarCollapsed = !sidebarCollapsed"
@@ -34,7 +34,7 @@
           class="back-btn"
         >
           <el-icon><ArrowLeft /></el-icon>
-          <span v-show="!sidebarCollapsed">返回</span>
+          <span v-show="!sidebarCollapsed">{{ $t('admin.back') }}</span>
         </el-button>
       </div>
     </div>
@@ -47,17 +47,21 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 
 const route = useRoute()
 const router = useRouter()
+const { t } = useI18n()
 const sidebarCollapsed = ref(false)
 
 const menuItems = [
-  { path: '/admin/users', label: '用户和权限', icon: 'User' },
-  { path: '/admin/departments', label: '部门管理', icon: 'OfficeBuilding' },
-  { path: '/admin/templates', label: '模板管理', icon: 'Document' },
-  { path: '/admin/ai-models', label: 'AI模型设置', icon: 'Cpu' },
-  { path: '/admin/storage', label: '云盘存储', icon: 'FolderOpened' },
+  { path: '/admin/users', label: t('admin.usersAndPermissions'), icon: 'User' },
+  { path: '/admin/departments', label: t('admin.departments'), icon: 'OfficeBuilding' },
+  { path: '/admin/templates', label: t('admin.templates'), icon: 'Document' },
+  { path: '/admin/ai-models', label: t('admin.aiModels'), icon: 'Cpu' },
+  { path: '/admin/storage', label: t('admin.cloudStorage'), icon: 'FolderOpened' },
+  { path: '/admin/feedback-review', label: t('admin.feedbackReview'), icon: 'ChatLineSquare' },
+  { path: '/admin/operation-logs', label: t('admin.logs'), icon: 'List' },
 ]
 
 function isActive(path: string) {

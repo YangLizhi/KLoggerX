@@ -12,8 +12,8 @@
           <span class="comment-author">{{ comment.userName }}</span>
           <span class="comment-time">{{ formatCommentTime(comment.createdAt) }}</span>
         </div>
-        <div class="comment-body" v-if="comment.selection">
-          <div class="comment-selection">"{{ comment.selection }}"</div>
+        <div class="comment-body" v-if="comment.quoted_text">
+          <div class="comment-selection">"{{ comment.quoted_text }}"</div>
         </div>
         <div class="comment-content" v-html="renderMentions(comment.content)"></div>
         <div class="comment-actions">
@@ -93,11 +93,14 @@ interface CommentItem {
   documentId: number
   userId: number
   userName: string
+  user?: { id: number; username: string; avatar: string }
   content: string
-  selection: string
+  quoted_text: string
   parentId: number | null
+  parent_id: number | null
   resolved: boolean
   createdAt: string
+  created_at: string
   replies?: CommentItem[]
 }
 
@@ -344,12 +347,12 @@ async function fetchComments() {
 
 async function handleAdd() {
   if (!newComment.value.trim()) return
-  let selection = ''
+  let quotedText = ''
   let hasSelection = false
   if (props.editor) {
     const { from, to } = props.editor.state.selection
     if (from !== to) {
-      selection = props.editor.state.doc.textBetween(from, to, ' ')
+      quotedText = props.editor.state.doc.textBetween(from, to, ' ')
       hasSelection = true
     }
   }
@@ -357,7 +360,7 @@ async function handleAdd() {
     const res: any = await addComment({
       documentId: props.documentId,
       content: newComment.value.trim(),
-      selection,
+      quoted_text: quotedText,
     })
     newComment.value = ''
     // 如果有选区，应用评论标记
@@ -378,7 +381,7 @@ async function handleReply(parentId: number) {
     await addComment({
       documentId: props.documentId,
       content: text,
-      parentId,
+      parent_id: parentId,
     })
     replyTexts[parentId] = ''
     fetchComments()

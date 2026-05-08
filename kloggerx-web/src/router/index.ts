@@ -1,4 +1,24 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { ElMessage } from 'element-plus'
+import i18n from '@/locales'
+
+/**
+ * 从 JWT token 中解析用户角色
+ * JWT payload 是 base64 编码的 JSON
+ */
+function getUserRoleFromToken(token: string | null): string {
+  if (!token) return ''
+  try {
+    const parts = token.split('.')
+    if (parts.length !== 3) return ''
+    // base64url decode
+    const payload = parts[1].replace(/-/g, '+').replace(/_/g, '/')
+    const decoded = JSON.parse(atob(payload))
+    return decoded.role || ''
+  } catch {
+    return ''
+  }
+}
 
 const router = createRouter({
   history: createWebHistory(),
@@ -25,13 +45,13 @@ const router = createRouter({
           path: 'home',
           name: 'Home',
           component: () => import('@/views/home/HomePage.vue'),
-          meta: { title: '主页' },
+          meta: { titleKey: 'nav.home' },
         },
         {
           path: 'documents',
           name: 'Documents',
           component: () => import('@/views/document/DocumentLibrary.vue'),
-          meta: { title: '云盘' },
+          meta: { titleKey: 'nav.cloudDrive' },
         },
         {
           path: 'recent',
@@ -68,7 +88,7 @@ const router = createRouter({
           path: 'templates',
           name: 'TemplateCenter',
           component: () => import('@/views/template/TemplateCenter.vue'),
-          meta: { title: '模板库' },
+          meta: { titleKey: 'nav.templateLibrary' },
         },
         {
           path: 'settings',
@@ -77,42 +97,66 @@ const router = createRouter({
         },
         {
           path: 'admin',
-          redirect: '/admin/users',
-          meta: { requiresAdmin: true, title: '系统管理' },
+          redirect: '/admin/dashboard',
+          meta: { requiresAdmin: true, titleKey: 'nav.admin' },
           children: [
+            {
+              path: 'dashboard',
+              name: 'AdminDashboard',
+              component: () => import('@/views/admin/AdminDashboard.vue'),
+              meta: { titleKey: 'nav.dashboard' },
+            },
             {
               path: 'users',
               name: 'UserManagement',
               component: () => import('@/views/admin/UserManagement.vue'),
-              meta: { title: '用户和权限' },
+              meta: { titleKey: 'nav.usersAndPermissions' },
             },
             {
               path: 'departments',
               name: 'DepartmentManagement',
               component: () => import('@/views/admin/DepartmentManagement.vue'),
-              meta: { title: '部门管理' },
+              meta: { titleKey: 'nav.departmentManagement' },
             },
             {
               path: 'ai-models',
               name: 'AIModelSettings',
               component: () => import('@/views/admin/AIModelSettings.vue'),
-              meta: { title: 'AI模型设置' },
+              meta: { titleKey: 'nav.aiModelSettings' },
             },
             {
               path: 'storage',
               name: 'StorageSettings',
               component: () => import('@/views/admin/StorageSettings.vue'),
-              meta: { title: '云盘存储' },
+              meta: { titleKey: 'nav.cloudStorage' },
             },
             {
               path: 'templates',
               name: 'TemplateManagement',
               component: () => import('@/views/admin/TemplateManagement.vue'),
-              meta: { title: '模板管理' },
+              meta: { titleKey: 'nav.templateManagement' },
+            },
+            {
+              path: 'feedback-review',
+              name: 'FeedbackReview',
+              component: () => import('@/views/admin/FeedbackReview.vue'),
+              meta: { titleKey: 'nav.feedbackReview' },
+            },
+            {
+              path: 'operation-logs',
+              name: 'OperationLog',
+              component: () => import('@/views/admin/OperationLog.vue'),
+              meta: { titleKey: 'nav.operationLog' },
             },
           ],
         },
       ],
+    },
+    {
+      path: '/share/:token',
+      name: 'SharedConversation',
+      component: () => import('@/views/knowledge/SharedConversation.vue'),
+      meta: { requiresAuth: false },
     },
     {
       path: '/doc/:id',
@@ -133,8 +177,26 @@ router.beforeEach((to, _from, next) => {
   const token = localStorage.getItem('kx_token')
   if (to.meta.requiresAuth !== false && !token) {
     next({ path: '/login', query: { redirect: to.fullPath } })
+  } else if (to.meta.requiresAdmin) {
+    // 解析token中的role，若非admin则拒绝
+    const userRole = getUserRoleFromToken(token)
+    if (userRole !== 'admin') {
+      next({ path: '/home' })
+      ElMessage.warning(i18n.global.t('nav.noAdminPermission'))
+    } else {
+      next()
+    }
   } else {
     next()
+  }
+})
+
+router.afterEach((to) => {
+  const titleKey = to.meta.titleKey as string | undefined
+  if (titleKey) {
+    document.title = `${i18n.global.t(titleKey)} - KLoggerX`
+  } else {
+    document.title = 'KLoggerX'
   }
 })
 

@@ -15,7 +15,16 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// ListRemoteStorageFiles lists files in a remote storage directory
+// ListRemoteStorageFiles godoc
+// @Summary 列出远程存储文件
+// @Description 列出远程存储目录中的文件
+// @Tags 远程存储
+// @Produce json
+// @Param id path int true "存储ID"
+// @Param path query string false "目录路径"
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /remote-storage/{id}/files [get]
 func ListRemoteStorageFiles(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.ParseUint(idStr, 10, 64)
@@ -48,7 +57,16 @@ func ListRemoteStorageFiles(c *gin.Context) {
 	}))
 }
 
-// DownloadRemoteFile downloads a file from remote storage
+// DownloadRemoteFile godoc
+// @Summary 下载远程文件
+// @Description 从远程存储下载文件
+// @Tags 远程存储
+// @Produce application/octet-stream
+// @Param id path int true "存储ID"
+// @Param path query string true "文件路径"
+// @Success 200 {file} binary
+// @Security BearerAuth
+// @Router /remote-storage/{id}/download [get]
 func DownloadRemoteFile(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.ParseUint(idStr, 10, 64)
@@ -92,7 +110,16 @@ func DownloadRemoteFile(c *gin.Context) {
 	}
 }
 
-// UploadRemoteFile uploads a file to remote storage
+// UploadRemoteFile godoc
+// @Summary 上传文件到远程存储
+// @Description 上传文件到远程存储
+// @Tags 远程存储
+// @Accept multipart/form-data
+// @Produce json
+// @Param id path int true "存储ID"
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /remote-storage/{id}/upload [post]
 func UploadRemoteFile(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.ParseUint(idStr, 10, 64)
@@ -136,7 +163,16 @@ func UploadRemoteFile(c *gin.Context) {
 	}))
 }
 
-// CreateRemoteFolder creates a directory in remote storage
+// CreateRemoteFolder godoc
+// @Summary 创建远程目录
+// @Description 在远程存储中创建目录
+// @Tags 远程存储
+// @Accept json
+// @Produce json
+// @Param id path int true "存储ID"
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /remote-storage/{id}/mkdir [post]
 func CreateRemoteFolder(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.ParseUint(idStr, 10, 64)
@@ -146,7 +182,7 @@ func CreateRemoteFolder(c *gin.Context) {
 	}
 
 	var req struct {
-		Path string `json:"path" binding:"required"`
+		Path string `json:"path" binding:"required,max=1000"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusOK, model.ErrorMsg("参数错误"))
@@ -164,7 +200,16 @@ func CreateRemoteFolder(c *gin.Context) {
 	c.JSON(http.StatusOK, model.Success(nil))
 }
 
-// DeleteRemoteFile deletes a file or directory from remote storage
+// DeleteRemoteFile godoc
+// @Summary 删除远程文件
+// @Description 删除远程存储中的文件或目录
+// @Tags 远程存储
+// @Accept json
+// @Produce json
+// @Param id path int true "存储ID"
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /remote-storage/{id}/file [delete]
 func DeleteRemoteFile(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.ParseUint(idStr, 10, 64)
@@ -174,7 +219,7 @@ func DeleteRemoteFile(c *gin.Context) {
 	}
 
 	var req struct {
-		Path string `json:"path" binding:"required"`
+		Path string `json:"path" binding:"required,max=1000"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusOK, model.ErrorMsg("参数错误"))
@@ -192,7 +237,15 @@ func DeleteRemoteFile(c *gin.Context) {
 	c.JSON(http.StatusOK, model.Success(nil))
 }
 
-// TestRemoteStorageConnect tests connection to a remote storage
+// TestRemoteStorageConnect godoc
+// @Summary 测试远程存储连接
+// @Description 测试与远程存储的连接
+// @Tags 远程存储
+// @Produce json
+// @Param id path int true "存储ID"
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /remote-storage/{id}/test [post]
 func TestRemoteStorageConnect(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.ParseUint(idStr, 10, 64)
@@ -215,7 +268,15 @@ func TestRemoteStorageConnect(c *gin.Context) {
 	}))
 }
 
-// DisconnectRemoteStorage disconnects from a remote storage
+// DisconnectRemoteStorageHandler godoc
+// @Summary 断开远程存储连接
+// @Description 断开与远程存储的连接
+// @Tags 远程存储
+// @Produce json
+// @Param id path int true "存储ID"
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /remote-storage/{id}/disconnect [post]
 func DisconnectRemoteStorageHandler(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.ParseUint(idStr, 10, 64)

@@ -3,30 +3,30 @@
     <div class="toolbar-group">
       <el-dropdown trigger="click" @command="addQuestion">
         <el-button size="small" type="primary">
-          <el-icon><Plus /></el-icon>添加题目
+          <el-icon><Plus /></el-icon>{{ $t('editor.survey.addQuestion') }}
         </el-button>
         <template #dropdown>
           <el-dropdown-menu>
-            <el-dropdown-item command="single">单选题</el-dropdown-item>
-            <el-dropdown-item command="multiple">多选题</el-dropdown-item>
-            <el-dropdown-item command="text">填空题</el-dropdown-item>
-            <el-dropdown-item command="rating">评分题</el-dropdown-item>
-            <el-dropdown-item command="matrix">矩阵题</el-dropdown-item>
+            <el-dropdown-item command="single">{{ $t('editor.survey.singleChoice') }}</el-dropdown-item>
+            <el-dropdown-item command="multiple">{{ $t('editor.survey.multipleChoice') }}</el-dropdown-item>
+            <el-dropdown-item command="text">{{ $t('editor.survey.textQuestion') }}</el-dropdown-item>
+            <el-dropdown-item command="rating">{{ $t('editor.survey.ratingQuestion') }}</el-dropdown-item>
+            <el-dropdown-item command="matrix">{{ $t('editor.survey.matrixQuestion') }}</el-dropdown-item>
           </el-dropdown-menu>
         </template>
       </el-dropdown>
     </div>
     <span class="toolbar-divider" />
     <div class="toolbar-group">
-      <el-button size="small" @click="moveUp" :disabled="!canMoveUp"><el-icon><Top /></el-icon>上移</el-button>
-      <el-button size="small" @click="moveDown" :disabled="!canMoveDown"><el-icon><Bottom /></el-icon>下移</el-button>
-      <el-button size="small" @click="duplicateQuestion" :disabled="!hasSelection"><el-icon><CopyDocument /></el-icon>复制</el-button>
-      <el-button size="small" @click="deleteQuestion" :disabled="!hasSelection"><el-icon><Delete /></el-icon>删除</el-button>
+      <el-button size="small" @click="moveUp" :disabled="!canMoveUp"><el-icon><Top /></el-icon>{{ $t('editor.survey.moveUp') }}</el-button>
+      <el-button size="small" @click="moveDown" :disabled="!canMoveDown"><el-icon><Bottom /></el-icon>{{ $t('editor.survey.moveDown') }}</el-button>
+      <el-button size="small" @click="duplicateQuestion" :disabled="!hasSelection"><el-icon><CopyDocument /></el-icon>{{ $t('editor.survey.duplicate') }}</el-button>
+      <el-button size="small" @click="deleteQuestion" :disabled="!hasSelection"><el-icon><Delete /></el-icon>{{ $t('editor.survey.deleteQuestion') }}</el-button>
     </div>
     <span class="toolbar-divider" />
     <div class="toolbar-group">
-      <el-button size="small" @click="previewSurvey"><el-icon><View /></el-icon>预览</el-button>
-      <el-button size="small" @click="showSettings"><el-icon><Setting /></el-icon>设置</el-button>
+      <el-button size="small" @click="previewSurvey"><el-icon><View /></el-icon>{{ $t('editor.survey.preview') }}</el-button>
+      <el-button size="small" @click="showSettings"><el-icon><Setting /></el-icon>{{ $t('editor.survey.settings') }}</el-button>
     </div>
   </div>
 </template>

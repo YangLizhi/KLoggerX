@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -16,8 +17,17 @@ import (
 )
 
 var upgrader = websocket.Upgrader{
-	CheckOrigin: func(r *http.Request) bool { return true },
+	CheckOrigin:  func(r *http.Request) bool { return true },
+	Subprotocols: []string{"access_token"},
 }
+
+const (
+	MaxConnectionsPerUser = 10 // 单用户最多10个WS连接
+	MaxConnectionsPerRoom = 50 // 单房间最多50个连接
+	pingInterval          = 30 * time.Second
+	pongTimeout           = 90 * time.Second
+	writeWait             = 10 * time.Second
+)
 
 type Message struct {
 	Type string      `json:"type"`
@@ -64,6 +74,19 @@ func NewHub() *Hub {
 	}
 }
 
+// countUserConnections 统计某用户当前所有连接数（需持有读锁或写锁）
+func (h *Hub) countUserConnections(userID uint) int {
+	count := 0
+	for _, clients := range h.rooms {
+		for c := range clients {
+			if c.UserID == userID {
+				count++
+			}
+		}
+	}
+	return count
+}
+
 func (h *Hub) Run() {
 	// 定期清理空闲的 Yjs 房间（每分钟一次）
 	cleanupTicker := time.NewTicker(1 * time.Minute)
@@ -76,6 +99,23 @@ func (h *Hub) Run() {
 
 		case client := <-h.register:
 			h.mu.Lock()
+			// 检查用户连接数
+			userConns := h.countUserConnections(client.UserID)
+			if userConns >= MaxConnectionsPerUser {
+				h.mu.Unlock()
+				client.Conn.WriteMessage(websocket.CloseMessage,
+					websocket.FormatCloseMessage(4001, "连接数超限"))
+				client.Conn.Close()
+				continue
+			}
+			// 检查房间连接数
+			if len(h.rooms[client.DocumentID]) >= MaxConnectionsPerRoom {
+				h.mu.Unlock()
+				client.Conn.WriteMessage(websocket.CloseMessage,
+					websocket.FormatCloseMessage(4002, "房间已满"))
+				client.Conn.Close()
+				continue
+			}
 			if h.rooms[client.DocumentID] == nil {
 				h.rooms[client.DocumentID] = make(map[*Client]bool)
 			}
@@ -198,8 +238,24 @@ func (h *Hub) broadcastToRoom(docID uint, msg Message, exclude *Client) {
 	}
 }
 
+// getTokenFromRequest 从请求中获取token（按优先级）
+// 1. Sec-WebSocket-Protocol header（格式: "access_token, <actual-token>"）
+// 2. Query parameter（deprecated，兼容旧客户端）
+func getTokenFromRequest(c *gin.Context) string {
+	// 优先从 Sec-WebSocket-Protocol 获取
+	protocols := c.GetHeader("Sec-WebSocket-Protocol")
+	if protocols != "" {
+		parts := strings.Split(protocols, ", ")
+		if len(parts) >= 2 && parts[0] == "access_token" {
+			return parts[1]
+		}
+	}
+	// fallback to query param (deprecated)
+	return c.Query("token")
+}
+
 func HandleWebSocket(hub *Hub, c *gin.Context) {
-	token := c.Query("token")
+	token := getTokenFromRequest(c)
 	claims, err := jwt.ParseToken(token)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
@@ -241,7 +297,7 @@ func HandleWebSocket(hub *Hub, c *gin.Context) {
 
 // HandleYjsWebSocket handles Yjs binary sync messages for real-time collaboration
 func HandleYjsWebSocket(hub *Hub, c *gin.Context) {
-	token := c.Query("token")
+	token := getTokenFromRequest(c)
 	claims, err := jwt.ParseToken(token)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
@@ -287,6 +343,11 @@ func HandleYjsWebSocket(hub *Hub, c *gin.Context) {
 }
 
 func (c *Client) readPump() {
+	c.Conn.SetReadDeadline(time.Now().Add(pongTimeout))
+	c.Conn.SetPongHandler(func(string) error {
+		c.Conn.SetReadDeadline(time.Now().Add(pongTimeout))
+		return nil
+	})
 	defer func() {
 		c.Hub.unregister <- c
 		c.Conn.Close()
@@ -337,7 +398,7 @@ func (c *Client) readYjsPump() {
 	}
 
 	// 获取或创建 Yjs 房间
-	yjsRoom := GlobalYjsManager.GetOrCreateRoom(actualDocID)
+	yjsRoom, _ := GlobalYjsManager.GetOrCreateRoom(actualDocID)
 	yjsRoom.AddClient(c)
 
 	defer func() {
@@ -359,10 +420,28 @@ func (c *Client) readYjsPump() {
 }
 
 func (c *Client) writePump() {
-	defer c.Conn.Close()
-	for msg := range c.Send {
-		if err := c.Conn.WriteMessage(msg.MsgType, msg.Data); err != nil {
-			break
+	ticker := time.NewTicker(pingInterval)
+	defer func() {
+		ticker.Stop()
+		c.Conn.Close()
+	}()
+	for {
+		select {
+		case msg, ok := <-c.Send:
+			if !ok {
+				// channel已关闭
+				c.Conn.WriteMessage(websocket.CloseMessage, []byte{})
+				return
+			}
+			c.Conn.SetWriteDeadline(time.Now().Add(writeWait))
+			if err := c.Conn.WriteMessage(msg.MsgType, msg.Data); err != nil {
+				return
+			}
+		case <-ticker.C:
+			c.Conn.SetWriteDeadline(time.Now().Add(writeWait))
+			if err := c.Conn.WriteMessage(websocket.PingMessage, nil); err != nil {
+				return
+			}
 		}
 	}
 }

@@ -20,6 +20,15 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// GetDocumentTree godoc
+// @Summary 获取文档树
+// @Description 获取用户的文档树结构
+// @Tags 文档管理
+// @Produce json
+// @Param parentId query int false "父文档ID"
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /document/tree [get]
 func GetDocumentTree(c *gin.Context) {
 	uid := utils.GetUserID(c.MustGet("userId"))
 	pidStr := c.Query("parentId")
@@ -37,6 +46,15 @@ func GetDocumentTree(c *gin.Context) {
 	c.JSON(http.StatusOK, model.Success(docs))
 }
 
+// GetDocumentDetail godoc
+// @Summary 获取文档详情
+// @Description 获取指定文档的详细信息
+// @Tags 文档管理
+// @Produce json
+// @Param id path int true "文档ID"
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /document/{id} [get]
 func GetDocumentDetail(c *gin.Context) {
 	uid := utils.GetUserID(c.MustGet("userId"))
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
@@ -48,6 +66,15 @@ func GetDocumentDetail(c *gin.Context) {
 	c.JSON(http.StatusOK, model.Success(doc))
 }
 
+// CreateDocument godoc
+// @Summary 创建文档
+// @Description 创建一个新文档
+// @Tags 文档管理
+// @Accept json
+// @Produce json
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /document/create [post]
 func CreateDocument(c *gin.Context) {
 	uid := utils.GetUserID(c.MustGet("userId"))
 	var req service.CreateDocReq
@@ -64,10 +91,28 @@ func CreateDocument(c *gin.Context) {
 	c.JSON(http.StatusOK, model.Success(doc))
 }
 
+// UpdateDocument godoc
+// @Summary 更新文档标题
+// @Description 更新指定文档的标题
+// @Tags 文档管理
+// @Accept json
+// @Produce json
+// @Param id path int true "文档ID"
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /document/{id}/update [post]
 func UpdateDocument(c *gin.Context) {
+	uid := utils.GetUserID(c.MustGet("userId"))
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+
+	// 权限检查：需要编辑权限
+	if err := service.CheckDocumentPermission(uid, uint(id), "edit"); err != nil {
+		c.JSON(http.StatusForbidden, model.ErrorMsg("无权限执行此操作"))
+		return
+	}
+
 	var body struct {
-		Title string `json:"title"`
+		Title string `json:"title" binding:"max=500"`
 	}
 	if err := c.ShouldBindJSON(&body); err != nil {
 		c.JSON(http.StatusOK, model.ErrorMsg("参数错误"))
@@ -80,11 +125,21 @@ func UpdateDocument(c *gin.Context) {
 	c.JSON(http.StatusOK, model.Success(nil))
 }
 
+// SaveDocumentContent godoc
+// @Summary 保存文档内容
+// @Description 保存文档的内容
+// @Tags 文档管理
+// @Accept json
+// @Produce json
+// @Param id path int true "文档ID"
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /document/{id}/content [post]
 func SaveDocumentContent(c *gin.Context) {
 	uid := utils.GetUserID(c.MustGet("userId"))
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
 	var body struct {
-		Content string `json:"content" binding:"required"`
+		Content string `json:"content" binding:"required,max=5000000"`
 	}
 	if err := c.ShouldBindJSON(&body); err != nil {
 		c.JSON(http.StatusOK, model.ErrorMsg("参数错误"))
@@ -97,9 +152,25 @@ func SaveDocumentContent(c *gin.Context) {
 	c.JSON(http.StatusOK, model.Success(nil))
 }
 
+// DeleteDocument godoc
+// @Summary 删除文档
+// @Description 将文档移入回收站
+// @Tags 文档管理
+// @Produce json
+// @Param id path int true "文档ID"
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /document/{id}/delete [post]
 func DeleteDocument(c *gin.Context) {
 	uid := utils.GetUserID(c.MustGet("userId"))
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+
+	// 权限检查：需要删除权限（owner 或 admin）
+	if err := service.CheckDocumentPermission(uid, uint(id), "delete"); err != nil {
+		c.JSON(http.StatusForbidden, model.ErrorMsg("无权限执行此操作"))
+		return
+	}
+
 	if err := service.DeleteDocument(uint(id)); err != nil {
 		c.JSON(http.StatusOK, model.ErrorMsg(err.Error()))
 		return
@@ -108,6 +179,15 @@ func DeleteDocument(c *gin.Context) {
 	c.JSON(http.StatusOK, model.Success(nil))
 }
 
+// RestoreDocument godoc
+// @Summary 恢复文档
+// @Description 从回收站恢复文档
+// @Tags 文档管理
+// @Produce json
+// @Param id path int true "文档ID"
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /document/{id}/restore [post]
 func RestoreDocument(c *gin.Context) {
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err := service.RestoreDocument(uint(id)); err != nil {
@@ -117,22 +197,101 @@ func RestoreDocument(c *gin.Context) {
 	c.JSON(http.StatusOK, model.Success(nil))
 }
 
-func PermanentDeleteDocument(c *gin.Context) {
+// PermanentDelete 永久删除文档
+// DELETE /document/:id/permanent
+func PermanentDelete(c *gin.Context) {
+	uid := utils.GetUserID(c.MustGet("userId"))
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
-	if err := service.PermanentDeleteDocument(uint(id)); err != nil {
+	if err := service.PermanentDeleteDocument(uid, uint(id)); err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg(err.Error()))
+		return
+	}
+	service.CreateOperationLog(uid, "", "permanent_delete", "document", uint(id), "", "", c.ClientIP())
+	c.JSON(http.StatusOK, model.Success(nil))
+}
+
+// BatchRestore 批量恢复文档
+// POST /document/batch-restore  body: { "doc_ids": [1,2,3] }
+func BatchRestore(c *gin.Context) {
+	uid := utils.GetUserID(c.MustGet("userId"))
+	var body struct {
+		DocIDs []uint `json:"doc_ids" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg("参数错误"))
+		return
+	}
+	if err := service.BatchRestoreDocuments(uid, body.DocIDs); err != nil {
 		c.JSON(http.StatusOK, model.ErrorMsg(err.Error()))
 		return
 	}
 	c.JSON(http.StatusOK, model.Success(nil))
 }
 
+// CleanupExpired 手动触发清理过期文档（管理员）
+// POST /document/cleanup-expired
+func CleanupExpired(c *gin.Context) {
+	count, err := service.CleanupExpiredDocuments()
+	if err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg("清理失败: "+err.Error()))
+		return
+	}
+	c.JSON(http.StatusOK, model.Success(map[string]interface{}{"deleted_count": count}))
+}
+
+// PermanentDeleteDocument legacy handler (kept for backward compatibility with DELETE /document/:id)
+// PermanentDeleteDocument godoc
+// @Summary 永久删除文档
+// @Description 永久删除文档
+// @Tags 文档管理
+// @Produce json
+// @Param id path int true "文档ID"
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /document/{id} [delete]
+func PermanentDeleteDocument(c *gin.Context) {
+	uid := utils.GetUserID(c.MustGet("userId"))
+	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err := service.PermanentDeleteDocument(uid, uint(id)); err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg(err.Error()))
+		return
+	}
+	c.JSON(http.StatusOK, model.Success(nil))
+}
+
+// MoveDocument godoc
+// @Summary 移动文档
+// @Description 移动文档到目标目录
+// @Tags 文档管理
+// @Accept json
+// @Produce json
+// @Param id path int true "文档ID"
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /document/{id}/move [post]
 func MoveDocument(c *gin.Context) {
 	uid := utils.GetUserID(c.MustGet("userId"))
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+
+	// 权限检查：对源文档需要编辑权限
+	if err := service.CheckDocumentPermission(uid, uint(id), "edit"); err != nil {
+		c.JSON(http.StatusForbidden, model.ErrorMsg("无权限执行此操作"))
+		return
+	}
+
 	var body struct {
 		TargetParentID *uint `json:"targetParentId"`
 	}
 	c.ShouldBindJSON(&body)
+
+	// 如果目标文件夹非根目录，检查对目标文件夹的权限
+	if body.TargetParentID != nil {
+		if err := service.CheckDocumentPermission(uid, *body.TargetParentID, "edit"); err != nil {
+			c.JSON(http.StatusForbidden, model.ErrorMsg("无权限移动到目标位置"))
+			return
+		}
+	}
+
 	if err := service.MoveDocument(uint(id), body.TargetParentID); err != nil {
 		c.JSON(http.StatusOK, model.ErrorMsg(err.Error()))
 		return
@@ -141,6 +300,15 @@ func MoveDocument(c *gin.Context) {
 	c.JSON(http.StatusOK, model.Success(nil))
 }
 
+// CopyDocument godoc
+// @Summary 复制文档
+// @Description 复制文档
+// @Tags 文档管理
+// @Produce json
+// @Param id path int true "文档ID"
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /document/{id}/copy [post]
 func CopyDocument(c *gin.Context) {
 	uid := utils.GetUserID(c.MustGet("userId"))
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
@@ -152,6 +320,16 @@ func CopyDocument(c *gin.Context) {
 	c.JSON(http.StatusOK, model.Success(doc))
 }
 
+// PinDocument godoc
+// @Summary 置顶文档
+// @Description 置顶或取消置顶文档
+// @Tags 文档管理
+// @Accept json
+// @Produce json
+// @Param id path int true "文档ID"
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /document/{id}/pin [post]
 func PinDocument(c *gin.Context) {
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
 	var body struct {
@@ -165,6 +343,16 @@ func PinDocument(c *gin.Context) {
 	c.JSON(http.StatusOK, model.Success(nil))
 }
 
+// FavoriteDocument godoc
+// @Summary 收藏文档
+// @Description 收藏或取消收藏文档
+// @Tags 文档管理
+// @Accept json
+// @Produce json
+// @Param id path int true "文档ID"
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /document/{id}/favorite [post]
 func FavoriteDocument(c *gin.Context) {
 	uid := utils.GetUserID(c.MustGet("userId"))
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
@@ -179,6 +367,16 @@ func FavoriteDocument(c *gin.Context) {
 	c.JSON(http.StatusOK, model.Success(nil))
 }
 
+// TransferOwnership godoc
+// @Summary 转移所有权
+// @Description 转移文档所有权给其他用户
+// @Tags 文档管理
+// @Accept json
+// @Produce json
+// @Param id path int true "文档ID"
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /document/{id}/transfer [post]
 func TransferOwnership(c *gin.Context) {
 	uid := utils.GetUserID(c.MustGet("userId"))
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
@@ -197,6 +395,16 @@ func TransferOwnership(c *gin.Context) {
 	c.JSON(http.StatusOK, model.Success(nil))
 }
 
+// GetRecycleBin godoc
+// @Summary 获取回收站
+// @Description 获取回收站中的文档列表
+// @Tags 文档管理
+// @Produce json
+// @Param page query int false "页码"
+// @Param pageSize query int false "每页数量"
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /document/recycle-bin [get]
 func GetRecycleBin(c *gin.Context) {
 	uid := utils.GetUserID(c.MustGet("userId"))
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
@@ -209,6 +417,14 @@ func GetRecycleBin(c *gin.Context) {
 	c.JSON(http.StatusOK, model.Success(model.PaginatedData{List: docs, Total: total, Page: page, PageSize: pageSize}))
 }
 
+// GetFavorites godoc
+// @Summary 获取收藏列表
+// @Description 获取用户收藏的文档列表
+// @Tags 文档管理
+// @Produce json
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /document/favorites [get]
 func GetFavorites(c *gin.Context) {
 	uid := utils.GetUserID(c.MustGet("userId"))
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
@@ -221,6 +437,14 @@ func GetFavorites(c *gin.Context) {
 	c.JSON(http.StatusOK, model.Success(model.PaginatedData{List: docs, Total: total, Page: page, PageSize: pageSize}))
 }
 
+// GetPinnedDocuments godoc
+// @Summary 获取置顶文档
+// @Description 获取用户置顶的文档列表
+// @Tags 文档管理
+// @Produce json
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /document/pinned [get]
 func GetPinnedDocuments(c *gin.Context) {
 	uid := utils.GetUserID(c.MustGet("userId"))
 	docs, err := service.GetPinnedDocuments(uid)
@@ -231,6 +455,14 @@ func GetPinnedDocuments(c *gin.Context) {
 	c.JSON(http.StatusOK, model.Success(docs))
 }
 
+// GetRecentDocuments godoc
+// @Summary 获取最近文档
+// @Description 获取用户最近访问的文档
+// @Tags 文档管理
+// @Produce json
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /document/recent [get]
 func GetRecentDocuments(c *gin.Context) {
 	uid := utils.GetUserID(c.MustGet("userId"))
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
@@ -243,6 +475,15 @@ func GetRecentDocuments(c *gin.Context) {
 	c.JSON(http.StatusOK, model.Success(model.PaginatedData{List: docs, Total: total, Page: page, PageSize: pageSize}))
 }
 
+// SearchDocuments godoc
+// @Summary 搜索文档
+// @Description 根据关键词搜索文档
+// @Tags 文档管理
+// @Produce json
+// @Param keyword query string false "搜索关键词"
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /document/search [get]
 func SearchDocuments(c *gin.Context) {
 	uid := utils.GetUserID(c.MustGet("userId"))
 	keyword := c.Query("keyword")
@@ -256,6 +497,15 @@ func SearchDocuments(c *gin.Context) {
 	c.JSON(http.StatusOK, model.Success(model.PaginatedData{List: docs, Total: total, Page: page, PageSize: pageSize}))
 }
 
+// GetDocumentVersions godoc
+// @Summary 获取文档版本历史
+// @Description 获取文档的版本历史记录
+// @Tags 文档管理
+// @Produce json
+// @Param id path int true "文档ID"
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /document/{id}/versions [get]
 func GetDocumentVersions(c *gin.Context) {
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
 	versions, err := service.GetDocumentVersions(uint(id))
@@ -266,6 +516,16 @@ func GetDocumentVersions(c *gin.Context) {
 	c.JSON(http.StatusOK, model.Success(versions))
 }
 
+// RollbackVersion godoc
+// @Summary 回滚版本
+// @Description 回滚文档到指定版本
+// @Tags 文档管理
+// @Accept json
+// @Produce json
+// @Param id path int true "文档ID"
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /document/{id}/rollback [post]
 func RollbackVersion(c *gin.Context) {
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
 	var body struct {
@@ -282,6 +542,43 @@ func RollbackVersion(c *gin.Context) {
 	c.JSON(http.StatusOK, model.Success(nil))
 }
 
+// GetVersionDiff godoc
+// @Summary 获取版本差异
+// @Description 获取两个版本之间的差异
+// @Tags 文档管理
+// @Produce json
+// @Param id path int true "文档ID"
+// @Param v1 query string true "版本1"
+// @Param v2 query string true "版本2"
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /document/{id}/versions/diff [get]
+func GetVersionDiff(c *gin.Context) {
+	docID, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+	v1 := c.Query("v1")
+	v2 := c.Query("v2")
+	if v1 == "" || v2 == "" {
+		c.JSON(http.StatusOK, model.ErrorMsg("请提供v1和v2版本号"))
+		return
+	}
+	diff, err := service.GetDocumentVersionDiff(uint(docID), v1, v2)
+	if err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg(err.Error()))
+		return
+	}
+	c.JSON(http.StatusOK, model.Success(diff))
+}
+
+// ImportDocument godoc
+// @Summary 导入文档
+// @Description 上传文件导入为文档
+// @Tags 文档管理
+// @Accept multipart/form-data
+// @Produce json
+// @Param file formData file true "文件"
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /document/import [post]
 func ImportDocument(c *gin.Context) {
 	uid := utils.GetUserID(c.MustGet("userId"))
 	file, err := c.FormFile("file")
@@ -457,7 +754,15 @@ func uploadImportFileToStorage(file *multipart.FileHeader, ext string) string {
 	return objectName
 }
 
-// GetDocumentFilePreview returns a presigned URL for the original uploaded file
+// GetDocumentFilePreview godoc
+// @Summary 获取文档文件预览URL
+// @Description 获取文档关联文件的预览URL
+// @Tags 文档管理
+// @Produce json
+// @Param id path int true "文档ID"
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /document/{id}/file-preview [get]
 func GetDocumentFilePreview(c *gin.Context) {
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
 
@@ -505,33 +810,75 @@ func GetDocumentFilePreview(c *gin.Context) {
 	}))
 }
 
+// ExportDocument godoc
+// @Summary 导出文档
+// @Description 导出指定文档
+// @Tags 文档管理
+// @Produce json
+// @Param id path int true "文档ID"
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /document/{id}/export [get]
 func ExportDocument(c *gin.Context) {
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
 	uid := utils.GetUserID(c.MustGet("userId"))
-	doc, err := service.GetDocumentDetail(uint(id), uid)
-	if err != nil {
-		c.JSON(http.StatusOK, model.ErrorMsg("文档不存在"))
-		return
+	format := c.DefaultQuery("format", "markdown")
+
+	var content, filename string
+	var err error
+
+	switch format {
+	case "text":
+		content, filename, err = service.ExportDocumentAsText(uid, uint(id))
+		if err != nil {
+			c.JSON(http.StatusOK, model.ErrorMsg(err.Error()))
+			return
+		}
+		c.Header("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, filename))
+		c.Data(http.StatusOK, "text/plain; charset=utf-8", []byte(content))
+	case "markdown":
+		content, filename, err = service.ExportDocumentAsMarkdown(uid, uint(id))
+		if err != nil {
+			c.JSON(http.StatusOK, model.ErrorMsg(err.Error()))
+			return
+		}
+		c.Header("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, filename))
+		c.Data(http.StatusOK, "text/markdown; charset=utf-8", []byte(content))
+	default:
+		// Fallback: return JSON like before
+		doc, err := service.GetDocumentDetail(uint(id), uid)
+		if err != nil {
+			c.JSON(http.StatusOK, model.ErrorMsg("文档不存在"))
+			return
+		}
+		c.JSON(http.StatusOK, model.Success(gin.H{
+			"title":   doc.Title,
+			"content": doc.Content,
+			"type":    doc.Type,
+		}))
 	}
 
-	service.CreateOperationLog(uid, "", "export", "document", uint(id), doc.Title, "", c.ClientIP())
-
-	c.JSON(http.StatusOK, model.Success(gin.H{
-		"title":   doc.Title,
-		"content": doc.Content,
-		"type":    doc.Type,
-	}))
+	service.CreateOperationLog(uid, "", "export", "document", uint(id), "", format, c.ClientIP())
 }
 
-// SaveDocumentAsTemplate saves the current document content as a user-defined template
+// SaveDocumentAsTemplate godoc
+// @Summary 保存为模板
+// @Description 将文档保存为模板
+// @Tags 文档管理
+// @Accept json
+// @Produce json
+// @Param id path int true "文档ID"
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /document/{id}/save-as-template [post]
 func SaveDocumentAsTemplate(c *gin.Context) {
 	uid := utils.GetUserID(c.MustGet("userId"))
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
 
 	var req struct {
-		Name        string `json:"name" binding:"required"`
-		Description string `json:"description"`
-		Category    string `json:"category"`
+		Name        string `json:"name" binding:"required,max=200"`
+		Description string `json:"description" binding:"max=1000"`
+		Category    string `json:"category" binding:"max=100"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusOK, model.ErrorMsg("请填写模板名称"))
@@ -564,7 +911,15 @@ func SaveDocumentAsTemplate(c *gin.Context) {
 	c.JSON(http.StatusOK, model.Success(t))
 }
 
-// DownloadDocumentFile streams the original uploaded file to the client with its original filename.
+// DownloadDocumentFile godoc
+// @Summary 下载文档文件
+// @Description 下载文档关联的原始文件
+// @Tags 文档管理
+// @Produce application/octet-stream
+// @Param id path int true "文档ID"
+// @Success 200 {file} binary
+// @Security BearerAuth
+// @Router /document/{id}/download [get]
 func DownloadDocumentFile(c *gin.Context) {
 	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
 
@@ -608,7 +963,80 @@ func DownloadDocumentFile(c *gin.Context) {
 	}
 }
 
-// SearchSuggestions returns document title suggestions based on query prefix
+// GetDocumentFileContent godoc
+// @Summary 获取文档文件内容（流式）
+// @Description 直接流式返回文档关联文件的内容，用于PDF等文件的内联预览。支持通过query参数传递token。
+// @Tags 文档管理
+// @Produce application/pdf
+// @Param id path int true "文档ID"
+// @Param token query string true "认证Token"
+// @Success 200 {file} binary
+// @Router /document/{id}/file-content [get]
+func GetDocumentFileContent(c *gin.Context) {
+	id, _ := strconv.ParseUint(c.Param("id"), 10, 64)
+
+	var doc model.Document
+	if err := mysql.DB.First(&doc, id).Error; err != nil {
+		c.JSON(http.StatusNotFound, model.ErrorMsg("文档不存在"))
+		return
+	}
+
+	// Parse content to get filePath
+	var contentData struct {
+		Type     string `json:"type"`
+		FileType string `json:"fileType"`
+		FileName string `json:"fileName"`
+		FilePath string `json:"filePath"`
+	}
+	if err := json.Unmarshal([]byte(doc.Content), &contentData); err != nil || contentData.FilePath == "" {
+		c.JSON(http.StatusNotFound, model.ErrorMsg("该文档没有关联的文件"))
+		return
+	}
+
+	// Determine content type based on file type
+	contentType := "application/octet-stream"
+	switch contentData.FileType {
+	case "pdf":
+		contentType = "application/pdf"
+	case "word":
+		contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+	case "excel":
+		contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+	case "ppt":
+		contentType = "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+	}
+
+	rc, err := service.GetFileStreamByPath(contentData.FilePath)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, model.ErrorMsg("获取文件失败: "+err.Error()))
+		return
+	}
+	defer rc.Close()
+
+	// Set headers for inline display (not download)
+	fileName := contentData.FileName
+	if fileName == "" {
+		fileName = doc.Title
+	}
+	c.Header("Content-Disposition", fmt.Sprintf(`inline; filename="%s"`, fileName))
+	c.Header("Content-Type", contentType)
+	c.Header("Cache-Control", "private, max-age=3600")
+
+	c.Status(http.StatusOK)
+	if _, err := io.Copy(c.Writer, rc); err != nil {
+		_ = err
+	}
+}
+
+// SearchSuggestions godoc
+// @Summary 搜索建议
+// @Description 根据前缀返回文档标题建议
+// @Tags 文档管理
+// @Produce json
+// @Param q query string true "搜索前缀"
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /search/suggestions [get]
 func SearchSuggestions(c *gin.Context) {
 	q := c.Query("q")
 	if q == "" {
@@ -626,12 +1054,89 @@ func SearchSuggestions(c *gin.Context) {
 	c.JSON(http.StatusOK, model.Success(map[string]interface{}{"suggestions": titles}))
 }
 
-// EnhancedSearchDocuments performs enhanced document search with multi-keyword support
-// Supports searching both title and content, with pagination and type filtering
+// AddDocumentShortcut godoc
+// @Summary 创建快捷方式
+// @Description 创建指向现有文档的快捷方式
+// @Tags 文档管理
+// @Accept json
+// @Produce json
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /document/shortcut [post]
+func AddDocumentShortcut(c *gin.Context) {
+	uid := utils.GetUserID(c.MustGet("userId"))
+	var req struct {
+		DocumentID     uint  `json:"document_id" binding:"required"`
+		TargetParentID *uint `json:"target_parent_id"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, model.ErrorMsg("参数错误"))
+		return
+	}
+	if err := service.CreateDocumentShortcut(uid, req.DocumentID, req.TargetParentID); err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg(err.Error()))
+		return
+	}
+	c.JSON(http.StatusOK, model.SuccessMsg("快捷方式已创建"))
+}
+
+// MigrateDocuments godoc
+// @Summary 批量迁移文档
+// @Description 批量移动文档到目标目录
+// @Tags 文档管理
+// @Accept json
+// @Produce json
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /document/migrate [post]
+func MigrateDocuments(c *gin.Context) {
+	uid := utils.GetUserID(c.MustGet("userId"))
+	var req struct {
+		DocumentIDs    []uint `json:"document_ids" binding:"required"`
+		TargetParentID *uint  `json:"target_parent_id"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, model.ErrorMsg("参数错误"))
+		return
+	}
+	if len(req.DocumentIDs) == 0 {
+		c.JSON(http.StatusBadRequest, model.ErrorMsg("请选择要迁移的文档"))
+		return
+	}
+	// Check permission on target folder
+	if req.TargetParentID != nil {
+		if err := service.CheckDocumentPermission(uid, *req.TargetParentID, "edit"); err != nil {
+			c.JSON(http.StatusForbidden, model.ErrorMsg("无权限移动到目标位置"))
+			return
+		}
+	}
+	// Check permission on each document
+	for _, docID := range req.DocumentIDs {
+		if err := service.CheckDocumentPermission(uid, docID, "edit"); err != nil {
+			c.JSON(http.StatusForbidden, model.ErrorMsg(fmt.Sprintf("无权限操作文档 %d", docID)))
+			return
+		}
+	}
+	if err := service.MigrateDocuments(uid, req.DocumentIDs, req.TargetParentID); err != nil {
+		c.JSON(http.StatusOK, model.ErrorMsg(err.Error()))
+		return
+	}
+	c.JSON(http.StatusOK, model.SuccessMsg("文档迁移成功"))
+}
+
+// EnhancedSearchDocuments godoc
+// @Summary 增强搜索文档
+// @Description 多关键词搜索文档，支持标题和内容搜索
+// @Tags 文档管理
+// @Accept json
+// @Produce json
+// @Success 200 {object} model.Response
+// @Security BearerAuth
+// @Router /document/search [post]
 func EnhancedSearchDocuments(c *gin.Context) {
 	var req struct {
-		Query    string `json:"query"`
-		Type     string `json:"type"`
+		Query    string `json:"query" binding:"max=500"`
+		Type     string `json:"type" binding:"max=50"`
 		Page     int    `json:"page"`
 		PageSize int    `json:"pageSize"`
 	}

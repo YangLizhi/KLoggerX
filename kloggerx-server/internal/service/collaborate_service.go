@@ -11,17 +11,20 @@ import (
 // mentionRegex matches @username pattern, username can contain letters, numbers, underscores, hyphens and Chinese characters
 var mentionRegex = regexp.MustCompile(`@([a-zA-Z0-9_\-一-龥]+)`)
 
-func AddComment(docID, userID uint, content, selection string, parentID *uint) (*model.Comment, error) {
+func AddComment(docID, userID uint, content, quotedText string, parentID *uint) (*model.Comment, error) {
 	c := model.Comment{
 		DocumentID: docID,
 		UserID:     userID,
 		Content:    content,
-		Selection:  selection,
+		QuotedText: quotedText,
 		ParentID:   parentID,
 	}
 	if err := mysql.DB.Create(&c).Error; err != nil {
 		return nil, err
 	}
+
+	// Preload user
+	mysql.DB.Preload("User").First(&c, c.ID)
 
 	// Parse @mentions and create notifications asynchronously
 	go func() {
@@ -104,13 +107,11 @@ func processMentions(docID, fromUserID uint, content string) error {
 
 func GetComments(docID uint) ([]model.Comment, error) {
 	var comments []model.Comment
-	err := mysql.DB.Where("document_id = ?", docID).Order("created_at ASC").Find(&comments).Error
-	for i := range comments {
-		var u model.User
-		if mysql.DB.Select("username").First(&u, comments[i].UserID).Error == nil {
-			comments[i].UserName = u.Username
-		}
-	}
+	err := mysql.DB.Where("document_id = ? AND parent_id IS NULL", docID).
+		Preload("User").
+		Preload("Replies").
+		Preload("Replies.User").
+		Order("created_at ASC").Find(&comments).Error
 	return comments, err
 }
 
@@ -120,7 +121,7 @@ func ResolveComment(id uint) error {
 
 func GetCommentByID(id uint) (*model.Comment, error) {
 	var comment model.Comment
-	if err := mysql.DB.First(&comment, id).Error; err != nil {
+	if err := mysql.DB.Preload("User").First(&comment, id).Error; err != nil {
 		return nil, err
 	}
 	return &comment, nil

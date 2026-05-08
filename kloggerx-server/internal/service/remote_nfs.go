@@ -108,6 +108,11 @@ func (c *NFSClient) List(path string) ([]RemoteFileInfo, error) {
 		}
 	}
 
+	// Validate path security
+	if _, err := ValidatePath(path); err != nil {
+		return nil, err
+	}
+
 	fullPath := filepath.Join(c.basePath, path)
 	
 	entries, err := os.ReadDir(fullPath)
@@ -147,6 +152,11 @@ func (c *NFSClient) Download(filePath string) (io.ReadCloser, error) {
 		}
 	}
 
+	// Validate path security
+	if _, err := ValidatePath(filePath); err != nil {
+		return nil, err
+	}
+
 	fullPath := filepath.Join(c.basePath, filePath)
 	file, err := os.Open(fullPath)
 	if err != nil {
@@ -162,6 +172,11 @@ func (c *NFSClient) Upload(filePath string, reader io.Reader, size int64) error 
 		if err := c.Connect(); err != nil {
 			return err
 		}
+	}
+
+	// Validate path security
+	if _, err := ValidatePath(filePath); err != nil {
+		return err
 	}
 
 	fullPath := filepath.Join(c.basePath, filePath)
@@ -195,6 +210,11 @@ func (c *NFSClient) Delete(filePath string) error {
 		}
 	}
 
+	// Validate path security
+	if _, err := ValidatePath(filePath); err != nil {
+		return err
+	}
+
 	fullPath := filepath.Join(c.basePath, filePath)
 	
 	return os.RemoveAll(fullPath)
@@ -206,6 +226,11 @@ func (c *NFSClient) Mkdir(dirPath string) error {
 		if err := c.Connect(); err != nil {
 			return err
 		}
+	}
+
+	// Validate path security
+	if _, err := ValidatePath(dirPath); err != nil {
+		return err
 	}
 
 	fullPath := filepath.Join(c.basePath, dirPath)

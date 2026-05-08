@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "skills": {
+    "qiaomu-markdown-proxy": {
+      "source": "joeseesun/markdown-proxy",
+      "sourceType": "github",
+      "computedHash": "174240e1029a0956696d809cc0d630e6999fadc92140adaf9d32d636bbec7506"
+    }
+  }
+}

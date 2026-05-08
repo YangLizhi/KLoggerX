@@ -14,8 +14,8 @@ func RegisterRoutes(r *gin.Engine, hub *ws.Hub) {
 	api.POST("/user/login", UserLogin)
 	api.POST("/user/register", UserRegister)
 
-	// Authenticated routes
-	auth := api.Group("", middleware.Auth())
+	// Authenticated routes (全局限流: 每秒30请求，突发50)
+	auth := api.Group("", middleware.Auth(), middleware.RateLimit(30, 50), middleware.AuditLog())
 	{
 		// User
 		auth.GET("/user/info", GetUserInfo)
@@ -33,6 +33,8 @@ func RegisterRoutes(r *gin.Engine, hub *ws.Hub) {
 		auth.POST("/document/:id/delete", DeleteDocument)
 		auth.POST("/document/:id/restore", RestoreDocument)
 		auth.DELETE("/document/:id", PermanentDeleteDocument)
+		auth.DELETE("/document/:id/permanent", PermanentDelete)
+		auth.POST("/document/batch-restore", BatchRestore)
 		auth.POST("/document/:id/move", MoveDocument)
 		auth.POST("/document/:id/copy", CopyDocument)
 		auth.POST("/document/:id/pin", PinDocument)
@@ -46,12 +48,15 @@ func RegisterRoutes(r *gin.Engine, hub *ws.Hub) {
 		auth.POST("/document/search", EnhancedSearchDocuments)
 		auth.GET("/search/suggestions", SearchSuggestions)
 		auth.GET("/document/:id/versions", GetDocumentVersions)
+		auth.GET("/document/:id/versions/diff", GetVersionDiff)
 		auth.POST("/document/:id/rollback", RollbackVersion)
 		auth.POST("/document/import", ImportDocument)
 		auth.GET("/document/:id/export", ExportDocument)
 		auth.GET("/document/:id/file-preview", GetDocumentFilePreview)
 		auth.GET("/document/:id/download", DownloadDocumentFile)
 		auth.POST("/document/:id/save-as-template", SaveDocumentAsTemplate)
+		auth.POST("/document/shortcut", AddDocumentShortcut)
+		auth.POST("/document/migrate", MigrateDocuments)
 
 		// Permission
 		auth.GET("/auth/document/:id", GetDocumentPermissions)
@@ -61,6 +66,17 @@ func RegisterRoutes(r *gin.Engine, hub *ws.Hub) {
 		auth.POST("/auth/share/update", UpdateShareSetting)
 		auth.GET("/auth/check/:id", CheckPermission)
 
+		// Knowledge Conversations
+		auth.GET("/knowledge/conversations", GetConversationListHandler)
+		auth.POST("/knowledge/conversations", CreateConversationHandler)
+		auth.GET("/knowledge/conversations/:id", GetConversationDetailHandler)
+		auth.PUT("/knowledge/conversations/:id", UpdateConversationHandler)
+		auth.DELETE("/knowledge/conversations/:id", DeleteConversationHandler)
+		auth.DELETE("/knowledge/conversations", BatchDeleteConversationsHandler)
+		auth.GET("/knowledge/conversations/:id/export", ExportConversationHandler)
+		auth.POST("/knowledge/conversations/:id/share", CreateShareLinkHandler)
+		auth.DELETE("/knowledge/conversations/:id/share", RevokeShareLinkHandler)
+
 		// Knowledge
 		auth.GET("/knowledge/list", GetKnowledgeBaseList)
 		auth.GET("/knowledge/:id", GetKnowledgeBaseDetail)
@@ -68,6 +84,7 @@ func RegisterRoutes(r *gin.Engine, hub *ws.Hub) {
 		auth.POST("/knowledge/:id/update", UpdateKnowledgeBase)
 		auth.DELETE("/knowledge/:id", DeleteKnowledgeBase)
 		auth.GET("/knowledge/:id/tree", GetKnowledgeBaseTree)
+		auth.GET("/knowledge/:id/export", ExportKnowledgeBase)
 		auth.POST("/knowledge/:id/member/add", AddKnowledgeMember)
 		auth.POST("/knowledge/:id/member/remove", RemoveKnowledgeMember)
 		auth.GET("/knowledge/:id/members", GetKnowledgeMembers)
@@ -78,19 +95,29 @@ func RegisterRoutes(r *gin.Engine, hub *ws.Hub) {
 		auth.POST("/knowledge/:id/source/add", AddKnowledgeSource)
 		auth.DELETE("/knowledge/:id/source/:srcId", RemoveKnowledgeSource)
 		auth.POST("/knowledge/:id/source/:srcId/sync", SyncKnowledgeSource)
-		// Knowledge AI chat
-		auth.POST("/knowledge/:id/chat", KnowledgeChat)
-		auth.POST("/knowledge/chat/global", KnowledgeChatGlobal)
-		// Knowledge RAPTOR and embedding
-		auth.POST("/knowledge/:id/raptor/build", BuildRaptorTree)
+		// Knowledge AI chat (AI限流: 每秒2请求，突发5)
+		auth.POST("/knowledge/:id/chat", middleware.AIRateLimit(), KnowledgeChat)
+		auth.POST("/knowledge/chat/global", middleware.AIRateLimit(), KnowledgeChatGlobal)
+		auth.POST("/knowledge/chat/stream", middleware.AIRateLimit(), StreamChatHandler)
+		// Knowledge Graph (重型任务并发限制: 最多3个)
+		auth.POST("/knowledge/:id/graph/build", middleware.HeavyTaskLimit(3), BuildKnowledgeGraph)
+		auth.GET("/knowledge/:id/graph", GetKnowledgeGraph)
+		auth.GET("/knowledge/:id/graph/status", GetKnowledgeGraphStatus)
+		// Knowledge RAPTOR and embedding (重型任务并发限制: 最多3个)
+		auth.POST("/knowledge/:id/raptor/build", middleware.HeavyTaskLimit(3), BuildRaptorTree)
 		auth.GET("/knowledge/:id/raptor/stats", GetRaptorTreeStats)
 		auth.GET("/knowledge/:id/embedding/status", GetEmbeddingStatus)
-		auth.POST("/knowledge/:id/embedding/rebuild", RebuildEmbeddings)
+		auth.POST("/knowledge/:id/embedding/rebuild", middleware.HeavyTaskLimit(3), RebuildEmbeddings)
+		// Knowledge Feedback
+		auth.POST("/knowledge/messages/:id/feedback", SubmitFeedbackHandler)
+		auth.GET("/knowledge/messages/:id/feedback", GetFeedbackHandler)
 
 		// Templates
 		auth.GET("/template/list", GetTemplates)
 		auth.GET("/template/:id", GetTemplateDetail)
 		auth.POST("/template/:id/use", UseTemplate)
+		auth.POST("/template/:id/favorite", FavoriteTemplateHandler)
+		auth.DELETE("/template/:id/favorite", UnfavoriteTemplateHandler)
 
 		// Collaborate
 		auth.POST("/collaborate/comment/add", AddComment)
@@ -102,6 +129,12 @@ func RegisterRoutes(r *gin.Engine, hub *ws.Hub) {
 		auth.POST("/collaborate/notification/read-all", MarkAllNotificationsRead)
 		auth.POST("/collaborate/notification/create", CreateSystemNotification)
 		auth.POST("/collaborate/invite", InviteCollaborators)
+
+		// Comment (new routes)
+		auth.POST("/document/:id/comments", CreateCommentHandler)
+		auth.GET("/document/:id/comments", ListCommentsHandler)
+		auth.DELETE("/comment/:commentId", DeleteCommentHandler)
+		auth.PUT("/comment/:commentId/resolve", ResolveCommentHandler)
 
 		// File
 		auth.POST("/file/upload", UploadFile)
@@ -170,6 +203,10 @@ func RegisterRoutes(r *gin.Engine, hub *ws.Hub) {
 			admin.POST("/admin/remote-storages/:id/connect", ConnectRemoteStorage)
 			admin.POST("/admin/remote-storages/:id/disconnect", DisconnectRemoteStorage)
 
+			// Dashboard
+			admin.GET("/admin/dashboard/stats", GetDashboardStats)
+			admin.GET("/admin/system/info", GetSystemInfo)
+
 			// Directory listing for path selection
 			admin.GET("/admin/directories", AdminListDirectories)
 
@@ -183,12 +220,37 @@ func RegisterRoutes(r *gin.Engine, hub *ws.Hub) {
 			admin.POST("/admin/template/create", CreateTemplateHandler)
 			admin.PUT("/admin/template/:id", UpdateTemplateHandler)
 			admin.DELETE("/admin/template/:id", DeleteTemplateHandler)
+
+			// Document cleanup (admin only)
+			admin.POST("/admin/document/cleanup-expired", CleanupExpired)
+
+			// Follow-up suggestions toggle
+			admin.GET("/admin/settings/follow-up-suggestions", GetFollowUpSuggestionsHandler)
+			admin.PUT("/admin/settings/follow-up-suggestions", UpdateFollowUpSuggestionsHandler)
+
+			// Operation Logs (admin)
+			admin.GET("/admin/operation-logs", ListAllOperationLogs)
+
+			// Feedback Reviews
+			feedbackReviews := admin.Group("/admin/feedback/reviews")
+			{
+				feedbackReviews.GET("", GetPendingReviewsHandler)
+				feedbackReviews.POST("/:id/approve", ApproveReviewHandler)
+				feedbackReviews.POST("/:id/reject", RejectReviewHandler)
+				feedbackReviews.GET("/stats", GetReviewStatsHandler)
+			}
 		}
 	}
+
+	// File content streaming (supports token via query parameter for iframe embedding)
+	api.GET("/document/:id/file-content", middleware.AuthQueryToken(), GetDocumentFileContent)
 
 	// OnlyOffice callback (no auth required - OnlyOffice server calls this)
 	api.POST("/onlyoffice/callback/:docId", OnlyOfficeCallback)
 	api.GET("/onlyoffice/download/:docId", DownloadDocumentForOnlyOffice)
+
+	// Public share link (no auth required)
+	api.GET("/knowledge/share/:token", GetSharedConversationHandler)
 
 	// WebSocket
 	r.GET("/ws/doc/:id", func(c *gin.Context) {

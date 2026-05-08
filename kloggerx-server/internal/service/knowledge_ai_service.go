@@ -1,19 +1,38 @@
 package service
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+	"regexp"
 	"strings"
+	"sync"
 	"time"
 
 	"kloggerx-server/internal/model"
+	"kloggerx-server/internal/pkg/logger"
 	"kloggerx-server/internal/repository/mysql"
 	"kloggerx-server/internal/repository/qdrant"
 )
+
+// ─── Embedding Config Cache ──────────────────────────────────────────────────
+
+var embeddingConfigCache struct {
+	sync.RWMutex
+	baseURL  string
+	apiKey   string
+	modelID  string
+	cachedAt time.Time
+	ttl      time.Duration
+}
+
+func init() {
+	embeddingConfigCache.ttl = 5 * time.Minute
+}
 
 // ─── Knowledge Source Management ─────────────────────────────────────────────
 
@@ -114,18 +133,18 @@ const chunkSize = 500 // characters per chunk
 func IndexDocumentContent(kbID, docID uint) {
 	var doc model.Document
 	if err := mysql.DB.First(&doc, docID).Error; err != nil {
-		fmt.Printf("[DEBUG] IndexDocumentContent: document %d not found: %v\n", docID, err)
+		logger.Debugf("IndexDocumentContent: document %d not found: %v", docID, err)
 		return
 	}
 
 	// Extract plain text from JSON content
 	plainText := extractPlainTextFromContent(doc.Content)
 	if plainText == "" {
-		fmt.Printf("[DEBUG] IndexDocumentContent: document %d (%s) has no extractable text, content length=%d\n", docID, doc.Title, len(doc.Content))
+		logger.Debugf("IndexDocumentContent: document %d (%s) has no extractable text, content length=%d", docID, doc.Title, len(doc.Content))
 		return
 	}
 
-	fmt.Printf("[DEBUG] IndexDocumentContent: processing document %d (%s), text length=%d\n", docID, doc.Title, len(plainText))
+	logger.Debugf("IndexDocumentContent: processing document %d (%s), text length=%d", docID, doc.Title, len(plainText))
 
 	// Delete old chunks for this document in this KB
 	mysql.DB.Where("knowledge_base_id = ? AND document_id = ?", kbID, docID).Delete(&model.KnowledgeChunk{})
@@ -461,9 +480,9 @@ func ChatWithKnowledgeOpts(kbID uint, question string, history []ChatMessage, mo
 			cancel()
 
 			if searchErr != nil {
-				fmt.Printf("[DEBUG] HybridSearch error: %v\n", searchErr)
+				logger.Debugf("HybridSearch error: %v", searchErr)
 			} else if len(results) > 0 {
-				fmt.Printf("[DEBUG] HybridSearch found %d results\n", len(results))
+				logger.Debugf("HybridSearch found %d results", len(results))
 				for _, r := range results {
 					chunks = append(chunks, ChunkRef{
 						DocumentID:    r.DocumentID,
@@ -473,20 +492,20 @@ func ChatWithKnowledgeOpts(kbID uint, question string, history []ChatMessage, mo
 					})
 				}
 			} else {
-				fmt.Printf("[DEBUG] HybridSearch returned 0 results\n")
+				logger.Debugf("HybridSearch returned 0 results")
 			}
 		} else {
-			fmt.Printf("[DEBUG] GetEmbeddingModelSettings error: %v\n", err)
+			logger.Debugf("GetEmbeddingModelSettings error: %v", err)
 		}
 	} else {
-		fmt.Printf("[DEBUG] Qdrant client is nil, skipping vector search\n")
+		logger.Debugf("Qdrant client is nil, skipping vector search")
 	}
 
 	// Fallback to keyword search if vector search failed or returned no results
 	if len(chunks) == 0 {
-		fmt.Printf("[DEBUG] Falling back to keyword search\n")
+		logger.Debugf("Falling back to keyword search")
 		chunks = SearchChunks(kbID, question, 6)
-		fmt.Printf("[DEBUG] Keyword search found %d results\n", len(chunks))
+		logger.Debugf("Keyword search found %d results", len(chunks))
 	}
 
 	// 2. Build context from chunks
@@ -513,9 +532,40 @@ func ChatWithKnowledgeOpts(kbID uint, question string, history []ChatMessage, mo
 	}, nil
 }
 
-// GetEmbeddingModelSettings reads embedding model settings from the database.
+// GetEmbeddingModelSettings reads embedding model settings from the database with caching.
 // Returns baseURL, apiKey, modelID for the embedding model.
 func GetEmbeddingModelSettings() (baseURL, apiKey, modelID string, err error) {
+	embeddingConfigCache.RLock()
+	if time.Since(embeddingConfigCache.cachedAt) < embeddingConfigCache.ttl {
+		baseURL = embeddingConfigCache.baseURL
+		apiKey = embeddingConfigCache.apiKey
+		modelID = embeddingConfigCache.modelID
+		embeddingConfigCache.RUnlock()
+		return
+	}
+	embeddingConfigCache.RUnlock()
+
+	// Cache expired, reload from DB
+	embeddingConfigCache.Lock()
+	defer embeddingConfigCache.Unlock()
+
+	// Double-check after acquiring write lock
+	if time.Since(embeddingConfigCache.cachedAt) < embeddingConfigCache.ttl {
+		return embeddingConfigCache.baseURL, embeddingConfigCache.apiKey, embeddingConfigCache.modelID, nil
+	}
+
+	baseURL, apiKey, modelID, err = getEmbeddingModelSettingsFromDB()
+	if err == nil {
+		embeddingConfigCache.baseURL = baseURL
+		embeddingConfigCache.apiKey = apiKey
+		embeddingConfigCache.modelID = modelID
+		embeddingConfigCache.cachedAt = time.Now()
+	}
+	return
+}
+
+// getEmbeddingModelSettingsFromDB is the actual DB lookup for embedding model settings.
+func getEmbeddingModelSettingsFromDB() (baseURL, apiKey, modelID string, err error) {
 	var setting model.SystemSetting
 	if dbErr := mysql.DB.Where("`key` = ?", "ai_model_settings").First(&setting).Error; dbErr != nil {
 		return "", "", "", fmt.Errorf("AI模型未配置，请在管理后台配置AI模型")
@@ -544,8 +594,7 @@ func GetEmbeddingModelSettings() (baseURL, apiKey, modelID string, err error) {
 		return "", "", "", fmt.Errorf("AI配置解析失败")
 	}
 
-	// Log for debugging
-	fmt.Printf("[DEBUG] GetEmbeddingModelSettings: embeddingModel='%s', providers=%d\n",
+	logger.Debugf("GetEmbeddingModelSettings: embeddingModel='%s', providers=%d",
 		data.KBSettings.EmbeddingModel, len(data.Providers))
 
 	// If embeddingModel is specified, find it in all active providers
@@ -553,14 +602,13 @@ func GetEmbeddingModelSettings() (baseURL, apiKey, modelID string, err error) {
 		targetModel := data.KBSettings.EmbeddingModel
 		for _, p := range data.Providers {
 			if !p.IsActive || p.BaseURL == "" || p.APIKey == "" {
-				fmt.Printf("[DEBUG] Skipping inactive provider: %s (active=%v, baseUrl='%s')\n", p.Name, p.IsActive, p.BaseURL)
+				logger.Debugf("Skipping inactive provider: %s (active=%v, baseUrl='%s')", p.Name, p.IsActive, p.BaseURL)
 				continue
 			}
-			fmt.Printf("[DEBUG] Checking provider '%s' with %d models\n", p.Name, len(p.Models))
+			logger.Debugf("Checking provider '%s' with %d models", p.Name, len(p.Models))
 			for _, m := range p.Models {
-				//fmt.Printf("[DEBUG]   - model: id='%s', type='%s'\n", m.ID, m.Type)
 				if m.ID == targetModel {
-					fmt.Printf("[DEBUG] Found embedding model '%s' in provider '%s' (baseUrl='%s')\n", m.ID, p.Name, p.BaseURL)
+					logger.Debugf("Found embedding model '%s' in provider '%s' (baseUrl='%s')", m.ID, p.Name, p.BaseURL)
 					return p.BaseURL, p.APIKey, m.ID, nil
 				}
 			}
@@ -721,6 +769,461 @@ func GetAISettingsWithModel(modelOverride string) (baseURL, apiKey, modelID stri
 
 func callAIChat(systemPrompt, question string, history []ChatMessage) (string, error) {
 	return callAIChatWithModel(systemPrompt, question, history, "")
+}
+
+// ─── SSE Streaming Chat ──────────────────────────────────────────────────────
+
+// SSEEvent represents a Server-Sent Event payload
+type SSEEvent struct {
+	Type    string      `json:"type"`              // "chunk" | "sources" | "done" | "error"
+	Content string      `json:"content,omitempty"`
+	Data    interface{} `json:"data,omitempty"`
+}
+
+// ChatOptions holds parameters for streaming chat
+type ChatOptions struct {
+	UserID          uint
+	ConversationID  uint   // 0 means create new conversation
+	KnowledgeBaseID *uint  // nil means global
+	Question        string
+	History         []ChatMessage
+	ModelOverride   string
+}
+
+// StreamChatWithKnowledge performs RAG-based streaming chat.
+// 1. Execute retrieval (hybrid/keyword search)
+// 2. Build system prompt with document context
+// 3. Call AI API with stream:true
+// 4. Push chunks via writer callback
+// 5. Persist messages to database after completion
+func StreamChatWithKnowledge(ctx context.Context, opts ChatOptions, writer func(SSEEvent)) error {
+	start := time.Now()
+
+	// Determine which KB to search
+	var kbIDs []uint
+	if opts.KnowledgeBaseID != nil {
+		kbIDs = []uint{*opts.KnowledgeBaseID}
+	} else {
+		// Global: search all KBs the user is a member of
+		var members []model.KnowledgeMember
+		mysql.DB.Where("user_id = ?", opts.UserID).Find(&members)
+		for _, m := range members {
+			kbIDs = append(kbIDs, m.KnowledgeBaseID)
+		}
+	}
+
+	if len(kbIDs) == 0 {
+		writer(SSEEvent{Type: "error", Content: "您还没有加入任何知识库，请先创建或加入知识库"})
+		return fmt.Errorf("no knowledge bases")
+	}
+
+	// Check if any chunks exist
+	var totalChunks int64
+	mysql.DB.Model(&model.KnowledgeChunk{}).Where("knowledge_base_id IN ?", kbIDs).Count(&totalChunks)
+	if totalChunks == 0 {
+		writer(SSEEvent{Type: "error", Content: "当前知识库内没有内容，请先添加文档并同步"})
+		return fmt.Errorf("no content in knowledge base")
+	}
+
+	// 1. Execute retrieval
+	var chunks []ChunkRef
+	for _, kbID := range kbIDs {
+		// Try vector search first
+		if qdrant.DefaultVectorClient != nil {
+			embedBaseURL, embedAPIKey, embedModelID, err := GetEmbeddingModelSettings()
+			if err == nil && embedAPIKey != "" {
+				embedSvc := NewEmbeddingService(EmbeddingConfig{
+					BaseURL: embedBaseURL,
+					APIKey:  embedAPIKey,
+					Model:   embedModelID,
+				})
+				retrievalSvc := NewRetrievalService(embedSvc, qdrant.DefaultVectorClient)
+				searchCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+				results, searchErr := retrievalSvc.HybridSearch(searchCtx, kbID, opts.Question, DefaultHybridSearchOptions())
+				cancel()
+				if searchErr == nil && len(results) > 0 {
+					for _, r := range results {
+						chunks = append(chunks, ChunkRef{
+							DocumentID:    r.DocumentID,
+							DocumentTitle: r.DocumentTitle,
+							Content:       r.Content,
+							ChunkIndex:    r.ChunkIndex,
+						})
+					}
+				}
+			}
+		}
+		// Fallback to keyword search
+		if len(chunks) == 0 {
+			chunks = append(chunks, SearchChunks(kbID, opts.Question, 6)...)
+		}
+	}
+
+	// 2. Build context and system prompt
+	var contextParts []string
+	for i, c := range chunks {
+		contextParts = append(contextParts, fmt.Sprintf("[%d] 来自《%s》:\n%s", i+1, c.DocumentTitle, c.Content))
+	}
+	contextText := strings.Join(contextParts, "\n\n")
+
+	systemPrompt := "你是一个知识库助手，根据提供的文档内容准确回答用户问题。回答时请引用来源编号，格式为「来源[n]」。如果文档中没有相关信息，请如实说明。"
+	if contextText != "" {
+		systemPrompt += "\n\n以下是相关文档内容：\n" + contextText
+	}
+
+	// Send sources event
+	writer(SSEEvent{Type: "sources", Data: chunks})
+
+	// 3. Call AI API with streaming
+	fullContent, tokensUsed, err := callAIChatStream(ctx, systemPrompt, opts.Question, opts.History, opts.ModelOverride, func(chunk string) {
+		writer(SSEEvent{Type: "chunk", Content: chunk})
+	})
+	if err != nil {
+		writer(SSEEvent{Type: "error", Content: fmt.Sprintf("AI调用失败: %v", err)})
+		return err
+	}
+
+	durationMs := uint(time.Since(start).Milliseconds())
+
+	// 5. Persist messages to database
+	var conversationID uint
+	if opts.ConversationID > 0 {
+		conversationID = opts.ConversationID
+	} else {
+		// Create new conversation
+		title := opts.Question
+		if len([]rune(title)) > 50 {
+			title = string([]rune(title)[:50]) + "..."
+		}
+		conv := model.KbConversation{
+			UserID:          opts.UserID,
+			KnowledgeBaseID: opts.KnowledgeBaseID,
+			Title:           title,
+			Model:           opts.ModelOverride,
+			MessageCount:    0,
+		}
+		if dbErr := mysql.DB.Create(&conv).Error; dbErr != nil {
+			logger.Errorf("Failed to create conversation: %v", dbErr)
+		} else {
+			conversationID = conv.ID
+		}
+	}
+
+	var messageID uint
+	if conversationID > 0 {
+		// Save user message
+		userMsg := model.KbMessage{
+			ConversationID: conversationID,
+			Role:           "user",
+			Content:        opts.Question,
+		}
+		mysql.DB.Create(&userMsg)
+
+		// Save assistant message
+		var sourcesJSON *string
+		if len(chunks) > 0 {
+			if sj, e := json.Marshal(chunks); e == nil {
+				s := string(sj)
+				sourcesJSON = &s
+			}
+		}
+		assistantMsg := model.KbMessage{
+			ConversationID: conversationID,
+			Role:           "assistant",
+			Content:        fullContent,
+			Sources:        sourcesJSON,
+			TokensUsed:     uint(tokensUsed),
+			DurationMs:     durationMs,
+		}
+		mysql.DB.Create(&assistantMsg)
+		messageID = assistantMsg.ID
+
+		// Update conversation message count
+		mysql.DB.Model(&model.KbConversation{}).Where("id = ?", conversationID).
+			Updates(map[string]interface{}{
+				"message_count": mysql.DB.Raw("message_count + 2"),
+				"updated_at":    time.Now(),
+			})
+	}
+
+	// Send done event
+	writer(SSEEvent{Type: "done", Data: map[string]interface{}{
+		"messageId":      messageID,
+		"conversationId": conversationID,
+		"tokensUsed":     tokensUsed,
+		"durationMs":     durationMs,
+	}})
+
+	// Generate follow-up suggestions after done event (if enabled)
+	if IsFollowUpSuggestionsEnabled() {
+		suggestions, sugErr := GenerateFollowUpSuggestions(opts.Question, fullContent, opts.History, opts.ModelOverride)
+		if sugErr == nil && len(suggestions) > 0 {
+			writer(SSEEvent{Type: "suggestions", Data: suggestions})
+		}
+	}
+
+	return nil
+}
+
+// callAIChatStream calls the AI API with stream:true and invokes onChunk for each delta.
+// Returns the full accumulated content, estimated token count, and any error.
+func callAIChatStream(ctx context.Context, systemPrompt, question string, history []ChatMessage, modelOverride string, onChunk func(string)) (string, int, error) {
+	baseURL, apiKey, modelID, err := GetAISettingsWithModel(modelOverride)
+	if err != nil {
+		return "", 0, err
+	}
+
+	messages := []map[string]string{
+		{"role": "system", "content": systemPrompt},
+	}
+	for _, h := range history {
+		messages = append(messages, map[string]string{"role": h.Role, "content": h.Content})
+	}
+	messages = append(messages, map[string]string{"role": "user", "content": question})
+
+	reqBody := map[string]interface{}{
+		"model":       modelID,
+		"messages":    messages,
+		"max_tokens":  2000,
+		"temperature": 0.7,
+		"stream":      true,
+	}
+	reqData, _ := json.Marshal(reqBody)
+
+	baseURL = strings.TrimSuffix(baseURL, "/")
+	chatURL := baseURL + "/chat/completions"
+
+	httpReq, err := http.NewRequestWithContext(ctx, "POST", chatURL, bytes.NewReader(reqData))
+	if err != nil {
+		return "", 0, fmt.Errorf("创建请求失败: %v", err)
+	}
+	httpReq.Header.Set("Authorization", "Bearer "+apiKey)
+	httpReq.Header.Set("Content-Type", "application/json")
+	httpReq.Header.Set("Accept", "text/event-stream")
+
+	client := &http.Client{Timeout: 120 * time.Second}
+	resp, err := client.Do(httpReq)
+	if err != nil {
+		return "", 0, fmt.Errorf("AI服务连接失败: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return "", 0, fmt.Errorf("AI API返回错误 %d: %s", resp.StatusCode, string(body))
+	}
+
+	// Parse SSE stream
+	var fullContent strings.Builder
+	scanner := bufio.NewScanner(resp.Body)
+	scanner.Buffer(make([]byte, 64*1024), 64*1024)
+
+	for scanner.Scan() {
+		line := scanner.Text()
+
+		// Skip empty lines and comments
+		if line == "" || strings.HasPrefix(line, ":") {
+			continue
+		}
+
+		// Parse data lines
+		if !strings.HasPrefix(line, "data: ") {
+			continue
+		}
+		data := strings.TrimPrefix(line, "data: ")
+
+		// Check for stream end
+		if data == "[DONE]" {
+			break
+		}
+
+		// Parse JSON chunk
+		var chunk struct {
+			Choices []struct {
+				Delta struct {
+					Content string `json:"content"`
+				} `json:"delta"`
+				FinishReason *string `json:"finish_reason"`
+			} `json:"choices"`
+			Usage *struct {
+				TotalTokens int `json:"total_tokens"`
+			} `json:"usage"`
+		}
+		if err := json.Unmarshal([]byte(data), &chunk); err != nil {
+			continue
+		}
+
+		if len(chunk.Choices) > 0 && chunk.Choices[0].Delta.Content != "" {
+			content := chunk.Choices[0].Delta.Content
+			fullContent.WriteString(content)
+			onChunk(content)
+		}
+	}
+
+	if err := scanner.Err(); err != nil {
+		return fullContent.String(), 0, fmt.Errorf("读取流失败: %v", err)
+	}
+
+	// Estimate tokens (rough: 1 token ≈ 1.5 chars for Chinese)
+	resultText := fullContent.String()
+	estimatedTokens := len([]rune(resultText))*2/3 + len([]rune(question))*2/3
+
+	return resultText, estimatedTokens, nil
+}
+
+// callAIChatLite performs a lightweight AI call with custom maxTokens and temperature.
+// Used for auxiliary tasks like generating follow-up suggestions.
+func callAIChatLite(prompt string, modelOverride string, maxTokens int, temperature float64) (string, error) {
+	baseURL, apiKey, modelID, err := GetAISettingsWithModel(modelOverride)
+	if err != nil {
+		return "", err
+	}
+
+	messages := []map[string]string{
+		{"role": "user", "content": prompt},
+	}
+
+	reqBody := map[string]interface{}{
+		"model":       modelID,
+		"messages":    messages,
+		"max_tokens":  maxTokens,
+		"temperature": temperature,
+	}
+	reqData, _ := json.Marshal(reqBody)
+
+	baseURL = strings.TrimSuffix(baseURL, "/")
+	chatURL := baseURL + "/chat/completions"
+	httpReq, err := http.NewRequest("POST", chatURL, bytes.NewReader(reqData))
+	if err != nil {
+		return "", fmt.Errorf("创建请求失败: %v", err)
+	}
+	httpReq.Header.Set("Authorization", "Bearer "+apiKey)
+	httpReq.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{Timeout: 30 * time.Second}
+	resp, err := client.Do(httpReq)
+	if err != nil {
+		return "", fmt.Errorf("AI服务连接失败: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return "", fmt.Errorf("AI API返回错误 %d: %s", resp.StatusCode, string(body))
+	}
+
+	var chatResp struct {
+		Choices []struct {
+			Message struct {
+				Content string `json:"content"`
+			} `json:"message"`
+		} `json:"choices"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&chatResp); err != nil {
+		return "", fmt.Errorf("解析AI响应失败: %v", err)
+	}
+	if len(chatResp.Choices) == 0 {
+		return "", fmt.Errorf("AI未返回任何内容")
+	}
+	return chatResp.Choices[0].Message.Content, nil
+}
+
+// GenerateFollowUpSuggestions generates 2-3 follow-up question suggestions
+// based on the conversation context.
+func GenerateFollowUpSuggestions(question, answer string, history []ChatMessage, modelOverride string) ([]string, error) {
+	// Truncate answer if too long to save tokens
+	answerRunes := []rune(answer)
+	if len(answerRunes) > 500 {
+		answer = string(answerRunes[:500]) + "..."
+	}
+
+	prompt := `基于以下对话内容，生成2-3个用户可能想继续追问的简短问题。
+要求：
+1. 问题要自然、有延展性
+2. 与当前话题相关但角度不同
+3. 每个问题不超过20个字
+4. 直接返回JSON数组格式，如：["问题1", "问题2", "问题3"]
+
+用户问题：` + question + `
+AI回答：` + answer
+
+	result, err := callAIChatLite(prompt, modelOverride, 500, 0.8)
+	if err != nil {
+		return nil, err
+	}
+
+	// Try to parse as JSON array
+	var suggestions []string
+	if parseErr := json.Unmarshal([]byte(strings.TrimSpace(result)), &suggestions); parseErr == nil {
+		return suggestions, nil
+	}
+
+	// Fallback: try to extract JSON array from the response using regex
+	re := regexp.MustCompile(`\[\s*"[^"]*"(?:\s*,\s*"[^"]*")*\s*\]`)
+	matched := re.FindString(result)
+	if matched != "" {
+		if parseErr := json.Unmarshal([]byte(matched), &suggestions); parseErr == nil {
+			return suggestions, nil
+		}
+	}
+
+	// Could not parse suggestions
+	return nil, fmt.Errorf("failed to parse suggestions from AI response")
+}
+
+// IsFollowUpSuggestionsEnabled checks if follow-up suggestions are enabled in system settings.
+func IsFollowUpSuggestionsEnabled() bool {
+	var setting model.SystemSetting
+	if err := mysql.DB.Where("`key` = ?", "ai_model_settings").First(&setting).Error; err != nil {
+		return true // default enabled
+	}
+
+	var data struct {
+		KBSettings struct {
+			EnableFollowUpSuggestions *bool `json:"enableFollowUpSuggestions"`
+		} `json:"kbSettings"`
+	}
+	if err := json.Unmarshal([]byte(setting.Value), &data); err != nil {
+		return true // default enabled
+	}
+
+	if data.KBSettings.EnableFollowUpSuggestions == nil {
+		return true // default enabled
+	}
+	return *data.KBSettings.EnableFollowUpSuggestions
+}
+
+// UpdateFollowUpSuggestionsEnabled updates the follow-up suggestions setting.
+func UpdateFollowUpSuggestionsEnabled(enabled bool) error {
+	var setting model.SystemSetting
+	if err := mysql.DB.Where("`key` = ?", "ai_model_settings").First(&setting).Error; err != nil {
+		// Create with default structure
+		data := map[string]interface{}{
+			"providers": []interface{}{},
+			"kbSettings": map[string]interface{}{
+				"enableFollowUpSuggestions": enabled,
+			},
+		}
+		jsonData, _ := json.Marshal(data)
+		setting = model.SystemSetting{Key: "ai_model_settings", Value: string(jsonData)}
+		return mysql.DB.Create(&setting).Error
+	}
+
+	// Parse existing and update
+	var data map[string]interface{}
+	if err := json.Unmarshal([]byte(setting.Value), &data); err != nil {
+		return err
+	}
+
+	kbSettings, ok := data["kbSettings"].(map[string]interface{})
+	if !ok {
+		kbSettings = map[string]interface{}{}
+	}
+	kbSettings["enableFollowUpSuggestions"] = enabled
+	data["kbSettings"] = kbSettings
+
+	jsonData, _ := json.Marshal(data)
+	return mysql.DB.Model(&model.SystemSetting{}).Where("`key` = ?", "ai_model_settings").Update("value", string(jsonData)).Error
 }
 
 // callAIChatWithModel calls AI chat API with optional model override

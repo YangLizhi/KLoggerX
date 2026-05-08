@@ -1,6 +1,7 @@
 package config
 
 import (
+	"os"
 	"time"
 
 	"github.com/spf13/viper"
@@ -83,4 +84,28 @@ func Init(configPath string) error {
 	}
 	Cfg = &Config{}
 	return viper.Unmarshal(Cfg)
+}
+
+// GetJWTSecret 优先从环境变量读取 JWT Secret，否则使用配置文件
+func GetJWTSecret() string {
+	if secret := os.Getenv("KLOGGERX_JWT_SECRET"); secret != "" {
+		return secret
+	}
+	return Cfg.JWT.Secret
+}
+
+// GetMinIOAccessKey 优先从环境变量读取 MinIO AccessKey
+func GetMinIOAccessKey() string {
+	if key := os.Getenv("KLOGGERX_MINIO_ACCESS_KEY"); key != "" {
+		return key
+	}
+	return Cfg.MinIO.AccessKey
+}
+
+// GetMinIOSecretKey 优先从环境变量读取 MinIO SecretKey
+func GetMinIOSecretKey() string {
+	if key := os.Getenv("KLOGGERX_MINIO_SECRET_KEY"); key != "" {
+		return key
+	}
+	return Cfg.MinIO.SecretKey
 }

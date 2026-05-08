@@ -20,7 +20,7 @@
     <div v-else-if="error" class="editor-overlay editor-error">
       <el-icon :size="48" color="#f54a45"><Warning /></el-icon>
       <p>{{ error }}</p>
-      <el-button type="primary" @click="initEditor">重试</el-button>
+      <el-button type="primary" @click="initEditor">{{ $t('editor.onlyoffice.retry') }}</el-button>
     </div>
   </div>
 </template>
@@ -30,6 +30,9 @@ import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import { getOnlyOfficeConfig, getOnlyOfficeServerURL, type OnlyOfficeConfig } from '@/api/modules/onlyoffice'
 import { ElMessage } from 'element-plus'
 import { Warning } from '@element-plus/icons-vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   documentId: number
@@ -52,15 +55,15 @@ let docEditor: any = null
 let readyTimeout: ReturnType<typeof setTimeout> | null = null
 
 const ONLYOFFICE_ERROR_MAP: Record<number, string> = {
-  '-1': '未知错误（OnlyOffice 未返回具体错误码）',
-  0: '未分类错误，请检查文档配置与网络状态',
-  1: '文档密钥无效或已过期，请刷新页面重试',
-  2: '文档下载失败，请检查下载地址与文件可访问性',
-  3: '文档权限不足，当前用户可能无权访问该文件',
-  4: 'OnlyOffice 内部错误，请稍后重试',
-  5: '文档类型不匹配，请确认 fileType 与实际文件一致',
-  6: '回调保存失败，请检查 callback 接口与后端日志',
-  7: 'JWT 校验失败，请检查 OnlyOffice 与后端密钥配置'
+  '-1': t('editor.onlyoffice.unknownError'),
+  0: t('editor.onlyoffice.uncategorized'),
+  1: t('editor.onlyoffice.invalidKey'),
+  2: t('editor.onlyoffice.downloadFailed'),
+  3: t('editor.onlyoffice.noPermission'),
+  4: t('editor.onlyoffice.internalError'),
+  5: t('editor.onlyoffice.typeMismatch'),
+  6: t('editor.onlyoffice.callbackFailed'),
+  7: t('editor.onlyoffice.jwtFailed')
 }
 
 function extractOnlyOfficeErrorCode(event: any): number {
@@ -72,7 +75,7 @@ function toReadableOnlyOfficeError(event: any): string {
   const code = extractOnlyOfficeErrorCode(event)
   const message = event?.data?.message || event?.message || ''
   const mapped = ONLYOFFICE_ERROR_MAP[code] || ONLYOFFICE_ERROR_MAP[-1]
-  return `OnlyOffice 错误（code: ${code}）：${mapped}${message ? `；详情：${message}` : ''}`
+  return `OnlyOffice error (code: ${code}): ${mapped}${message ? ` - ${message}` : ''}`
 }
 
 function clearReadyTimeout() {
@@ -130,7 +133,7 @@ async function initEditor() {
     editorConfig.value = res.data
 
     if (!editorConfig.value) {
-      throw new Error('未获取到编辑器配置')
+      throw new Error(t('editor.onlyoffice.noConfig'))
     }
 
     // Load OnlyOffice API
@@ -139,7 +142,7 @@ async function initEditor() {
     // Guard timeout: avoid endless loading skeleton
     readyTimeout = setTimeout(() => {
       if (loading.value && !error.value) {
-        error.value = '编辑器初始化超时，请检查文档类型、OnlyOffice 服务可达性、JWT 与回调配置'
+        error.value = t('editor.onlyoffice.initTimeout')
         loading.value = false
         emit('error', error.value)
         ElMessage.error(error.value)
@@ -192,7 +195,7 @@ async function initEditor() {
   } catch (err: any) {
     console.error('[OnlyOffice] failed to initialize editor:', err)
     clearReadyTimeout()
-    error.value = err?.message || '初始化编辑器失败'
+    error.value = err?.message || t('editor.onlyoffice.initFailed')
     loading.value = false
     emit('error', error.value)
     ElMessage.error(error.value)

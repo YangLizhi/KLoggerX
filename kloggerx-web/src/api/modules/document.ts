@@ -30,7 +30,15 @@ export function restoreDocument(id: number) {
 }
 
 export function permanentDeleteDocument(id: number) {
-  return del<ApiResponse>(`/api/v1/document/${id}`)
+  return del<ApiResponse>(`/api/v1/document/${id}/permanent`)
+}
+
+export function batchRestoreDocuments(docIds: number[]) {
+  return post<ApiResponse>('/api/v1/document/batch-restore', { doc_ids: docIds })
+}
+
+export function cleanupExpiredDocuments() {
+  return post<ApiResponse<{ deleted_count: number }>>('/api/v1/admin/document/cleanup-expired')
 }
 
 export function moveDocument(id: number, targetParentId: number | null) {
@@ -49,8 +57,8 @@ export function favoriteDocument(id: number, isFavorite: boolean) {
   return post<ApiResponse>(`/api/v1/document/${id}/favorite`, { isFavorite })
 }
 
-export function transferOwnership(id: number, targetUserId: number, keepPermission: boolean) {
-  return post<ApiResponse>(`/api/v1/document/${id}/transfer`, { targetUserId, keepPermission })
+export function transferOwnership(id: number, targetUser: string, keepPermission: boolean = true) {
+  return post<ApiResponse>(`/api/v1/document/${id}/transfer`, { targetUser, keepPermission })
 }
 
 export function addShortcut(documentId: number, targetParentId: number | null) {
@@ -132,4 +140,22 @@ export function enhancedSearchDocuments(data: {
 
 export function getSearchSuggestions(q: string) {
   return get<ApiResponse<{ suggestions: string[] }>>('/api/v1/search/suggestions', { q })
+}
+
+export interface DiffLine {
+  type: 'add' | 'delete' | 'equal'
+  content: string
+  old_line?: number
+  new_line?: number
+}
+
+export interface VersionDiffResult {
+  old_version: string
+  new_version: string
+  lines: DiffLine[]
+  stats: { added: number; deleted: number; changed: number }
+}
+
+export function getVersionDiff(docId: number, v1: string, v2: string) {
+  return get<ApiResponse<VersionDiffResult>>(`/api/v1/document/${docId}/versions/diff`, { v1, v2 })
 }

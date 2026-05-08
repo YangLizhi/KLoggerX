@@ -7,7 +7,8 @@
         <input
           :value="title"
           class="title-input"
-          placeholder="无标题幻灯片"
+          placeholder=""
+          :placeholder="$t('editor.slide.untitledSlide')"
           @input="$emit('update:title', ($event.target as HTMLInputElement).value)"
           @blur="$emit('saveTitle')"
         />
@@ -24,12 +25,12 @@
         </span>
       </div>
       <div class="menu-right">
-        <el-button size="small" text @click="emitAction('comment')"><el-icon><ChatDotRound /></el-icon>评论</el-button>
-        <el-button size="small" text @click="emitAction('permission')"><el-icon><Lock /></el-icon>权限</el-button>
-        <el-button size="small" text @click="emitAction('share')"><el-icon><Share /></el-icon>分享</el-button>
+        <el-button size="small" text @click="emitAction('comment')"><el-icon><ChatDotRound /></el-icon>{{ $t('editor.slide.comment') }}</el-button>
+        <el-button size="small" text @click="emitAction('permission')"><el-icon><Lock /></el-icon>{{ $t('editor.slide.permission') }}</el-button>
+        <el-button size="small" text @click="emitAction('share')"><el-icon><Share /></el-icon>{{ $t('editor.slide.share') }}</el-button>
         <span class="save-status">{{ saveStatus }}</span>
-        <el-button size="small" text @click="exportPPT"><el-icon><Download /></el-icon>导出</el-button>
-        <el-button size="small" text @click="printSlides"><el-icon><Printer /></el-icon>打印</el-button>
+        <el-button size="small" text @click="exportPPT"><el-icon><Download /></el-icon>{{ $t('editor.slide.export') }}</el-button>
+        <el-button size="small" text @click="printSlides"><el-icon><Printer /></el-icon>{{ $t('editor.slide.print') }}</el-button>
       </div>
     </div>
 
@@ -39,7 +40,7 @@
       <template v-if="activeMenu === 'home'">
         <!-- 剪贴板 -->
         <div class="toolbar-section">
-          <div class="section-label">剪贴板</div>
+          <div class="section-label">{{ $t('editor.slide.clipboard') }}</div>
           <div class="toolbar-group">
             <el-button size="small" @click="emitAction('cut')"><el-icon><Scissors /></el-icon></el-button>
             <el-button size="small" @click="emitAction('copy')"><el-icon><CopyDocument /></el-icon></el-button>
@@ -51,11 +52,11 @@
 
         <!-- 幻灯片 -->
         <div class="toolbar-section">
-          <div class="section-label">幻灯片</div>
+          <div class="section-label">{{ $t('editor.slide.slides') }}</div>
           <div class="toolbar-group">
-            <el-button size="small" @click="addSlide"><el-icon><Plus /></el-icon>新建</el-button>
-            <el-button size="small" @click="duplicateSlide" :disabled="!hasSelection"><el-icon><CopyDocument /></el-icon>复制</el-button>
-            <el-button size="small" @click="deleteSlide" :disabled="!canDelete"><el-icon><Delete /></el-icon>删除</el-button>
+            <el-button size="small" @click="addSlide"><el-icon><Plus /></el-icon>{{ $t('editor.slide.newSlide') }}</el-button>
+            <el-button size="small" @click="duplicateSlide" :disabled="!hasSelection"><el-icon><CopyDocument /></el-icon>{{ $t('editor.slide.duplicateSlide') }}</el-button>
+            <el-button size="small" @click="deleteSlide" :disabled="!canDelete"><el-icon><Delete /></el-icon>{{ $t('editor.slide.deleteSlide') }}</el-button>
             <el-button size="small" @click="moveUp" :disabled="!canMoveUp"><el-icon><Top /></el-icon></el-button>
             <el-button size="small" @click="moveDown" :disabled="!canMoveDown"><el-icon><Bottom /></el-icon></el-button>
           </div>
@@ -65,13 +66,13 @@
 
         <!-- 字体 -->
         <div class="toolbar-section">
-          <div class="section-label">字体</div>
+          <div class="section-label">{{ $t('editor.slide.font') }}</div>
           <div class="toolbar-group">
             <el-select v-model="fontFamily" size="small" style="width: 100px" @change="onFontFamilyChange">
-              <el-option label="微软雅黑" value="Microsoft YaHei" />
-              <el-option label="宋体" value="SimSun" />
-              <el-option label="黑体" value="SimHei" />
-              <el-option label="楷体" value="KaiTi" />
+              <el-option :label="$t('editor.slide.fontMSYH')" value="Microsoft YaHei" />
+              <el-option :label="$t('editor.slide.fontSong')" value="SimSun" />
+              <el-option :label="$t('editor.slide.fontHei')" value="SimHei" />
+              <el-option :label="$t('editor.slide.fontKai')" value="KaiTi" />
               <el-option label="Arial" value="Arial" />
               <el-option label="Times New Roman" value="Times New Roman" />
             </el-select>
@@ -89,8 +90,8 @@
                 <el-icon><Underline /></el-icon>
               </el-button>
             </div>
-            <el-color-picker v-model="textColor" size="small" title="文字颜色" @change="onTextColorChange" />
-            <el-color-picker v-model="bgColor" size="small" title="背景颜色" @change="onBgColorChange" />
+            <el-color-picker v-model="textColor" size="small" :title="$t('editor.slide.textColor')" @change="onTextColorChange" />
+            <el-color-picker v-model="bgColor" size="small" :title="$t('editor.slide.bgColor')" @change="onBgColorChange" />
           </div>
         </div>
 
@@ -98,7 +99,7 @@
 
         <!-- 段落 -->
         <div class="toolbar-section">
-          <div class="section-label">段落</div>
+          <div class="section-label">{{ $t('editor.slide.paragraph') }}</div>
           <div class="toolbar-group">
             <el-button size="small" @click="emitAction('alignLeft')"><el-icon><AlignLeft /></el-icon></el-button>
             <el-button size="small" @click="emitAction('alignCenter')"><el-icon><AlignCenter /></el-icon></el-button>
@@ -112,19 +113,19 @@
       <!-- 插入 菜单 -->
       <template v-else-if="activeMenu === 'insert'">
         <div class="toolbar-section">
-          <div class="section-label">幻灯片</div>
+          <div class="section-label">{{ $t('editor.slide.slides') }}</div>
           <div class="toolbar-group">
-            <el-button size="small" @click="addSlide"><el-icon><Plus /></el-icon>新建幻灯片</el-button>
+            <el-button size="small" @click="addSlide"><el-icon><Plus /></el-icon>{{ $t('editor.slide.newSlideBtn') }}</el-button>
           </div>
         </div>
 
         <span class="toolbar-divider" />
 
         <div class="toolbar-section">
-          <div class="section-label">表格</div>
+          <div class="section-label">{{ $t('editor.slide.tableSection') }}</div>
           <div class="toolbar-group">
             <el-dropdown trigger="click" @command="onInsertTable">
-              <el-button size="small"><el-icon><Grid /></el-icon>表格</el-button>
+              <el-button size="small"><el-icon><Grid /></el-icon>{{ $t('editor.slide.tableSection') }}</el-button>
               <template #dropdown>
                 <el-dropdown-menu>
                   <el-dropdown-item :command="3">3 x 3</el-dropdown-item>
@@ -140,27 +141,27 @@
         <span class="toolbar-divider" />
 
         <div class="toolbar-section">
-          <div class="section-label">图像</div>
+          <div class="section-label">{{ $t('editor.slide.imageSection') }}</div>
           <div class="toolbar-group">
-            <el-button size="small" @click="insertImage"><el-icon><Picture /></el-icon>图片</el-button>
-            <el-button size="small" @click="insertOnlineImage"><el-icon><Link /></el-icon>在线图片</el-button>
+            <el-button size="small" @click="insertImage"><el-icon><Picture /></el-icon>{{ $t('editor.slide.image') }}</el-button>
+            <el-button size="small" @click="insertOnlineImage"><el-icon><Link /></el-icon>{{ $t('editor.slide.onlineImage') }}</el-button>
           </div>
         </div>
 
         <span class="toolbar-divider" />
 
         <div class="toolbar-section">
-          <div class="section-label">形状</div>
+          <div class="section-label">{{ $t('editor.slide.shapeSection') }}</div>
           <div class="toolbar-group">
             <el-dropdown trigger="click" @command="onInsertShape">
-              <el-button size="small"><el-icon><Share /></el-icon>形状</el-button>
+              <el-button size="small"><el-icon><Share /></el-icon>{{ $t('editor.slide.shape') }}</el-button>
               <template #dropdown>
                 <el-dropdown-menu>
-                  <el-dropdown-item command="rect">矩形</el-dropdown-item>
-                  <el-dropdown-item command="circle">圆形</el-dropdown-item>
-                  <el-dropdown-item command="triangle">三角形</el-dropdown-item>
-                  <el-dropdown-item command="arrow">箭头</el-dropdown-item>
-                  <el-dropdown-item command="line">直线</el-dropdown-item>
+                  <el-dropdown-item command="rect">{{ $t('editor.slide.rect') }}</el-dropdown-item>
+                  <el-dropdown-item command="circle">{{ $t('editor.slide.circle') }}</el-dropdown-item>
+                  <el-dropdown-item command="triangle">{{ $t('editor.slide.triangle') }}</el-dropdown-item>
+                  <el-dropdown-item command="arrow">{{ $t('editor.slide.arrow') }}</el-dropdown-item>
+                  <el-dropdown-item command="line">{{ $t('editor.slide.line') }}</el-dropdown-item>
                 </el-dropdown-menu>
               </template>
             </el-dropdown>
@@ -170,20 +171,20 @@
         <span class="toolbar-divider" />
 
         <div class="toolbar-section">
-          <div class="section-label">文本</div>
+          <div class="section-label">{{ $t('editor.slide.textSection') }}</div>
           <div class="toolbar-group">
-            <el-button size="small" @click="insertTextBox"><el-icon><EditPen /></el-icon>文本框</el-button>
-            <el-button size="small" @click="insertLink"><el-icon><Link /></el-icon>链接</el-button>
+            <el-button size="small" @click="insertTextBox"><el-icon><EditPen /></el-icon>{{ $t('editor.slide.textBox') }}</el-button>
+            <el-button size="small" @click="insertLink"><el-icon><Link /></el-icon>{{ $t('editor.slide.link') }}</el-button>
           </div>
         </div>
 
         <span class="toolbar-divider" />
 
         <div class="toolbar-section">
-          <div class="section-label">媒体</div>
+          <div class="section-label">{{ $t('editor.slide.mediaSection') }}</div>
           <div class="toolbar-group">
-            <el-button size="small" @click="insertVideo"><el-icon><VideoPlay /></el-icon>视频</el-button>
-            <el-button size="small" @click="insertAudio"><el-icon><Headset /></el-icon>音频</el-button>
+            <el-button size="small" @click="insertVideo"><el-icon><VideoPlay /></el-icon>{{ $t('editor.slide.video') }}</el-button>
+            <el-button size="small" @click="insertAudio"><el-icon><Headset /></el-icon>{{ $t('editor.slide.audio') }}</el-button>
           </div>
         </div>
       </template>
@@ -191,7 +192,7 @@
       <!-- 设计 菜单 -->
       <template v-else-if="activeMenu === 'design'">
         <div class="toolbar-section">
-          <div class="section-label">主题</div>
+          <div class="section-label">{{ $t('editor.slide.theme') }}</div>
           <div class="toolbar-group theme-list">
             <div
               v-for="theme in themes"
@@ -209,11 +210,11 @@
         <span class="toolbar-divider" />
 
         <div class="toolbar-section">
-          <div class="section-label">幻灯片大小</div>
+          <div class="section-label">{{ $t('editor.slide.slideSize') }}</div>
           <div class="toolbar-group">
             <el-select v-model="slideRatio" size="small" style="width: 120px" @change="onRatioChange">
-              <el-option label="16:9 宽屏" value="16:9" />
-              <el-option label="4:3 标准" value="4:3" />
+              <el-option :label="$t('editor.slide.widescreen')" value="16:9" />
+              <el-option :label="$t('editor.slide.standard')" value="4:3" />
               <el-option label="16:10" value="16:10" />
             </el-select>
           </div>
@@ -222,11 +223,11 @@
         <span class="toolbar-divider" />
 
         <div class="toolbar-section">
-          <div class="section-label">背景</div>
+          <div class="section-label">{{ $t('editor.slide.background') }}</div>
           <div class="toolbar-group">
-            <el-color-picker v-model="bgColor" size="small" title="纯色背景" @change="onBgColorChange" />
-            <el-button size="small" @click="applyGradientBg"><el-icon><Share /></el-icon>渐变</el-button>
-            <el-button size="small" @click="applyImageBg"><el-icon><Picture /></el-icon>图片</el-button>
+            <el-color-picker v-model="bgColor" size="small" :title="$t('editor.slide.solidBg')" @change="onBgColorChange" />
+            <el-button size="small" @click="applyGradientBg"><el-icon><Share /></el-icon>{{ $t('editor.slide.gradient') }}</el-button>
+            <el-button size="small" @click="applyImageBg"><el-icon><Picture /></el-icon>{{ $t('editor.slide.image') }}</el-button>
           </div>
         </div>
       </template>
@@ -234,16 +235,16 @@
       <!-- 动画 菜单 -->
       <template v-else-if="activeMenu === 'animation'">
         <div class="toolbar-section">
-          <div class="section-label">切换效果</div>
+          <div class="section-label">{{ $t('editor.slide.transitionEffect') }}</div>
           <div class="toolbar-group">
             <el-select v-model="transition" size="small" style="width: 120px" @change="onTransitionChange">
-              <el-option label="无" value="none" />
-              <el-option label="淡入淡出" value="fade" />
-              <el-option label="推进" value="push" />
-              <el-option label="擦除" value="wipe" />
-              <el-option label="分割" value="split" />
-              <el-option label="翻转" value="flip" />
-              <el-option label="缩放" value="zoom" />
+              <el-option :label="$t('editor.slide.transitionNone')" value="none" />
+              <el-option :label="$t('editor.slide.transitionFade')" value="fade" />
+              <el-option :label="$t('editor.slide.transitionPush')" value="push" />
+              <el-option :label="$t('editor.slide.transitionWipe')" value="wipe" />
+              <el-option :label="$t('editor.slide.transitionSplit')" value="split" />
+              <el-option :label="$t('editor.slide.transitionFlip')" value="flip" />
+              <el-option :label="$t('editor.slide.transitionZoom')" value="zoom" />
             </el-select>
           </div>
         </div>
@@ -251,25 +252,25 @@
         <span class="toolbar-divider" />
 
         <div class="toolbar-section">
-          <div class="section-label">切换时间</div>
+          <div class="section-label">{{ $t('editor.slide.transitionTime') }}</div>
           <div class="toolbar-group">
             <el-input-number v-model="transitionDuration" size="small" :min="0.1" :max="5" :step="0.1" style="width: 100px" @change="onDurationChange" />
-            <span class="unit-label">秒</span>
+            <span class="unit-label">{{ $t('editor.slide.seconds') }}</span>
           </div>
         </div>
 
         <span class="toolbar-divider" />
 
         <div class="toolbar-section">
-          <div class="section-label">入场动画</div>
+          <div class="section-label">{{ $t('editor.slide.entranceAnim') }}</div>
           <div class="toolbar-group">
             <el-select v-model="entranceAnim" size="small" style="width: 120px" @change="onEntranceAnimChange">
-              <el-option label="无" value="none" />
-              <el-option label="飞入" value="fly-in" />
-              <el-option label="淡入" value="fade-in" />
-              <el-option label="缩放" value="zoom-in" />
-              <el-option label="旋转" value="spin" />
-              <el-option label="弹跳" value="bounce" />
+              <el-option :label="$t('editor.slide.animNone')" value="none" />
+              <el-option :label="$t('editor.slide.animFlyIn')" value="fly-in" />
+              <el-option :label="$t('editor.slide.animFadeIn')" value="fade-in" />
+              <el-option :label="$t('editor.slide.animZoomIn')" value="zoom-in" />
+              <el-option :label="$t('editor.slide.animSpin')" value="spin" />
+              <el-option :label="$t('editor.slide.animBounce')" value="bounce" />
             </el-select>
           </div>
         </div>
@@ -278,19 +279,19 @@
       <!-- 放映 菜单 -->
       <template v-else-if="activeMenu === 'slideshow'">
         <div class="toolbar-section">
-          <div class="section-label">开始放映</div>
+          <div class="section-label">{{ $t('editor.slide.startPresentation') }}</div>
           <div class="toolbar-group">
-            <el-button type="primary" size="small" @click="playFromStart"><el-icon><VideoPlay /></el-icon>从头开始</el-button>
-            <el-button size="small" @click="playFromCurrent" :disabled="!hasSelection"><el-icon><VideoPlay /></el-icon>从当前页</el-button>
+            <el-button type="primary" size="small" @click="playFromStart"><el-icon><VideoPlay /></el-icon>{{ $t('editor.slide.fromStart') }}</el-button>
+            <el-button size="small" @click="playFromCurrent" :disabled="!hasSelection"><el-icon><VideoPlay /></el-icon>{{ $t('editor.slide.fromCurrent') }}</el-button>
           </div>
         </div>
 
         <span class="toolbar-divider" />
 
         <div class="toolbar-section">
-          <div class="section-label">放映设置</div>
+          <div class="section-label">{{ $t('editor.slide.presentationSettings') }}</div>
           <div class="toolbar-group">
-            <el-checkbox v-model="autoPlay" @change="onAutoPlayChange">自动播放</el-checkbox>
+            <el-checkbox v-model="autoPlay" @change="onAutoPlayChange">{{ $t('editor.slide.autoPlay') }}</el-checkbox>
             <el-input-number
               v-model="autoPlayInterval"
               size="small"
@@ -299,17 +300,17 @@
               :disabled="!autoPlay"
               style="width: 80px; margin-left: 8px"
             />
-            <span class="unit-label">秒/页</span>
+            <span class="unit-label">{{ $t('editor.slide.secondsPerPage') }}</span>
           </div>
         </div>
 
         <span class="toolbar-divider" />
 
         <div class="toolbar-section">
-          <div class="section-label">演讲者工具</div>
+          <div class="section-label">{{ $t('editor.slide.speakerTools') }}</div>
           <div class="toolbar-group">
-            <el-checkbox v-model="showSpeakerNotes">显示演讲者备注</el-checkbox>
-            <el-checkbox v-model="showTimer">显示计时器</el-checkbox>
+            <el-checkbox v-model="showSpeakerNotes">{{ $t('editor.slide.showSpeakerNotes') }}</el-checkbox>
+            <el-checkbox v-model="showTimer">{{ $t('editor.slide.showTimer') }}</el-checkbox>
           </div>
         </div>
       </template>
@@ -320,6 +321,9 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   slideCount: number
@@ -334,11 +338,11 @@ const router = useRouter()
 
 // Menu structure
 const menus = [
-  { key: 'home', label: '开始' },
-  { key: 'insert', label: '插入' },
-  { key: 'design', label: '设计' },
-  { key: 'animation', label: '动画' },
-  { key: 'slideshow', label: '放映' },
+  { key: 'home', label: t('editor.slide.menuHome') },
+  { key: 'insert', label: t('editor.slide.menuInsert') },
+  { key: 'design', label: t('editor.slide.menuDesign') },
+  { key: 'animation', label: t('editor.slide.menuAnimation') },
+  { key: 'slideshow', label: t('editor.slide.menuSlideshow') },
 ]
 
 const activeMenu = ref('home')

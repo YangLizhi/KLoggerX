@@ -6,13 +6,14 @@ import {
   pinDocument,
   favoriteDocument,
 } from '@/api/modules/document'
+import i18n from '@/locales'
 
 export function useDocument(docId: () => number) {
   const title = ref('')
   const content = ref('')
   const docType = ref('doc')
   const loading = ref(false)
-  const saveStatus = ref('已保存')
+  const saveStatus = ref(i18n.global.t('document.status.saved'))
   const isPinned = ref(false)
   const isFavorite = ref(false)
   let saveTimer: ReturnType<typeof setTimeout> | null = null
@@ -34,23 +35,23 @@ export function useDocument(docId: () => number) {
   }
 
   async function saveContent(jsonContent: string) {
-    saveStatus.value = '保存中...'
+    saveStatus.value = i18n.global.t('document.status.saving')
     try {
       await saveDocumentContent(docId(), jsonContent)
-      saveStatus.value = '已保存'
+      saveStatus.value = i18n.global.t('document.status.saved')
     } catch {
-      saveStatus.value = '保存失败'
+      saveStatus.value = i18n.global.t('document.status.saveFailed')
     }
   }
 
   function scheduleSave(getContent: () => string, delay = 2000) {
-    saveStatus.value = '编辑中...'
+    saveStatus.value = i18n.global.t('document.status.editing')
     if (saveTimer) clearTimeout(saveTimer)
     saveTimer = setTimeout(() => saveContent(getContent()), delay)
   }
 
   async function saveTitle() {
-    if (!title.value.trim()) title.value = '无标题文档'
+    if (!title.value.trim()) title.value = i18n.global.t('document.status.untitled')
     await updateDocument(docId(), { title: title.value })
   }
 

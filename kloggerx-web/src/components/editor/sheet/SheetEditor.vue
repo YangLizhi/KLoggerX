@@ -10,8 +10,11 @@ import type { FUniver, Univer, IWorkbookData } from '@univerjs/presets'
 import { UniverSheetsCorePreset } from '@univerjs/preset-sheets-core'
 import UniverPresetSheetsCoreZhCN from '@univerjs/preset-sheets-core/locales/zh-CN'
 import { createUniver, LocaleType, mergeLocales } from '@univerjs/presets'
+import { useI18n } from 'vue-i18n'
 
 import '@univerjs/preset-sheets-core/lib/index.css'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   documentId: number
@@ -84,7 +87,7 @@ function convertOldFormatToUniver(content: string): IWorkbookData | null {
 
         sheets[sheetId] = {
           id: sheetId,
-          name: sheet.name || `工作表${index + 1}`,
+          name: sheet.name || `${t('editor.sheet.worksheetPrefix')}${index + 1}`,
           cellData,
           defaultColumnWidth: 100,
           defaultRowHeight: 24,
@@ -95,7 +98,7 @@ function convertOldFormatToUniver(content: string): IWorkbookData | null {
 
       return {
         id: `workbook-${props.documentId}`,
-        name: props.docTitle || '无标题表格',
+        name: props.docTitle || t('editor.sheet.untitledSheet'),
         sheetOrder,
         sheets,
       } as unknown as IWorkbookData
@@ -112,12 +115,12 @@ function convertOldFormatToUniver(content: string): IWorkbookData | null {
 function getDefaultWorkbook(): IWorkbookData {
   return {
     id: `workbook-${props.documentId}`,
-    name: props.docTitle || '无标题表格',
+    name: props.docTitle || t('editor.sheet.untitledSheet'),
     sheetOrder: ['sheet-0'],
     sheets: {
       'sheet-0': {
         id: 'sheet-0',
-        name: '工作表1',
+        name: `${t('editor.sheet.worksheetPrefix')}1`,
         cellData: {},
         defaultColumnWidth: 100,
         defaultRowHeight: 24,

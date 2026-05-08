@@ -19,6 +19,53 @@ func GetTemplates(category string) ([]model.Template, error) {
 	return list, err
 }
 
+// GetTemplatesByCategory returns templates by category with pagination.
+func GetTemplatesByCategory(category string, page, pageSize int) ([]model.Template, int64, error) {
+	var list []model.Template
+	var total int64
+	db := mysql.DB.Model(&model.Template{})
+	if category != "" {
+		db = db.Where("category = ?", category)
+	}
+	db.Count(&total)
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 {
+		pageSize = 20
+	}
+	err := db.Offset((page - 1) * pageSize).Limit(pageSize).Order("id ASC").Find(&list).Error
+	return list, total, err
+}
+
+// SearchTemplates searches templates by keyword (name fuzzy match).
+func SearchTemplates(keyword string) ([]model.Template, error) {
+	var list []model.Template
+	err := mysql.DB.Where("name LIKE ?", "%"+keyword+"%").Order("id ASC").Find(&list).Error
+	return list, err
+}
+
+// FavoriteTemplate adds a template to user's favorites.
+func FavoriteTemplate(userID, templateID uint) error {
+	fav := model.TemplateFavorite{
+		UserID:     userID,
+		TemplateID: templateID,
+	}
+	return mysql.DB.Where("user_id = ? AND template_id = ?", userID, templateID).FirstOrCreate(&fav).Error
+}
+
+// UnfavoriteTemplate removes a template from user's favorites.
+func UnfavoriteTemplate(userID, templateID uint) error {
+	return mysql.DB.Where("user_id = ? AND template_id = ?", userID, templateID).Delete(&model.TemplateFavorite{}).Error
+}
+
+// GetUserFavoriteTemplateIDs returns the template IDs a user has favorited.
+func GetUserFavoriteTemplateIDs(userID uint) ([]uint, error) {
+	var ids []uint
+	err := mysql.DB.Model(&model.TemplateFavorite{}).Where("user_id = ?", userID).Pluck("template_id", &ids).Error
+	return ids, err
+}
+
 func GetTemplateCategories() ([]string, error) {
 	var cats []string
 	err := mysql.DB.Model(&model.Template{}).Distinct("category").Pluck("category", &cats).Error

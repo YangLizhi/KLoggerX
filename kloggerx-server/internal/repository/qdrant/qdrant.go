@@ -206,6 +206,28 @@ func DeletePointsByIDs(ctx context.Context, collection string, ids []string) err
 	return err
 }
 
+// SetPayload sets payload fields on points matching a filter
+func SetPayload(ctx context.Context, collection string, payload map[string]interface{}, filter map[string]interface{}) error {
+	body := map[string]interface{}{
+		"payload": payload,
+		"filter":  filter,
+	}
+
+	_, err := doRequest(ctx, "POST", fmt.Sprintf("/collections/%s/points/payload", collection), body)
+	return err
+}
+
+// SetPayloadByPointIDs sets payload fields on specific points by IDs
+func SetPayloadByPointIDs(ctx context.Context, collection string, payload map[string]interface{}, pointIDs []string) error {
+	body := map[string]interface{}{
+		"payload": payload,
+		"points":  pointIDs,
+	}
+
+	_, err := doRequest(ctx, "POST", fmt.Sprintf("/collections/%s/points/payload", collection), body)
+	return err
+}
+
 // GetCollectionInfo returns collection info
 func GetCollectionInfo(ctx context.Context, collection string) (map[string]interface{}, error) {
 	respBody, err := doRequest(ctx, "GET", fmt.Sprintf("/collections/%s", collection), nil)
